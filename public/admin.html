@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>협곡단 · 관리자</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --rift:#0A1428;--surface:#0F1E38;--surface-2:#132446;--line:#1F3355;--line-soft:#182B4C;
+    --ink:#E9EEF7;--ink-2:#AEBDD4;--ink-3:#7A8AA6;--gold:#C8AA6E;--gold-bright:#F0E0B8;--gold-deep:#94743A;
+    --blue:#1E9DE3;--red:#E84057;--good:#2ECC8F;--warn:#E0A335;
+    --font:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,-apple-system,sans-serif;
+    --shadow:0 10px 40px -12px rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--rift);color:var(--ink);font-family:var(--font);line-height:1.5;letter-spacing:-.01em;
+    background-image:radial-gradient(1000px 500px at 20% -10%,rgba(30,157,227,.10),transparent 60%),radial-gradient(1000px 500px at 80% -10%,rgba(232,64,87,.09),transparent 60%);}
+  .num{font-variant-numeric:tabular-nums}
+  a{color:var(--gold-bright)}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 20px}
+  header{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--rift) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .bar{display:flex;align-items:center;gap:14px;height:60px}
+  .bar b{font-size:17px;font-weight:800}
+  .bar small{color:var(--ink-3);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+  .spacer{flex:1}
+  .btn{appearance:none;border:1px solid var(--line);border-radius:9px;padding:8px 15px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;color:var(--ink-2);background:var(--surface)}
+  .btn:hover{border-color:var(--ink-3);color:var(--ink)}
+  .btn.primary{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#1c1305;border-color:var(--gold-deep)}
+  .btn.primary:hover{filter:brightness(1.06)}
+  .btn.danger:hover{border-color:var(--red);color:var(--red)}
+  .btn.sm{padding:5px 10px;font-size:12px;border-radius:7px}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  main{padding:26px 0 80px}
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:22px}
+  .tab{appearance:none;background:none;border:0;border-bottom:2px solid transparent;color:var(--ink-3);font-family:inherit;font-size:14px;font-weight:700;padding:12px 16px;cursor:pointer}
+  .tab[aria-selected=true]{color:var(--gold-bright);border-bottom-color:var(--gold)}
+  .view{display:none}.view.on{display:block}
+  input,select{background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:13px}
+  input:focus,select:focus{outline:none;border-color:var(--gold)}
+  label.fld{display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--ink-3);font-weight:700}
+  .card{border:1px solid var(--line);border-radius:13px;background:var(--surface);padding:18px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  h2{font-size:18px;margin:0 0 14px}
+  h3{font-size:14px;margin:0 0 12px;color:var(--gold-bright)}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th{text-align:left;color:var(--ink-3);font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;padding:8px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:6px 8px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+  tr.hidden-row{opacity:.45}
+  td input,td select{padding:6px 7px;font-size:12px;width:100%}
+  .tw{overflow-x:auto}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--surface-2);border:1px solid var(--gold-deep);color:var(--gold-bright);padding:11px 18px;border-radius:11px;font-size:13px;font-weight:700;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.3s;z-index:50}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .login{max-width:360px;margin:12vh auto 0;text-align:center}
+  .login .card{padding:28px}
+  .login h1{font-size:22px;margin:0 0 6px}
+  .login p{color:var(--ink-3);font-size:13px;margin:0 0 20px}
+  .err{color:var(--red);font-size:12.5px;font-weight:600;min-height:16px;margin-top:8px}
+  .hint{color:var(--ink-3);font-size:12px;margin:6px 0 0}
+  .tag{font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;background:var(--surface-2)}
+  .modal-bg{position:fixed;inset:0;background:rgba(4,8,18,.72);display:none;place-items:center;z-index:40;padding:20px}
+  .modal-bg.on{display:grid}
+  .modal{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;max-width:820px;width:100%;max-height:88vh;overflow:auto;box-shadow:var(--shadow)}
+  .teams2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0}
+  .teambox{border:1px solid var(--line-soft);border-radius:11px;padding:13px;background:var(--rift)}
+  .teambox.blue{border-top:2px solid var(--blue)}.teambox.red{border-top:2px solid var(--red)}
+  .teambox h4{margin:0 0 10px;font-size:12px}
+  .lrow{display:grid;grid-template-columns:38px 1fr;gap:8px;align-items:center;margin-bottom:8px}
+  .lrow .lb{font-size:10px;font-weight:800;text-align:center;color:var(--ink-3)}
+  @media(max-width:640px){.teams2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="wrap bar">
+  <b>협곡단 관리자</b><small>Admin</small>
+  <div class="spacer"></div>
+  <a class="btn sm" href="/">← 메인</a>
+  <button class="btn sm" id="logoutBtn" style="display:none">로그아웃</button>
+</div></header>
+
+<main class="wrap">
+  <!-- LOGIN -->
+  <section id="loginView" class="login" style="display:none">
+    <div class="card">
+      <h1>🔧 관리자 로그인</h1>
+      <p>관리자 비밀번호를 입력하세요.</p>
+      <input id="pw" type="password" placeholder="비밀번호" style="width:100%" autocomplete="current-password">
+      <div class="err" id="loginErr"></div>
+      <button class="btn primary" id="loginBtn" style="width:100%;margin-top:10px">로그인</button>
+      <p class="hint" id="defaultHint" style="display:none">※ 서버가 기본 비밀번호를 사용 중입니다 (<b>hyeopgok</b>). 운영 시 ADMIN_PASSWORD 환경변수를 설정하세요.</p>
+    </div>
+  </section>
+
+  <!-- ADMIN -->
+  <section id="adminView" style="display:none">
+    <div class="tabs">
+      <button class="tab" data-t="members" aria-selected="true">단원 관리</button>
+      <button class="tab" data-t="matches" aria-selected="false">내전 기록 관리</button>
+    </div>
+
+    <div class="view on" id="v-members">
+      <div class="card" style="margin-bottom:18px">
+        <h3>➕ 단원 추가</h3>
+        <div class="row">
+          <label class="fld">이름<input id="a_name" style="width:120px"></label>
+          <label class="fld">출생연도<input id="a_birth" type="number" value="2000" style="width:90px"></label>
+          <label class="fld">닉네임<input id="a_nick" style="width:150px"></label>
+          <label class="fld">티어<select id="a_tier"></select></label>
+          <label class="fld">주라인<input id="a_main" placeholder="미드, 탑" style="width:110px"></label>
+          <label class="fld">부라인<input id="a_sub" placeholder="정글" style="width:110px"></label>
+          <label class="fld">직책<select id="a_role"></select></label>
+          <button class="btn primary" id="addMemberBtn">추가</button>
+        </div>
+        <div class="err" id="addErr"></div>
+        <p class="hint">라인은 쉼표로 구분 (탑/정글/미드/원딜/서폿, 올라운더는 부라인에 "올라이너").</p>
+      </div>
+      <div class="card">
+        <h3>단원 목록 <span id="memCount" class="tag"></span></h3>
+        <div class="tw"><table id="memTable"></table></div>
+      </div>
+    </div>
+
+    <div class="view" id="v-matches">
+      <div class="card" style="margin-bottom:18px">
+        <div class="row" style="justify-content:space-between">
+          <h3 style="margin:0">내전 기록</h3>
+          <button class="btn primary" id="newMatchBtn">➕ 새 내전 등록</button>
+        </div>
+      </div>
+      <div class="card"><div class="tw"><table id="matchTable"></table></div></div>
+    </div>
+  </section>
+</main>
+
+<!-- MATCH EDITOR MODAL -->
+<div class="modal-bg" id="matchModal">
+  <div class="modal">
+    <h2 id="matchModalTitle">내전 편집</h2>
+    <div class="row" style="margin-bottom:6px">
+      <label class="fld">날짜<input id="m_date" type="date"></label>
+      <label class="fld">시간(분)<input id="m_dur" type="number" value="30" style="width:90px"></label>
+      <label class="fld">승리팀
+        <select id="m_winner"><option value="blue">블루팀</option><option value="red">레드팀</option></select>
+      </label>
+      <label class="fld">MVP<select id="m_mvp" style="min-width:160px"></select></label>
+    </div>
+    <div class="teams2">
+      <div class="teambox blue"><h4 style="color:var(--blue)">블루팀</h4><div id="m_blue"></div></div>
+      <div class="teambox red"><h4 style="color:var(--red)">레드팀</h4><div id="m_red"></div></div>
+    </div>
+    <div class="err" id="matchErr"></div>
+    <div class="row" style="justify-content:flex-end;margin-top:8px">
+      <button class="btn" id="matchCancel">취소</button>
+      <button class="btn primary" id="matchSave">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=(s,el=document)=>el.querySelector(s);
+const $$=(s,el=document)=>[...el.querySelectorAll(s)];
+async function jget(p){const r=await fetch(p);if(!r.ok)throw Object.assign(new Error(p+' '+r.status),{status:r.status});return r.json();}
+async function jsend(m,p,b){const r=await fetch(p,{method:m,headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined});const j=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(j.message||p),{payload:j,status:r.status});return j;}
+function toast(msg){let t=$("#toast");if(!t){t=document.createElement('div');t.className='toast';t.id='toast';document.body.appendChild(t);}t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400);}
+
+let META={}, MEMBERS=[], LINE_ORDER=[], TIER_ORDER=[];
+const ROLES=['단장','부단장','단원','예비'];
+
+/* ── 인증 ── */
+async function checkAuth(){
+  const me=await jget('/api/admin/me');
+  if(me.usingDefaults) $("#defaultHint").style.display='block';
+  if(me.authed){ showAdmin(); } else { $("#loginView").style.display='block'; $("#pw").focus(); }
+}
+function showAdmin(){
+  $("#loginView").style.display='none';
+  $("#adminView").style.display='block';
+  $("#logoutBtn").style.display='inline-flex';
+  loadAll();
+}
+$("#loginBtn").addEventListener("click",login);
+$("#pw").addEventListener("keydown",e=>{if(e.key==='Enter')login()});
+async function login(){
+  const err=$("#loginErr");err.textContent='';
+  try{ await jsend('POST','/api/admin/login',{password:$("#pw").value}); showAdmin(); }
+  catch(ex){ err.textContent = ex.status===401 ? '비밀번호가 올바르지 않습니다.' : ('오류: '+ex.message); }
+}
+$("#logoutBtn").addEventListener("click",async()=>{ await jsend('POST','/api/admin/logout'); location.reload(); });
+
+/* ── 탭 ── */
+$$(".tab").forEach(t=>t.addEventListener("click",()=>{
+  $$(".tab").forEach(x=>x.setAttribute("aria-selected", x===t));
+  $$(".view").forEach(v=>v.classList.toggle("on", v.id==="v-"+t.dataset.t));
+}));
+
+/* ── 데이터 로드 ── */
+async function loadAll(){
+  META=await jget('/api/meta');
+  LINE_ORDER=META.lineOrder; TIER_ORDER=META.tierOrder;
+  fillSelect($("#a_tier"),TIER_ORDER); $("#a_tier").value='언랭';
+  fillSelect($("#a_role"),ROLES); $("#a_role").value='단원';
+  await loadMembers(); await loadMatches();
+}
+function fillSelect(sel,arr,cur){sel.innerHTML=arr.map(v=>`<option value="${v}">${v}</option>`).join('');if(cur!=null)sel.value=cur;}
+
+/* ── 단원 관리 ── */
+async function loadMembers(){
+  const {members}=await jget('/api/members?includeHidden=1');
+  MEMBERS=members;
+  $("#memCount").textContent=members.length+'명';
+  const tierOpts=t=>TIER_ORDER.map(x=>`<option ${x===t?'selected':''}>${x}</option>`).join('');
+  const roleOpts=r=>ROLES.map(x=>`<option ${x===r?'selected':''}>${x}</option>`).join('');
+  $("#memTable").innerHTML=`<thead><tr>
+    <th>이름</th><th>출생</th><th>닉네임</th><th>티어</th><th>주라인</th><th>부라인</th><th>직책</th><th>점수</th><th></th></tr></thead>
+    <tbody>${members.map(m=>`<tr data-id="${m.id}" class="${m.hidden?'hidden-row':''}">
+      <td><input data-f="name" value="${esc(m.name)}" style="width:90px"></td>
+      <td><input data-f="birth" type="number" value="${m.birth}" style="width:70px"></td>
+      <td><input data-f="nick" value="${esc(m.nick)}" style="width:130px"></td>
+      <td><select data-f="tier">${tierOpts(m.tier)}</select></td>
+      <td><input data-f="main" value="${esc(m.main.join(', '))}" style="width:100px"></td>
+      <td><input data-f="sub" value="${esc(m.sub.join(', '))}" style="width:100px"></td>
+      <td><select data-f="role">${roleOpts(m.role)}</select></td>
+      <td class="num"><span class="tag">${m.score}</span></td>
+      <td style="white-space:nowrap">
+        <button class="btn sm save">저장</button>
+        ${m.hidden?'<button class="btn sm restore">복원</button>':'<button class="btn sm danger del">삭제</button>'}
+      </td></tr>`).join('')}</tbody>`;
+}
+function esc(s){return String(s==null?'':s).replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+$("#memTable").addEventListener("click",async e=>{
+  const tr=e.target.closest("tr"); if(!tr)return; const id=tr.dataset.id;
+  if(e.target.classList.contains("save")){
+    const patch={};
+    $$("[data-f]",tr).forEach(inp=>{
+      const f=inp.dataset.f;
+      if(f==='main'||f==='sub') patch[f]=inp.value.split(',').map(s=>s.trim()).filter(Boolean);
+      else patch[f]=inp.value;
+    });
+    try{ await jsend('PATCH','/api/admin/members/'+id,patch); toast('저장했습니다'); await refreshMembersAndMatches(); }
+    catch(ex){ toast((ex.payload&&ex.payload.messages&&ex.payload.messages[0])||'저장 실패'); }
+  } else if(e.target.classList.contains("del")){
+    if(!confirm('이 단원을 명단에서 숨기시겠어요? (과거 기록은 유지됩니다)'))return;
+    try{ await jsend('DELETE','/api/admin/members/'+id); toast('삭제(숨김)했습니다'); await refreshMembersAndMatches(); }catch(ex){toast('실패: '+ex.message);}
+  } else if(e.target.classList.contains("restore")){
+    try{ await jsend('POST','/api/admin/members/'+id+'/restore'); toast('복원했습니다'); await refreshMembersAndMatches(); }catch(ex){toast('실패: '+ex.message);}
+  }
+});
+$("#addMemberBtn").addEventListener("click",async()=>{
+  const err=$("#addErr");err.textContent='';
+  const body={
+    name:$("#a_name").value.trim(), birth:Number($("#a_birth").value),
+    nick:$("#a_nick").value.trim(), tier:$("#a_tier").value,
+    main:$("#a_main").value.split(',').map(s=>s.trim()).filter(Boolean),
+    sub:$("#a_sub").value.split(',').map(s=>s.trim()).filter(Boolean),
+    role:$("#a_role").value,
+  };
+  try{ await jsend('POST','/api/admin/members',body); toast('단원을 추가했습니다');
+    $("#a_name").value='';$("#a_nick").value='';$("#a_main").value='';$("#a_sub").value='';
+    await refreshMembersAndMatches();
+  }catch(ex){ err.textContent=(ex.payload&&ex.payload.messages&&ex.payload.messages[0])||('추가 실패: '+ex.message); }
+});
+async function refreshMembersAndMatches(){ await loadMembers(); await loadMatches(); }
+
+/* ── 내전 관리 ── */
+let MATCHES=[];
+async function loadMatches(){
+  const {matches}=await jget('/api/matches');
+  MATCHES=matches;
+  const byId=Object.fromEntries(MEMBERS.map(m=>[m.id,m.name]));
+  const nm=id=>byId[id]||('#'+id);
+  $("#matchTable").innerHTML=`<thead><tr><th>날짜</th><th>결과</th><th>블루팀</th><th>레드팀</th><th>MVP</th><th>구분</th><th></th></tr></thead>
+    <tbody>${matches.map(mt=>{
+      const user=String(mt.id).startsWith('u');
+      const mvp=[...mt.blue,...mt.red].find(p=>p.mvp);
+      return `<tr data-id="${mt.id}">
+        <td class="num">${mt.date.slice(0,10)}</td>
+        <td><b style="color:${mt.blueWin?'var(--blue)':'var(--red)'}">${mt.blueWin?'블루 승':'레드 승'}</b></td>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${mt.blue.map(p=>p.name).join(', ')}</td>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${mt.red.map(p=>p.name).join(', ')}</td>
+        <td style="color:var(--gold-bright)">${mvp?mvp.name:'—'}</td>
+        <td>${user?'<span class="tag" style="color:var(--gold)">직접</span>':'<span class="tag">샘플</span>'}</td>
+        <td style="white-space:nowrap">${user?'<button class="btn sm edit">편집</button> <button class="btn sm danger del">삭제</button>':'<span class="hint">읽기전용</span>'}</td>
+      </tr>`;}).join('')}</tbody>`;
+}
+$("#matchTable").addEventListener("click",async e=>{
+  const tr=e.target.closest("tr"); if(!tr)return; const id=tr.dataset.id;
+  if(e.target.classList.contains("edit")){ openMatchModal(MATCHES.find(m=>String(m.id)===String(id))); }
+  else if(e.target.classList.contains("del")){
+    if(!confirm('이 내전 기록을 삭제할까요?'))return;
+    try{ await jsend('DELETE','/api/matches/'+id); toast('삭제했습니다'); await loadMatches(); }catch(ex){toast('실패: '+ex.message);}
+  }
+});
+
+/* ── 내전 편집 모달 ── */
+let editingId=null;
+function playerOptions(sel){
+  return `<option value="">— 선택 —</option>`+MEMBERS.slice().sort((a,b)=>a.name.localeCompare(b.name,'ko'))
+    .map(m=>`<option value="${m.id}" ${sel===m.id?'selected':''}>${m.name} · ${m.tier}</option>`).join('');
+}
+function laneRows(side,players){
+  return LINE_ORDER.map((lane,i)=>{
+    const p=players&&players.find(x=>x.lane===lane);
+    return `<div class="lrow"><span class="lb">${META.lineShort[lane]}</span>
+      <select class="msel" data-side="${side}" data-lane="${lane}">${playerOptions(p?p.id:null)}</select></div>`;
+  }).join('');
+}
+function openMatchModal(mt){
+  editingId = mt?mt.id:null;
+  $("#matchModalTitle").textContent = mt?'내전 편집':'새 내전 등록';
+  $("#m_date").value = mt?mt.date.slice(0,10):new Date().toISOString().slice(0,10);
+  $("#m_dur").value = mt?mt.dur:30;
+  $("#m_winner").value = mt?(mt.blueWin?'blue':'red'):'blue';
+  $("#m_blue").innerHTML=laneRows('blue',mt?mt.blue:null);
+  $("#m_red").innerHTML=laneRows('red',mt?mt.red:null);
+  refreshModalMvp(mt?(mt.mvpId):null);
+  $("#matchErr").textContent='';
+  $("#matchModal").classList.add("on");
+}
+function refreshModalMvp(cur){
+  const chosen=$$(".msel").map(s=>s.value).filter(v=>v!=='').map(Number);
+  const uniq=[...new Set(chosen)];
+  const byId=Object.fromEntries(MEMBERS.map(m=>[m.id,m.name]));
+  $("#m_mvp").innerHTML=`<option value="">${uniq.length?'— MVP —':'— 선수 선택 —'}</option>`+
+    uniq.map(id=>`<option value="${id}" ${cur===id?'selected':''}>${byId[id]||('#'+id)}</option>`).join('');
+}
+$("#matchModal").addEventListener("change",e=>{ if(e.target.classList.contains("msel")) refreshModalMvp(Number($("#m_mvp").value)||null); });
+$("#matchCancel").addEventListener("click",()=>$("#matchModal").classList.remove("on"));
+$("#matchModal").addEventListener("click",e=>{ if(e.target.id==='matchModal') $("#matchModal").classList.remove("on"); });
+$("#newMatchBtn").addEventListener("click",()=>openMatchModal(null));
+$("#matchSave").addEventListener("click",async()=>{
+  const err=$("#matchErr");err.textContent='';
+  const collect=side=>LINE_ORDER.map(lane=>{
+    const s=$(`.msel[data-side="${side}"][data-lane="${lane}"]`);
+    return {id:s.value===''?null:Number(s.value),lane};
+  });
+  const blue=collect('blue'),red=collect('red'),all=[...blue,...red];
+  if(all.some(p=>p.id===null)){err.textContent='양 팀 10명을 모두 선택하세요.';return}
+  const ids=all.map(p=>p.id),dup=ids.find((id,i)=>ids.indexOf(id)!==i);
+  if(dup!=null){err.textContent='중복 선택된 단원이 있습니다.';return}
+  const mvpId=$("#m_mvp").value; if(!mvpId){err.textContent='MVP를 선택하세요.';return}
+  const body={date:$("#m_date").value,dur:$("#m_dur").value,winner:$("#m_winner").value,blue,red,mvpId:Number(mvpId)};
+  try{
+    if(editingId) await jsend('PUT','/api/matches/'+editingId,body);
+    else await jsend('POST','/api/matches',body);
+    $("#matchModal").classList.remove("on"); toast(editingId?'수정했습니다':'등록했습니다'); await loadMatches();
+  }catch(ex){ err.textContent=(ex.payload&&ex.payload.messages&&ex.payload.messages[0])||('저장 실패: '+ex.message); }
+});
+
+checkAuth().catch(ex=>{ $("#loginView").style.display='block'; console.error(ex); });
+</script>
+</body></html>

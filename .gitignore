@@ -1,0 +1,9 @@
+node_modules/
+data/matches.json
+data/members-override.json
+*.log
+.DS_Store
+
+# 개인/로컬 설정
+.claude/settings.local.json
+.env

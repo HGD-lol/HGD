@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>협곡단 · 팀 경매</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --rift:#0A1428;--surface:#0F1E38;--surface-2:#132446;--line:#1F3355;--line-soft:#182B4C;
+    --ink:#E9EEF7;--ink-2:#AEBDD4;--ink-3:#7A8AA6;--gold:#C8AA6E;--gold-bright:#F0E0B8;--gold-deep:#94743A;
+    --blue:#1E9DE3;--red:#E84057;--good:#2ECC8F;--warn:#E0A335;
+    --font:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,-apple-system,sans-serif;
+    --shadow:0 10px 40px -12px rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--rift);color:var(--ink);font-family:var(--font);line-height:1.5;letter-spacing:-.01em;
+    background-image:radial-gradient(1000px 500px at 20% -10%,rgba(30,157,227,.10),transparent 60%),radial-gradient(1000px 500px at 80% -10%,rgba(232,64,87,.09),transparent 60%);}
+  .num{font-variant-numeric:tabular-nums}
+  a{color:var(--gold-bright)}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+  header{border-bottom:1px solid var(--line)}
+  .bar{display:flex;align-items:center;gap:14px;height:60px}
+  .bar b{font-size:17px;font-weight:800}
+  .bar small{color:var(--ink-3);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+  .spacer{flex:1}
+  .btn{appearance:none;border:1px solid var(--line);border-radius:9px;padding:9px 16px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;color:var(--ink-2);background:var(--surface)}
+  .btn:hover{border-color:var(--ink-3);color:var(--ink)}
+  .btn.primary{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#1c1305;border-color:var(--gold-deep)}
+  .btn.primary:hover{filter:brightness(1.06)}
+  .btn.big{padding:14px 22px;font-size:16px}
+  .btn.sm{padding:6px 11px;font-size:12px;border-radius:7px}
+  .btn.blue{border-color:var(--blue);color:var(--blue)} .btn.red{border-color:var(--red);color:var(--red)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  input,select{background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:13px}
+  input:focus,select:focus{outline:none;border-color:var(--gold)}
+  label.fld{display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--ink-3);font-weight:700}
+  main{padding:26px 0 80px}
+  .card{border:1px solid var(--line);border-radius:13px;background:var(--surface);padding:18px}
+  h1{font-size:24px;margin:0 0 4px}h2{font-size:18px;margin:0 0 14px}h3{font-size:14px;margin:0 0 12px;color:var(--gold-bright)}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .tag{font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;background:var(--surface-2)}
+  .hint{color:var(--ink-3);font-size:12px}
+  .err{color:var(--red);font-size:12.5px;font-weight:600;min-height:16px}
+  /* setup */
+  .capline{display:flex;gap:8px;margin-bottom:8px}
+  .playerpick{display:flex;flex-wrap:wrap;gap:7px;max-height:230px;overflow:auto;padding:4px}
+  .pp{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer;user-select:none}
+  .pp.on{background:color-mix(in srgb,var(--gold) 16%,transparent);border-color:var(--gold);color:var(--gold-bright)}
+  .pp .dot{width:7px;height:7px;border-radius:50%}
+  /* live */
+  .live-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+  .roomcode{font-size:24px;font-weight:900;letter-spacing:.1em;color:var(--gold-bright)}
+  .statuspill{font-size:12px;font-weight:800;padding:4px 12px;border-radius:20px;background:var(--surface-2)}
+  .statuspill.live{color:var(--good);background:color-mix(in srgb,var(--good) 15%,transparent)}
+  .statuspill.done{color:var(--gold-bright)}
+  .block{border:1px solid var(--gold-deep);border-radius:16px;background:linear-gradient(180deg,var(--surface),var(--surface-2));padding:24px;text-align:center;margin-bottom:18px;box-shadow:var(--shadow)}
+  .block .who{font-size:30px;font-weight:900}
+  .block .meta{color:var(--ink-2);font-size:14px;margin-top:4px}
+  .timer{font-size:44px;font-weight:900;font-variant-numeric:tabular-nums;margin:10px 0 4px}
+  .timer.warn{color:var(--warn)} .timer.crit{color:var(--red)}
+  .highbid{font-size:16px;font-weight:800;margin-top:6px}
+  .bidrow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+  .captains{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:18px}
+  .cap{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px;position:relative}
+  .cap.mine{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold-deep)}
+  .cap.high{border-color:var(--good)}
+  .cap h4{margin:0 0 2px;font-size:15px}
+  .cap .pts{font-size:22px;font-weight:900;color:var(--gold-bright);font-variant-numeric:tabular-nums}
+  .cap .pts small{font-size:11px;color:var(--ink-3);font-weight:700}
+  .cap .team{margin-top:8px;display:flex;flex-direction:column;gap:3px}
+  .cap .team div{font-size:12px;color:var(--ink-2);display:flex;justify-content:space-between}
+  .cap .claim{position:absolute;top:12px;right:12px}
+  .pool{display:flex;flex-wrap:wrap;gap:6px}
+  .pchip{font-size:12px;font-weight:700;padding:4px 10px;border-radius:7px;background:var(--surface-2);color:var(--ink-2)}
+  .pchip.onblock{background:color-mix(in srgb,var(--gold) 20%,transparent);color:var(--gold-bright)}
+  .pchip.sold{opacity:.5;text-decoration:line-through}
+  .pchip.unsold{color:var(--red)}
+  .log{max-height:200px;overflow:auto;font-size:12.5px;display:flex;flex-direction:column-reverse;gap:3px}
+  .log div{color:var(--ink-2);padding:2px 0;border-bottom:1px solid var(--line-soft)}
+  .hostbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;padding:12px;border:1px dashed var(--gold-deep);border-radius:11px}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--surface-2);border:1px solid var(--gold-deep);color:var(--gold-bright);padding:11px 18px;border-radius:11px;font-size:13px;font-weight:700;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.3s;z-index:50}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}.block .who{font-size:24px}.timer{font-size:36px}}
+</style>
+</head>
+<body>
+<header><div class="wrap bar">
+  <b>🔨 협곡단 팀 경매</b><small>Team Auction</small>
+  <div class="spacer"></div>
+  <a class="btn sm" href="/">← 메인</a>
+</div></header>
+
+<main class="wrap">
+  <!-- SETUP -->
+  <section id="setup">
+    <h1>팀 경매</h1>
+    <p class="hint" style="margin:0 0 20px">캡틴들이 포인트로 단원을 실시간 입찰해 팀을 구성합니다. 방을 만들어 코드를 공유하거나, 코드로 참여하세요.</p>
+    <div class="grid2">
+      <div class="card">
+        <h3>➕ 방 만들기 (호스트)</h3>
+        <div class="row" style="margin-bottom:12px">
+          <label class="fld">캡틴 예산<input id="c_budget" type="number" value="1000" style="width:100px"></label>
+          <label class="fld">시작가<input id="c_min" type="number" value="10" style="width:80px"></label>
+          <label class="fld">입찰 단위<input id="c_inc" type="number" value="10" style="width:80px"></label>
+          <label class="fld">지명 제한(초)<input id="c_timer" type="number" value="30" style="width:90px"></label>
+          <label class="fld">입찰후(초)<input id="c_reset" type="number" value="10" style="width:80px"></label>
+          <label class="fld">팀당 인원<input id="c_team" type="number" value="4" style="width:80px"></label>
+        </div>
+        <h3 style="margin-top:8px">캡틴</h3>
+        <div id="capLines"></div>
+        <button class="btn sm" id="addCap">+ 캡틴 추가</button>
+        <h3 style="margin-top:16px">경매 매물 <span class="hint" id="pickCount">0명 선택</span>
+          <button class="btn sm" id="pickAll" style="margin-left:8px">전체</button>
+          <button class="btn sm" id="pickNone">해제</button></h3>
+        <div class="playerpick" id="playerPick"></div>
+        <div class="err" id="createErr" style="margin-top:10px"></div>
+        <button class="btn primary big" id="createBtn" style="width:100%;margin-top:12px">방 만들고 시작하기</button>
+      </div>
+      <div class="card" style="align-self:start">
+        <h3>🔑 방 참여하기</h3>
+        <div class="row">
+          <label class="fld" style="flex:1">방 코드<input id="j_code" placeholder="ABCD" style="text-transform:uppercase;width:100%"></label>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <label class="fld" style="flex:1">이름<input id="j_name" placeholder="닉네임" style="width:100%"></label>
+        </div>
+        <div class="err" id="joinErr" style="margin-top:10px"></div>
+        <button class="btn primary" id="joinBtn" style="width:100%;margin-top:12px">참여</button>
+        <p class="hint" style="margin-top:14px">참여 후 캡틴 카드의 <b>이 캡틴 맡기</b>를 누르면 입찰할 수 있습니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIVE -->
+  <section id="live" style="display:none">
+    <div class="live-head">
+      <span class="roomcode" id="lvCode"></span>
+      <span class="statuspill" id="lvStatus"></span>
+      <span class="hint" id="lvRemain"></span>
+      <div class="spacer"></div>
+      <span class="hint" id="lvMe"></span>
+      <button class="btn sm" id="leaveBtn">나가기</button>
+    </div>
+
+    <div class="hostbar" id="hostBar" style="display:none">
+      <span style="font-weight:800;color:var(--gold-bright);align-self:center">호스트 컨트롤</span>
+      <button class="btn sm" id="hStart">시작</button>
+      <button class="btn sm" id="hNext">다음 매물</button>
+      <button class="btn sm" id="hSkip">즉시 마감</button>
+      <button class="btn sm" id="hRequeue">유찰 재경매</button>
+    </div>
+
+    <div class="block" id="block">
+      <div class="hint" id="blockLabel">대기 중</div>
+      <div class="who" id="blockWho">—</div>
+      <div class="meta" id="blockMeta"></div>
+      <div class="timer" id="timer">--</div>
+      <div class="highbid" id="highbid"></div>
+      <div class="bidrow" id="bidRow"></div>
+    </div>
+
+    <div class="captains" id="captains"></div>
+
+    <div class="grid2">
+      <div class="card"><h3>매물 현황</h3><div class="pool" id="pool"></div></div>
+      <div class="card"><h3>경매 로그</h3><div class="log" id="log"></div></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $=(s,el=document)=>el.querySelector(s);
+const $$=(s,el=document)=>[...el.querySelectorAll(s)];
+async function jget(p){const r=await fetch(p);if(!r.ok)throw new Error(p+' '+r.status);return r.json();}
+async function jsend(m,p,b){const r=await fetch(p,{method:m,headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined});const j=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(j.message||p),{payload:j});return j;}
+function toast(msg){let t=$("#toast");if(!t){t=document.createElement('div');t.className='toast';t.id='toast';document.body.appendChild(t);}t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
+
+let META={}, MEMBERS=[], TIER_COLOR={};
+let ws=null, ROOM=null, myCaptainId=null, isHost=false, clockOffset=0;
+
+/* ── SETUP ── */
+async function initSetup(){
+  META=await jget('/api/meta'); TIER_COLOR=META.tierColor;
+  MEMBERS=(await jget('/api/members')).members;
+  renderCapLines(2);
+  renderPlayerPick();
+  // 기본: 전체 선택
+  $$("#playerPick .pp").forEach(p=>p.classList.add('on')); updatePickCount();
+}
+function renderCapLines(n){
+  const box=$("#capLines"); box.innerHTML='';
+  for(let i=0;i<n;i++) addCapLine(i===0?'블루':i===1?'레드':'');
+}
+function addCapLine(val){
+  const div=document.createElement('div'); div.className='capline';
+  div.innerHTML=`<input class="capname" placeholder="캡틴 이름" value="${val||''}" style="flex:1">
+    <button class="btn sm rm">✕</button>`;
+  div.querySelector('.rm').onclick=()=>div.remove();
+  $("#capLines").appendChild(div);
+}
+$("#addCap").onclick=()=>addCapLine('');
+function renderPlayerPick(){
+  const list=MEMBERS.slice().sort((a,b)=>(META.tierRank[b.tier]||0)-(META.tierRank[a.tier]||0)||a.name.localeCompare(b.name,'ko'));
+  $("#playerPick").innerHTML=list.map(m=>`<button type="button" class="pp" data-id="${m.id}">
+    <span class="dot" style="background:${TIER_COLOR[m.tier]}"></span>${m.name}<span class="hint">${m.tier}</span></button>`).join('');
+  $$("#playerPick .pp").forEach(p=>p.onclick=()=>{p.classList.toggle('on');updatePickCount();});
+}
+function updatePickCount(){$("#pickCount").textContent=$$("#playerPick .pp.on").length+'명 선택';}
+$("#pickAll").onclick=()=>{$$("#playerPick .pp").forEach(p=>p.classList.add('on'));updatePickCount();};
+$("#pickNone").onclick=()=>{$$("#playerPick .pp").forEach(p=>p.classList.remove('on'));updatePickCount();};
+
+$("#createBtn").onclick=async()=>{
+  const err=$("#createErr");err.textContent='';
+  const captains=$$(".capname").map(i=>i.value.trim()).filter(Boolean).map(name=>({name}));
+  const players=$$("#playerPick .pp.on").map(p=>Number(p.dataset.id));
+  if(captains.length<2){err.textContent='캡틴을 2명 이상 입력하세요.';return}
+  if(players.length<captains.length){err.textContent='매물이 캡틴 수보다 많아야 합니다.';return}
+  const config={budget:+$("#c_budget").value,minBid:+$("#c_min").value,bidIncrement:+$("#c_inc").value,
+    timerSec:+$("#c_timer").value,resetSec:+$("#c_reset").value,teamSize:+$("#c_team").value};
+  try{
+    const res=await jsend('POST','/api/auction/rooms',{config,captains,players});
+    connect(res.code, ($("#j_name").value.trim()||'호스트'), res.hostKey);
+  }catch(ex){ err.textContent='생성 실패: '+((ex.payload&&ex.payload.message)||ex.message); }
+};
+$("#joinBtn").onclick=()=>{
+  const err=$("#joinErr");err.textContent='';
+  const code=$("#j_code").value.trim().toUpperCase();
+  const name=$("#j_name").value.trim()||'관전자';
+  if(!code){err.textContent='방 코드를 입력하세요.';return}
+  connect(code,name,null);
+};
+
+/* ── WEBSOCKET ── */
+function connect(code,name,hostKey){
+  const proto=location.protocol==='https:'?'wss':'ws';
+  let url=`${proto}://${location.host}/ws/auction?code=${encodeURIComponent(code)}&name=${encodeURIComponent(name)}`;
+  if(hostKey) url+=`&host=${encodeURIComponent(hostKey)}`;
+  ws=new WebSocket(url);
+  ws.onopen=()=>{ $("#setup").style.display='none'; $("#live").style.display='block'; };
+  ws.onmessage=(ev)=>{
+    const d=JSON.parse(ev.data);
+    if(d.type==='hello'){ isHost=!!d.you.isHost; $("#lvMe").textContent=`${d.you.name}${isHost?' (호스트)':''}`; applyState(d.room); }
+    else if(d.type==='state'){ applyState(d.room); }
+    else if(d.type==='claimed'){ myCaptainId=d.captainId; toast('캡틴을 맡았습니다'); render(); }
+    else if(d.type==='error'){ toast(d.message); }
+  };
+  ws.onclose=()=>{ toast('연결이 종료되었습니다'); };
+  ws.onerror=()=>{ $("#joinErr").textContent='연결 실패 — 방 코드를 확인하세요.'; $("#createErr").textContent='연결 실패'; };
+}
+function sendWs(obj){ if(ws&&ws.readyState===1) ws.send(JSON.stringify(obj)); }
+$("#leaveBtn").onclick=()=>{ if(ws)ws.close(); location.reload(); };
+
+/* host controls */
+$("#hStart").onclick=()=>sendWs({type:'start'});
+$("#hNext").onclick=()=>sendWs({type:'next'});
+$("#hSkip").onclick=()=>sendWs({type:'skip'});
+$("#hRequeue").onclick=()=>sendWs({type:'requeue'});
+
+/* ── RENDER ── */
+function applyState(room){
+  ROOM=room;
+  if(room.current&&room.current.serverNow) clockOffset=room.current.serverNow-Date.now();
+  render();
+}
+function serverNow(){ return Date.now()+clockOffset; }
+
+function render(){
+  if(!ROOM)return;
+  $("#lvCode").textContent='방 '+ROOM.code;
+  const st=$("#lvStatus"); st.className='statuspill '+ROOM.status;
+  st.textContent=ROOM.status==='lobby'?'대기 중':ROOM.status==='live'?'진행 중':'종료';
+  $("#lvRemain").textContent=`남은 매물 ${ROOM.remaining} · 팀당 ${ROOM.config.teamSize}명`;
+  $("#hostBar").style.display=isHost?'flex':'none';
+  $("#hStart").disabled=ROOM.status!=='lobby';
+  $("#hNext").disabled=!(ROOM.status==='live'&&!ROOM.current);
+  $("#hSkip").disabled=!ROOM.current;
+
+  // block
+  const cur=ROOM.current;
+  if(cur&&cur.player){
+    $("#blockLabel").textContent='경매 중인 매물';
+    $("#blockWho").textContent=cur.player.name;
+    $("#blockMeta").innerHTML=`<span class="tag" style="color:${TIER_COLOR[cur.player.tier]}">${cur.player.tier}</span> · 점수 ${cur.player.score}`;
+    const hc=ROOM.captains.find(c=>c.id===cur.highCaptainId);
+    $("#highbid").innerHTML=cur.highCaptainId!=null
+      ? `최고 입찰 <b style="color:var(--gold-bright)">${cur.highBid}P</b> · <b>${hc?hc.name:''}</b>`
+      : `<span class="hint">아직 입찰 없음 · 시작가 ${ROOM.config.minBid}P</span>`;
+    renderBidRow(cur);
+  } else {
+    $("#blockLabel").textContent=ROOM.status==='done'?'경매 종료':'대기 중';
+    $("#blockWho").textContent=ROOM.status==='done'?'🏁 모든 매물 정리 완료':'—';
+    $("#blockMeta").textContent='';
+    $("#highbid").textContent='';
+    $("#bidRow").innerHTML='';
+    $("#timer").textContent='--'; $("#timer").className='timer';
+  }
+
+  // captains
+  $("#captains").innerHTML=ROOM.captains.map(c=>{
+    const mine=c.id===myCaptainId, high=cur&&cur.highCaptainId===c.id;
+    return `<div class="cap ${mine?'mine':''} ${high?'high':''}">
+      <div class="claim">${mine?'<button class="btn sm" data-release>해제</button>':`<button class="btn sm" data-claim="${c.id}">이 캡틴 맡기</button>`}</div>
+      <h4>${c.name}${high?' 🔨':''}</h4>
+      <div class="pts">${c.points}<small>P · 남은슬롯 ${c.slotsLeft}</small></div>
+      <div class="team">${c.team.map(p=>`<div><span>${p.name}</span><span class="hint">${p.price}P</span></div>`).join('')||'<div class="hint">아직 없음</div>'}</div>
+    </div>`;
+  }).join('');
+  $$("#captains [data-claim]").forEach(b=>b.onclick=()=>sendWs({type:'claim',captainId:Number(b.dataset.claim)}));
+  $$("#captains [data-release]").forEach(b=>b.onclick=()=>{myCaptainId=null;sendWs({type:'release'});render();});
+
+  // pool
+  $("#pool").innerHTML=ROOM.players.map(p=>`<span class="pchip ${p.status}">${p.name}${p.status==='sold'?` · ${p.price}P`:''}</span>`).join('');
+  // log
+  $("#log").innerHTML=ROOM.log.slice().reverse().map(l=>`<div>${l.msg}</div>`).join('');
+}
+
+function renderBidRow(cur){
+  const row=$("#bidRow");
+  const cap=ROOM.captains.find(c=>c.id===myCaptainId);
+  if(!cap){ row.innerHTML='<span class="hint">입찰하려면 위에서 캡틴을 맡으세요.</span>'; return; }
+  const nextMin = cur.highCaptainId==null ? ROOM.config.minBid : cur.highBid + ROOM.config.bidIncrement;
+  const canBid = cap.slotsLeft>0 && cur.highCaptainId!==cap.id && nextMin<=cap.points;
+  row.innerHTML=`
+    <button class="btn primary big" id="bidBtn" ${canBid?'':'disabled'}>입찰 ${nextMin}P</button>
+    <input id="bidAmt" type="number" placeholder="직접" style="width:110px" ${cap.slotsLeft>0?'':'disabled'}>
+    <button class="btn big" id="bidCustom" ${cap.slotsLeft>0?'':'disabled'}>입찰</button>`;
+  $("#bidBtn").onclick=()=>sendWs({type:'bid'});
+  $("#bidCustom").onclick=()=>{const v=parseInt($("#bidAmt").value,10);if(Number.isFinite(v))sendWs({type:'bid',amount:v});};
+  $("#bidAmt").onkeydown=(e)=>{if(e.key==='Enter')$("#bidCustom").click();};
+}
+
+/* timer tick */
+setInterval(()=>{
+  if(!ROOM||!ROOM.current){return;}
+  const remain=Math.max(0,Math.ceil((ROOM.current.endsAt-serverNow())/1000));
+  const t=$("#timer"); t.textContent=remain+'s';
+  t.className='timer'+(remain<=3?' crit':remain<=8?' warn':'');
+},250);
+
+initSetup().catch(ex=>{ $("#createErr").textContent='초기화 실패: '+ex.message; console.error(ex); });
+</script>
+</body></html>
