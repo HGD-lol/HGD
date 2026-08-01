@@ -7,6 +7,7 @@ const path = require('path');
 const scales = require('./src/lib/scales');
 const store = require('./src/store');
 const { attachAuctionWs } = require('./src/auction/ws');
+const { memberById, members: memberList } = require('./src/lib/members');
 
 const membersRoute = require('./src/routes/members');
 const matchesRoute = require('./src/routes/matches');
@@ -22,44 +23,32 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// 간단 요청 로그
 app.use((req, _res, next) => {
   console.log(`${new Date().toISOString()}  ${req.method} ${req.url}`);
   next();
 });
 
-// 정적 파일 (public/ 이 있으면 프런트엔드도 서빙)
 app.use(express.static(path.join(__dirname, 'public')));
 
-/* 루트 → API 인덱스로 안내 (public/index.html 이 있으면 그쪽이 우선 서빙됨) */
 app.get('/', (_req, res) => res.redirect('/api'));
 
 /* ── API 인덱스 ── */
 app.get('/api', (_req, res) => {
   res.json({
     name: '협곡단 · 내전 기록실 API',
-    season: scales.SEASON_LABEL,
+    season: store.getDashConfig().season,
     endpoints: {
       'GET /api/dashboard': '대시보드 집계',
-      'GET /api/members': '단원 명단 (?line=&tier=&role=&q=)',
-      'GET /api/members/:id': '단원 상세',
-      'GET /api/matches': '내전 기록 (?limit=)',
-      'GET /api/matches/:id': '단일 매치',
+      'GET /api/members': '단원 명단',
+      'GET /api/matches': '내전 기록',
       'POST /api/matches': '내전 등록',
-      'DELETE /api/matches/:id': '사용자 매치 삭제',
-      'GET /api/stats': '전적 순위 (?minGames=&sort=&order=)',
-      'GET /api/stats/:id': '단원 개인 전적',
-      'PUT /api/matches/:id': '내전 수정 (관리자)',
-      'DELETE /api/matches/:id': '내전 삭제 (관리자)',
-      'GET /api/stats': '전적 순위 (?minGames=&sort=&order=)',
-      'GET /api/scores': '단원 자체 점수 순위',
-      'POST /api/balance': '팀 밸런서 { ids:[10], reroll }',
-      'GET /api/meta': '티어/라인/직책 스케일',
-      'GET /api/roster/source': '로스터 데이터 출처(라이브 시트/폴백)',
-      'POST /api/roster/refresh': '시트에서 로스터 다시 불러오기',
-      'POST /api/admin/login': '관리자 로그인',
-      'PATCH/POST/DELETE /api/admin/members': '단원 관리 (관리자)',
-      'POST /api/auction/rooms': '경매방 생성 · WS /ws/auction',
+      'GET /api/pending': '대기 내전 목록',
+      'POST /api/pending': '내전 선수 등록',
+      'POST /api/pending/:id/complete': '대기 내전 → 기록 저장',
+      'GET /api/stats': '전적 순위',
+      'GET /api/scores': '내전 점수 순위',
+      'POST /api/balance': '팀 밸런서',
+      'GET /api/meta': '스케일 상수',
     },
     roster: store.roster(),
     counts: store.counts(),
@@ -69,10 +58,10 @@ app.get('/api', (_req, res) => {
 /* ── 로스터 데이터 출처 ── */
 app.get('/api/roster/source', (_req, res) => res.json(store.roster()));
 
-/* ── 시트에서 로스터 재로딩 ── */
+/* ── 시트에서 로스터 재로딩 (명시적 요청 시에만) ── */
 app.post('/api/roster/refresh', async (_req, res, next) => {
   try {
-    const info = await store.init();
+    const info = await store.importFromSheet();
     res.json({ refreshed: true, roster: info, counts: store.counts() });
   } catch (e) {
     next(e);
@@ -82,7 +71,7 @@ app.post('/api/roster/refresh', async (_req, res, next) => {
 /* ── 스케일/메타 상수 ── */
 app.get('/api/meta', (_req, res) => {
   res.json({
-    season: { year: scales.SEASON_YEAR, label: scales.SEASON_LABEL },
+    season: { year: scales.SEASON_YEAR, label: store.getDashConfig().season },
     tierOrder: scales.TIER_ORDER,
     tierRank: scales.TIER_RANK,
     tierColor: scales.TIER_COLOR,
@@ -91,6 +80,52 @@ app.get('/api/meta', (_req, res) => {
     lineShort: scales.LINE_SHORT,
     roleLabel: scales.ROLE_LABEL,
   });
+});
+
+/* ── Pending (대기 내전) ── */
+app.get('/api/pending', (_req, res) => {
+  const list = store.getPending().map((p) => ({
+    ...p,
+    players: p.playerIds.map((id) => {
+      const m = memberById(id);
+      const s = store.stats()[id] || { score: 200 };
+      return { id, name: m ? m.name : `#${id}`, tier: m ? m.tier : '언랭', score: s.score };
+    }),
+  }));
+  res.json({ count: list.length, pending: list });
+});
+
+app.post('/api/pending', (req, res) => {
+  const { playerIds, mode } = req.body || {};
+  if (!Array.isArray(playerIds) || playerIds.length !== 10) {
+    return res.status(400).json({ error: 'validation_failed', messages: ['정확히 10명을 선택하세요.'] });
+  }
+  if (mode && mode !== '협곡' && mode !== '칼바람') {
+    return res.status(400).json({ error: 'validation_failed', messages: ["모드는 '협곡' 또는 '칼바람' 이어야 합니다."] });
+  }
+  const ids = playerIds.map(Number);
+  const bad = ids.filter((id) => !memberById(id));
+  if (bad.length) {
+    return res.status(400).json({ error: 'validation_failed', messages: [`존재하지 않는 단원 id: ${bad.join(', ')}`] });
+  }
+  const dup = ids.find((id, i) => ids.indexOf(id) !== i);
+  if (dup != null) {
+    return res.status(400).json({ error: 'validation_failed', messages: ['중복된 단원이 있습니다.'] });
+  }
+  const pending = {
+    id: 'p' + Date.now(),
+    date: new Date().toISOString(),
+    mode: mode || '협곡',
+    playerIds: ids,
+  };
+  store.addPending(pending);
+  res.status(201).json(pending);
+});
+
+app.delete('/api/pending/:id', (req, res) => {
+  const ok = store.deletePending(req.params.id);
+  if (!ok) return res.status(404).json({ error: 'pending_not_found' });
+  res.json({ deleted: true });
 });
 
 app.use('/api/members', membersRoute);
@@ -104,12 +139,10 @@ app.use('/api/auction', auctionRoute);
 
 app.get('/health', (_req, res) => res.json({ ok: true, uptime: process.uptime() }));
 
-// 404
 app.use((req, res) => {
   res.status(404).json({ error: 'not_found', path: req.originalUrl });
 });
 
-// 에러 핸들러 (잘못된 JSON 본문 등)
 app.use((err, _req, res, _next) => {
   if (err.type === 'entity.parse.failed') {
     return res.status(400).json({ error: 'invalid_json', message: '요청 본문 JSON 형식이 올바르지 않습니다.' });
@@ -119,12 +152,12 @@ app.use((err, _req, res, _next) => {
 });
 
 async function bootstrap() {
-  const info = await store.init(); // 로스터(라이브 시트/폴백) 로드 후 매치 구성
+  const info = await store.init();
   return info;
 }
 
 const server = http.createServer(app);
-attachAuctionWs(server); // /ws/auction WebSocket
+attachAuctionWs(server);
 
 if (require.main === module) {
   bootstrap()
@@ -138,9 +171,9 @@ if (require.main === module) {
         console.log(`   API    http://localhost:${PORT}/api`);
         console.log(`   관리자 http://localhost:${PORT}/admin.html   경매 http://localhost:${PORT}/auction.html`);
         console.log(`   로스터 ${src}`);
-        console.log(`   단원 ${require('./src/lib/members').members.length}명 · 내전 ${c.matches}경기 (샘플 ${c.sampleMatches} + 사용자 ${c.userMatches})`);
+        console.log(`   단원 ${memberList.length}명 · 내전 ${c.matches}경기`);
         if (USING_DEFAULTS) {
-          console.log('   ⚠ ADMIN_PASSWORD/SESSION_SECRET 미설정 — 개발용 기본값 사용 중 (기본 비번: hyeopgok)');
+          console.log('   ⚠ ADMIN_PASSWORD/SESSION_SECRET 미설정 — 개발용 기본값 사용 중');
         }
         console.log('');
       });

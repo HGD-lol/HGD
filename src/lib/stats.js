@@ -1,19 +1,19 @@
 'use strict';
 
 const { members } = require('./members');
+const { BASE_SCORE, WIN_POINTS, LOSS_POINTS } = require('./scoring');
 
 /*
- * 전체 매치 목록으로부터 단원별 누적 전적을 집계한다.
- * matches 는 최신순(newest-first)으로 전달되므로, 각 단원이 처음 만나는 경기가
- * 가장 최근 경기다 → 앞쪽 연속 동일 결과가 "현재 연승/연패".
- * g:경기수 w:승 l:패 mvp:MVP횟수 wr:승률 streak:현재 연승(+)/연패(-)
+ * 전체 매치 목록으로부터 단원별 누적 전적 + 내전 점수를 집계한다.
+ * matches 는 최신순(newest-first)으로 전달된다.
  */
 function computeStats(matches) {
   const stats = {};
   members.forEach((m) => {
-    stats[m.id] = { id: m.id, g: 0, w: 0, l: 0, mvp: 0, wr: 0, streak: 0, _seq: [] };
+    stats[m.id] = { id: m.id, g: 0, w: 0, l: 0, mvp: 0, wr: 0, streak: 0, score: BASE_SCORE, _seq: [] };
   });
 
+  // 전적 집계 (최신순)
   matches.forEach((mt) => {
     const proc = (arr, won) =>
       arr.forEach((p) => {
@@ -22,12 +22,13 @@ function computeStats(matches) {
         s.g++;
         if (won) s.w++;
         if (p.mvp) s.mvp++;
-        s._seq.push(won); // 최신순으로 누적
+        s._seq.push(won);
       });
     proc(mt.blue, mt.blueWin);
     proc(mt.red, !mt.blueWin);
   });
 
+  // 연승/연패 계산
   Object.values(stats).forEach((s) => {
     s.l = s.g - s.w;
     s.wr = s.g ? s.w / s.g : 0;
@@ -38,9 +39,37 @@ function computeStats(matches) {
         if (r === first) n++;
         else break;
       }
-      s.streak = first ? n : -n; // 연승 +, 연패 -
+      s.streak = first ? n : -n;
     }
     delete s._seq;
+  });
+
+  // 내전 점수 계산 (협곡만, 시간순으로 처리)
+  const riftMatches = matches.filter((m) => !m.mode || m.mode === '협곡');
+  const chronological = [...riftMatches].reverse(); // oldest first
+  const scoreStreaks = {};
+
+  chronological.forEach((mt) => {
+    const proc = (arr, won) => {
+      arr.forEach((p) => {
+        if (!stats[p.id]) return;
+        if (scoreStreaks[p.id] == null) scoreStreaks[p.id] = 0;
+
+        if (won) {
+          if (scoreStreaks[p.id] > 0) scoreStreaks[p.id]++;
+          else scoreStreaks[p.id] = 1;
+          // 1승 +16, 2연승 +17, 3연승 +18 ...
+          stats[p.id].score += WIN_POINTS + (scoreStreaks[p.id] - 1);
+        } else {
+          if (scoreStreaks[p.id] < 0) scoreStreaks[p.id]--;
+          else scoreStreaks[p.id] = -1;
+          // 1패 -14, 2연패 -15, 3연패 -16 ...
+          stats[p.id].score += -(LOSS_POINTS + (-scoreStreaks[p.id] - 1));
+        }
+      });
+    };
+    proc(mt.blue, mt.blueWin);
+    proc(mt.red, !mt.blueWin);
   });
 
   return stats;

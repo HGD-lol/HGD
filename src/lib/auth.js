@@ -8,7 +8,7 @@ const crypto = require('crypto');
  *  - SESSION_SECRET : 토큰 서명 키 (미설정 시 개발용 기본값)
  * 외부 의존성 없이 crypto 만 사용한다.
  */
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'hyeopgok';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '1130';
 const SECRET = process.env.SESSION_SECRET || 'hgd-dev-secret-change-me';
 const COOKIE = 'hgd_admin';
 const TTL_MS = 12 * 60 * 60 * 1000; // 12시간

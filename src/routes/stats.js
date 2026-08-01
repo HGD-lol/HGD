@@ -3,7 +3,6 @@
 const express = require('express');
 const store = require('../store');
 const { memberById, activeMembers } = require('../lib/members');
-const { scoreOf } = require('../lib/scoring');
 
 const router = express.Router();
 
@@ -11,7 +10,6 @@ const SORT_KEYS = { wr: 'winrate', winrate: 'winrate', games: 'games', wins: 'wi
 
 function row(s) {
   const m = memberById(s.id);
-  const sc = scoreOf(m || {}, s);
   return {
     id: s.id,
     name: m ? m.name : `#${s.id}`,
@@ -23,21 +21,17 @@ function row(s) {
     winrate: Number(s.wr.toFixed(4)),
     mvp: s.mvp,
     streak: s.streak,
-    score: sc.total,
-    scoreParts: sc,
+    score: s.score,
   };
 }
 
-/*
- * GET /api/stats — 전적 순위표.
- * 쿼리: minGames(기본 3), sort(wr|games|wins|mvp|score, 기본 wr), order(desc|asc)
- */
+/* GET /api/stats — 전적 순위표 */
 router.get('/', (req, res) => {
   const stats = store.stats();
   const minGames = req.query.minGames != null ? parseInt(req.query.minGames, 10) : 3;
   const sortKey = SORT_KEYS[req.query.sort] || 'winrate';
   const asc = req.query.order === 'asc';
-  const activeIds = new Set(activeMembers().map((m) => m.id)); // 숨김 단원 제외
+  const activeIds = new Set(activeMembers().map((m) => m.id));
 
   let rows = Object.values(stats)
     .filter((s) => s.g >= minGames && activeIds.has(s.id))

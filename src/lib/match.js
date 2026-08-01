@@ -2,12 +2,7 @@
 
 const { memberById } = require('./members');
 
-/*
- * 저장 형태의 원시 매치({ id, date, dur, blueWin, mvpId, blue:[{id,lane}], red:[...] })를
- * 이름·티어·MVP 가 채워진 완성 매치 객체로 빌드한다.
- * MVP 는 등록 시 직접 지정한다(mvpId). KDA 는 더 이상 다루지 않는다.
- */
-function buildMatch({ id, date, dur, blueWin, blue, red, mvpId }) {
+function buildMatch({ id, date, dur, blueWin, blue, red, mvpId, mode }) {
   const mvpNum = mvpId == null ? null : Number(mvpId);
   const norm = (arr) =>
     arr.map((p) => {
@@ -16,7 +11,7 @@ function buildMatch({ id, date, dur, blueWin, blue, red, mvpId }) {
         id: Number(p.id),
         name: m ? m.name : `#${p.id}`,
         tier: m ? m.tier : '언랭',
-        lane: p.lane,
+        lane: p.lane || null,
         mvp: mvpNum != null && Number(p.id) === mvpNum,
       };
     });
@@ -28,7 +23,8 @@ function buildMatch({ id, date, dur, blueWin, blue, red, mvpId }) {
   return {
     id,
     date: date instanceof Date ? date : new Date(date),
-    dur: +dur || 30,
+    dur: dur ? +dur : null,
+    mode: mode || '협곡',
     blueWin: !!blueWin,
     blue: B,
     red: R,
@@ -36,12 +32,12 @@ function buildMatch({ id, date, dur, blueWin, blue, red, mvpId }) {
   };
 }
 
-/* 저장/전송용 직렬화 (date -> ISO 문자열) */
 function serializeMatch(m) {
   return {
     id: m.id,
     date: m.date.toISOString(),
     dur: m.dur,
+    mode: m.mode || '협곡',
     blueWin: m.blueWin,
     mvpId: m.mvpId,
     blue: m.blue.map(serializePlayer),
@@ -53,12 +49,12 @@ function serializePlayer(p) {
   return { id: p.id, name: p.name, tier: p.tier, lane: p.lane, mvp: p.mvp };
 }
 
-/* 파일 저장용 최소 형태 */
 function toStored(m) {
   return {
     id: m.id,
     date: m.date.toISOString(),
     dur: m.dur,
+    mode: m.mode || '협곡',
     blueWin: m.blueWin,
     mvpId: m.mvpId,
     blue: m.blue.map((p) => ({ id: p.id, lane: p.lane })),

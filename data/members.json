@@ -1,0 +1,506 @@
+[
+  {
+    "id": 0,
+    "name": "강민제",
+    "birth": 1997,
+    "nick": "청호한#999",
+    "tier": "다이아",
+    "main": [
+      "원딜"
+    ],
+    "sub": [
+      "탑"
+    ],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 1,
+    "name": "근영",
+    "birth": 1987,
+    "nick": "SHEET#KR1",
+    "tier": "언랭",
+    "main": [
+      "서폿"
+    ],
+    "sub": [],
+    "role": "예비",
+    "hidden": false
+  },
+  {
+    "id": 2,
+    "name": "김강산",
+    "birth": 1997,
+    "nick": "꿀송이#꿀단지",
+    "tier": "마스터",
+    "main": [
+      "정글"
+    ],
+    "sub": [],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 3,
+    "name": "김겸민",
+    "birth": 2000,
+    "nick": "야매때 몽둥이 #KR1",
+    "tier": "마스터",
+    "main": [
+      "탑"
+    ],
+    "sub": [
+      "미드"
+    ],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 4,
+    "name": "김민우",
+    "birth": 1996,
+    "nick": "ULTRAAQUA#1848",
+    "tier": "골드",
+    "main": [
+      "미드"
+    ],
+    "sub": [],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 5,
+    "name": "김보성",
+    "birth": 2000,
+    "nick": "봉 석 # KR1",
+    "tier": "에메랄드",
+    "main": [
+      "원딜"
+    ],
+    "sub": [
+      "탑"
+    ],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 6,
+    "name": "김시윤",
+    "birth": 2001,
+    "nick": "툰툰희#KR1",
+    "tier": "언랭",
+    "main": [
+      "탑"
+    ],
+    "sub": [
+      "미드"
+    ],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 7,
+    "name": "김주현",
+    "birth": 1995,
+    "nick": "벱 새#KR1",
+    "tier": "다이아",
+    "main": [
+      "정글"
+    ],
+    "sub": [
+      "탑"
+    ],
+    "role": "부단장",
+    "hidden": false
+  },
+  {
+    "id": 8,
+    "name": "김한솔",
+    "birth": 1997,
+    "nick": "김또우#KR1",
+    "tier": "다이아",
+    "main": [
+      "정글"
+    ],
+    "sub": [],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 9,
+    "name": "김현성",
+    "birth": 1995,
+    "nick": "따꿍아니라고# kr1",
+    "tier": "골드",
+    "main": [
+      "미드"
+    ],
+    "sub": [
+      "서폿"
+    ],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 10,
+    "name": "박형근",
+    "birth": 1995,
+    "nick": "미니언도생명#KR1",
+    "tier": "마스터",
+    "main": [
+      "미드"
+    ],
+    "sub": [
+      "올라이너"
+    ],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 11,
+    "name": "신규식",
+    "birth": 1995,
+    "nick": "Arang#0705",
+    "tier": "다이아",
+    "main": [
+      "원딜"
+    ],
+    "sub": [
+      "미드",
+      "서폿"
+    ],
+    "role": "부단장",
+    "hidden": false
+  },
+  {
+    "id": 12,
+    "name": "심현석",
+    "birth": 1998,
+    "nick": "발이차가워#KR1",
+    "tier": "언랭",
+    "main": [
+      "미드"
+    ],
+    "sub": [
+      "원딜"
+    ],
+    "role": "예비",
+    "hidden": false
+  },
+  {
+    "id": 13,
+    "name": "안지수",
+    "birth": 1992,
+    "nick": "눈물핑#ToT",
+    "tier": "에메랄드",
+    "main": [
+      "서폿"
+    ],
+    "sub": [
+      "미드",
+      "원딜"
+    ],
+    "role": "단장",
+    "hidden": false
+  },
+  {
+    "id": 14,
+    "name": "양희경",
+    "birth": 2001,
+    "nick": "공주가나지#8899",
+    "tier": "브론즈",
+    "main": [
+      "탑"
+    ],
+    "sub": [],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 15,
+    "name": "오정인",
+    "birth": 1992,
+    "nick": "siruS2#1111",
+    "tier": "골드",
+    "main": [
+      "서폿"
+    ],
+    "sub": [
+      "미드"
+    ],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 16,
+    "name": "유기제",
+    "birth": 1997,
+    "nick": "말랑말랑 하리보#하리보",
+    "tier": "실버",
+    "main": [
+      "정글",
+      "서폿"
+    ],
+    "sub": [
+      "올라이너"
+    ],
+    "role": "부단장",
+    "hidden": false
+  },
+  {
+    "id": 17,
+    "name": "유우정",
+    "birth": 1994,
+    "nick": "아 토#강아지",
+    "tier": "마스터",
+    "main": [
+      "서폿"
+    ],
+    "sub": [],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 18,
+    "name": "윤건우",
+    "birth": 1999,
+    "nick": "라봉이아빠#KR1",
+    "tier": "실버",
+    "main": [
+      "서폿"
+    ],
+    "sub": [
+      "정글"
+    ],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 19,
+    "name": "이건무",
+    "birth": 1999,
+    "nick": "이건무#이건무",
+    "tier": "다이아",
+    "main": [
+      "미드"
+    ],
+    "sub": [
+      "원딜"
+    ],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 20,
+    "name": "이남석",
+    "birth": 1994,
+    "nick": "홀로서기#KR94",
+    "tier": "마스터",
+    "main": [
+      "원딜"
+    ],
+    "sub": [
+      "올라이너"
+    ],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 21,
+    "name": "이성원",
+    "birth": 1995,
+    "nick": "uprising#xxx",
+    "tier": "마스터",
+    "main": [
+      "원딜"
+    ],
+    "sub": [],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 22,
+    "name": "이윤성",
+    "birth": 1994,
+    "nick": "어나니머스#kali",
+    "tier": "다이아",
+    "main": [
+      "미드"
+    ],
+    "sub": [],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 23,
+    "name": "이진형",
+    "birth": 1990,
+    "nick": "검은코맹수단#KR1",
+    "tier": "실버",
+    "main": [
+      "원딜"
+    ],
+    "sub": [
+      "서폿"
+    ],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 24,
+    "name": "이한결",
+    "birth": 1997,
+    "nick": "kiting evil#널향카",
+    "tier": "에메랄드",
+    "main": [
+      "원딜"
+    ],
+    "sub": [],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 25,
+    "name": "이현민",
+    "birth": 1998,
+    "nick": "재활승마과#이랴이랴",
+    "tier": "골드",
+    "main": [
+      "서폿"
+    ],
+    "sub": [
+      "미드"
+    ],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 26,
+    "name": "임채호",
+    "birth": 1997,
+    "nick": "아기호랑이윤영철#KR1",
+    "tier": "플레티넘",
+    "main": [
+      "미드",
+      "탑"
+    ],
+    "sub": [
+      "올라이너"
+    ],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 27,
+    "name": "정기용",
+    "birth": 1998,
+    "nick": "아가리똥내정기용#하수구",
+    "tier": "마스터",
+    "main": [
+      "정글"
+    ],
+    "sub": [
+      "미드"
+    ],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 28,
+    "name": "정채운",
+    "birth": 1996,
+    "nick": "빠지익#KR1",
+    "tier": "마스터",
+    "main": [
+      "원딜"
+    ],
+    "sub": [
+      "탑"
+    ],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 29,
+    "name": "주재훈",
+    "birth": 1999,
+    "nick": "마지막주제#KR1",
+    "tier": "다이아",
+    "main": [
+      "탑"
+    ],
+    "sub": [],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 30,
+    "name": "최현호",
+    "birth": 1991,
+    "nick": "깜시이#KR1",
+    "tier": "골드",
+    "main": [
+      "정글",
+      "탑"
+    ],
+    "sub": [
+      "올라이너"
+    ],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 31,
+    "name": "허옥",
+    "birth": 1992,
+    "nick": "허오키 도키요#KR1",
+    "tier": "플레티넘",
+    "main": [
+      "탑"
+    ],
+    "sub": [
+      "올라이너"
+    ],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 32,
+    "name": "황영택",
+    "birth": 1993,
+    "nick": "아들만둘이다#KR2",
+    "tier": "에메랄드",
+    "main": [
+      "정글"
+    ],
+    "sub": [],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 33,
+    "name": "황원인",
+    "birth": 1990,
+    "nick": "도토리줍기#KR2",
+    "tier": "마스터",
+    "main": [
+      "서폿"
+    ],
+    "sub": [
+      "원딜"
+    ],
+    "role": "단원",
+    "hidden": false
+  },
+  {
+    "id": 34,
+    "name": "황재하",
+    "birth": 1999,
+    "nick": "닭김밥#로이더",
+    "tier": "브론즈",
+    "main": [],
+    "sub": [],
+    "role": "단원",
+    "hidden": false
+  }
+]

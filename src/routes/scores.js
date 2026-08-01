@@ -2,21 +2,16 @@
 
 const express = require('express');
 const store = require('../store');
-const { activeMembers } = require('../lib/members');
-const { scoreOf } = require('../lib/scoring');
+const { activeMembers, memberById } = require('../lib/members');
 
 const router = express.Router();
 
-/*
- * GET /api/scores — 전 활동 단원 자체 점수 순위.
- * 점수 = 티어점수 + 승률보정 + 연승연패. (경기 없는 단원도 티어점수로 포함)
- */
+/* GET /api/scores — 내전 점수 순위 */
 router.get('/', (_req, res) => {
   const stats = store.stats();
   const rows = activeMembers()
     .map((m) => {
-      const s = stats[m.id] || { g: 0, w: 0, l: 0, wr: 0, mvp: 0, streak: 0 };
-      const sc = scoreOf(m, s);
+      const s = stats[m.id] || { g: 0, w: 0, l: 0, wr: 0, mvp: 0, streak: 0, score: 200 };
       return {
         id: m.id,
         name: m.name,
@@ -27,11 +22,7 @@ router.get('/', (_req, res) => {
         losses: s.l,
         winrate: Number(s.wr.toFixed(4)),
         streak: s.streak,
-        tierScore: sc.tierScore,
-        winrateScore: sc.winrateScore,
-        streakScore: sc.streakScore,
-        base: sc.base,
-        score: sc.total,
+        score: s.score,
       };
     })
     .sort((a, b) => b.score - a.score || b.winrate - a.winrate || a.name.localeCompare(b.name, 'ko'));

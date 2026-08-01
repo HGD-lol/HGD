@@ -4,12 +4,11 @@ const express = require('express');
 const store = require('../store');
 const { memberById } = require('../lib/members');
 const { buildMatch, serializeMatch } = require('../lib/match');
-const { LINE_ORDER } = require('../lib/scales');
 const { requireAdmin } = require('../lib/auth');
 
 const router = express.Router();
 
-/* 한 팀(5명) 입력 검증 — KDA 없이 id/lane 만 확인 */
+/* 한 팀 입력 검증 — id만 확인 (lane은 선택적) */
 function validateSide(side, label, errors) {
   if (!Array.isArray(side) || side.length !== 5) {
     errors.push(`${label} 팀은 정확히 5명이어야 합니다.`);
@@ -21,17 +20,17 @@ function validateSide(side, label, errors) {
       return;
     }
     if (!memberById(Number(p.id))) errors.push(`${label} ${i + 1}번: 존재하지 않는 단원 id(${p.id}).`);
-    if (p.lane && !LINE_ORDER.includes(p.lane)) errors.push(`${label} ${i + 1}번: 알 수 없는 라인(${p.lane}).`);
   });
 }
 
-/* 공통: 요청 본문 → 검증된 매치 파라미터 (에러 배열 반환) */
+/* 공통: 요청 본문 → 검증된 매치 파라미터 */
 function parseMatchBody(body) {
-  const { date, dur, winner, blue, red, mvpId } = body || {};
+  const { date, dur, winner, blue, red, mvpId, mode } = body || {};
   const errors = [];
 
   if (!date || Number.isNaN(new Date(date).getTime())) errors.push('경기 날짜가 올바르지 않습니다.');
   if (winner !== 'blue' && winner !== 'red') errors.push("승리 팀(winner)은 'blue' 또는 'red' 여야 합니다.");
+  if (mode && mode !== '협곡' && mode !== '칼바람') errors.push("모드는 '협곡' 또는 '칼바람' 이어야 합니다.");
   validateSide(blue, '블루', errors);
   validateSide(red, '레드', errors);
 
@@ -45,24 +44,19 @@ function parseMatchBody(body) {
     }
   }
 
-  if (mvpId == null || mvpId === '') {
-    errors.push('MVP를 선택하세요.');
-  } else if (!ids.includes(Number(mvpId))) {
-    errors.push('MVP는 참여한 10명 중에서 선택해야 합니다.');
-  }
-
   if (errors.length) return { errors };
 
-  const normSide = (arr) => arr.map((p) => ({ id: Number(p.id), lane: p.lane }));
+  const normSide = (arr) => arr.map((p) => ({ id: Number(p.id), lane: p.lane || null }));
   return {
     errors: [],
     params: {
       date: new Date(date),
-      dur,
+      dur: dur || null,
       blueWin: winner === 'blue',
       blue: normSide(blue),
       red: normSide(red),
-      mvpId: Number(mvpId),
+      mvpId: mvpId != null ? Number(mvpId) : null,
+      mode: mode || '협곡',
     },
   };
 }
@@ -91,12 +85,9 @@ router.post('/', (req, res) => {
   res.status(201).json(serializeMatch(match));
 });
 
-/* PUT /api/matches/:id — 내전 기록 수정 (관리자, 사용자 등록분만) */
+/* PUT /api/matches/:id — 내전 기록 수정 (관리자) */
 router.put('/:id', requireAdmin, (req, res) => {
   const id = req.params.id;
-  if (String(id).startsWith('s')) {
-    return res.status(403).json({ error: 'sample_immutable', message: '샘플 전적은 수정할 수 없습니다.' });
-  }
   if (!store.findMatch(id)) return res.status(404).json({ error: 'match_not_found', id });
   const { errors, params } = parseMatchBody(req.body);
   if (errors.length) return res.status(400).json({ error: 'validation_failed', messages: errors });
@@ -106,12 +97,9 @@ router.put('/:id', requireAdmin, (req, res) => {
   res.json(serializeMatch(match));
 });
 
-/* DELETE /api/matches/:id — 매치 삭제 (관리자, 사용자 등록분만) */
+/* DELETE /api/matches/:id — 매치 삭제 (관리자) */
 router.delete('/:id', requireAdmin, (req, res) => {
   const id = req.params.id;
-  if (String(id).startsWith('s')) {
-    return res.status(403).json({ error: 'sample_immutable', message: '샘플 전적은 삭제할 수 없습니다.' });
-  }
   const ok = store.deleteUserMatch(id);
   if (!ok) return res.status(404).json({ error: 'match_not_found', id });
   res.json({ deleted: true, id });

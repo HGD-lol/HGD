@@ -35,6 +35,21 @@ router.get('/me', (req, res) => {
   res.json({ authed: isAdmin(req), usingDefaults: USING_DEFAULTS });
 });
 
+/* ── 대시보드 설정 ── */
+router.get('/dashboard-config', requireAdmin, (req, res) => {
+  res.json(store.getDashConfig());
+});
+
+router.patch('/dashboard-config', requireAdmin, (req, res) => {
+  const { title, description, season } = req.body || {};
+  const patch = {};
+  if (title !== undefined) patch.title = String(title).trim();
+  if (description !== undefined) patch.description = String(description).trim();
+  if (season !== undefined) patch.season = String(season).trim();
+  const cfg = store.setDashConfig(patch);
+  res.json(cfg);
+});
+
 /* ── 단원 입력 검증 ── */
 function validateMember(body, { partial } = {}) {
   const errors = [];

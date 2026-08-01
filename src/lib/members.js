@@ -3,101 +3,62 @@
 const { SEASON_YEAR } = require('./scales');
 
 /*
- * 단원 데이터 = 시트 기반 로스터(setRoster) + 관리자 오버레이(setOverlay).
+ * 단원 데이터 — data/members.json 에서 직접 로드/저장.
  * members / pool 은 같은 배열 인스턴스를 유지한 채 내용만 교체한다(다른 모듈의 참조 보존).
- * id 는 안정적으로 유지된다:
- *   - 시트 단원 : 행 인덱스 (0..)
- *   - 추가 단원 : ADDED_BASE(1000)+순번
  * 삭제는 소프트(hidden=true) — 과거 매치가 이름을 계속 해석할 수 있게 슬롯을 남긴다.
  */
 const members = [];      // 전체(숨김 포함)
 const pool = [];         // 활동 풀(예비·숨김 제외)
 const byId = new Map();
 
-const ADDED_BASE = 1000;
-const COL = { name: 0, birth: 1, nick: 2, tier: 3, main: 4, sub: 5, role: 6 };
-
-let _rows = [];
-let _overlay = { edits: {}, added: [], removed: [] };
-
-/* RAW 행 → 단원 객체 */
-function buildMember(r, id) {
-  const mainRaw = r[4] ? String(r[4]).split(',') : [];
-  const subRaw = r[5] ? String(r[5]).split(',') : [];
+/* 저장된 단원 객체 → 내부 단원 객체 */
+function buildFromObj(m) {
+  const mainArr = Array.isArray(m.main) ? m.main : (m.main ? String(m.main).split(',').map(s => s.trim()).filter(Boolean) : []);
+  const subArr = Array.isArray(m.sub) ? m.sub : (m.sub ? String(m.sub).split(',').map(s => s.trim()).filter(Boolean) : []);
   return {
-    id,
-    name: r[0],
-    birth: r[1],
-    age: SEASON_YEAR - Number(r[1]),
-    nick: r[2] || '',
-    tier: r[3] || '언랭',
-    main: r[4] ? String(r[4]).split(',').map((s) => s.trim()) : [],
-    sub: r[5] ? String(r[5]).split(',').map((s) => s.trim()) : [],
-    role: r[6] || '단원',
-    lines: [...new Set([...mainRaw, ...subRaw].map((s) => s.trim()).filter((x) => x && x !== '올라이너'))],
-    allLaner: String(r[5]).trim() === '올라이너',
-    added: id >= ADDED_BASE,
-    hidden: false,
+    id: m.id,
+    name: m.name,
+    birth: m.birth,
+    age: SEASON_YEAR - Number(m.birth),
+    nick: m.nick || '',
+    tier: m.tier || '언랭',
+    main: mainArr,
+    sub: subArr,
+    role: m.role || '단원',
+    lines: [...new Set([...mainArr, ...subArr].filter(x => x && x !== '올라이너'))],
+    allLaner: subArr.includes('올라이너') || (typeof m.sub === 'string' && m.sub.trim() === '올라이너'),
+    hidden: !!m.hidden,
   };
 }
 
-function normLineValue(v) {
-  return Array.isArray(v) ? v.join(', ') : v == null ? '' : String(v);
-}
-function rawFromObj(a) {
-  return [
-    a.name,
-    Number(a.birth) || SEASON_YEAR,
-    a.nick || '',
-    a.tier || '언랭',
-    normLineValue(a.main),
-    normLineValue(a.sub),
-    a.role || '단원',
-  ];
-}
-function applyPatchToRow(row, patch) {
-  for (const [k, v] of Object.entries(patch || {})) {
-    if (!(k in COL)) continue;
-    if (k === 'main' || k === 'sub') row[COL[k]] = normLineValue(v);
-    else if (k === 'birth') row[COL[k]] = Number(v);
-    else row[COL[k]] = v;
-  }
-}
-
-function rebuild() {
+/* 단원 배열로 전체 리빌드 */
+function loadMembers(memberList) {
   members.length = 0;
   pool.length = 0;
   byId.clear();
 
-  const finalRows = _rows.map((r, i) => ({ id: i, row: r.slice() }));
-  // 편집
-  for (const [id, patch] of Object.entries(_overlay.edits || {})) {
-    const t = finalRows.find((x) => x.id === Number(id));
-    if (t) applyPatchToRow(t.row, patch);
-  }
-  // 추가
-  (_overlay.added || []).forEach((a, i) => finalRows.push({ id: ADDED_BASE + i, row: rawFromObj(a) }));
-
-  const removed = new Set((_overlay.removed || []).map(Number));
-  finalRows.forEach(({ id, row }) => {
-    const m = buildMember(row, id);
-    m.hidden = removed.has(id);
+  memberList.forEach(raw => {
+    const m = buildFromObj(raw);
     members.push(m);
-    byId.set(id, m);
+    byId.set(m.id, m);
     if (!m.hidden && m.role !== '예비') pool.push(m);
   });
   return members;
 }
 
-/* 시트 기반 로스터 교체 */
-function setRoster(rows) {
-  _rows = rows.map((r) => r.slice());
-  return rebuild();
-}
-/* 관리자 오버레이 교체 */
-function setOverlay(overlay) {
-  _overlay = { edits: {}, added: [], removed: [], ...(overlay || {}) };
-  return rebuild();
+/* 저장용 직렬화 (age, lines, allLaner 등 파생 필드 제외) */
+function toStoredMember(m) {
+  return {
+    id: m.id,
+    name: m.name,
+    birth: m.birth,
+    nick: m.nick,
+    tier: m.tier,
+    main: m.main,
+    sub: m.sub,
+    role: m.role,
+    hidden: m.hidden,
+  };
 }
 
 function memberById(id) {
@@ -105,7 +66,12 @@ function memberById(id) {
 }
 /* 숨김 제외 활동 명단 */
 function activeMembers() {
-  return members.filter((m) => !m.hidden);
+  return members.filter(m => !m.hidden);
+}
+/* 다음 사용 가능한 ID */
+function nextId() {
+  if (!members.length) return 0;
+  return Math.max(...members.map(m => m.id)) + 1;
 }
 
-module.exports = { members, pool, byId, memberById, activeMembers, setRoster, setOverlay, ADDED_BASE };
+module.exports = { members, pool, byId, memberById, activeMembers, loadMembers, toStoredMember, nextId };
