@@ -22,13 +22,14 @@ function row(s) {
     mvp: s.mvp,
     streak: s.streak,
     score: s.score,
+    lastMatch: s.lastMatch ? (s.lastMatch instanceof Date ? s.lastMatch.toISOString() : s.lastMatch) : null,
   };
 }
 
 /* GET /api/stats — 전적 순위표 */
 router.get('/', (req, res) => {
   const stats = store.stats();
-  const minGames = req.query.minGames != null ? parseInt(req.query.minGames, 10) : 3;
+  const minGames = req.query.minGames != null ? parseInt(req.query.minGames, 10) : 1;
   const sortKey = SORT_KEYS[req.query.sort] || 'winrate';
   const asc = req.query.order === 'asc';
   const activeIds = new Set(activeMembers().map((m) => m.id));

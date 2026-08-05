@@ -57,6 +57,13 @@
   .login p{color:var(--ink-3);font-size:13px;margin:0 0 20px}
   .err{color:var(--red);font-size:12.5px;font-weight:600;min-height:16px;margin-top:8px}
   .tag{font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;background:var(--surface-2)}
+  .edit-panel{background:var(--surface-2);border-top:1px solid var(--line);padding:14px 12px}
+  .edit-panel .team-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+  .edit-panel .team-label{font-size:12px;font-weight:800;min-width:50px}
+  .edit-panel .team-label.blue{color:var(--blue)}
+  .edit-panel .team-label.red{color:var(--red)}
+  .edit-panel select.player-sel{padding:5px 6px;font-size:12px;min-width:110px;max-width:140px}
+  .edit-panel .edit-actions{display:flex;gap:8px;align-items:center;margin-top:10px}
 </style>
 </head>
 <body>
@@ -84,6 +91,7 @@
       <button class="tab" data-t="dashboard" aria-selected="true">대시보드 설정</button>
       <button class="tab" data-t="members" aria-selected="false">단원 관리</button>
       <button class="tab" data-t="matches" aria-selected="false">내전 기록 관리</button>
+      <button class="tab" data-t="suggestions" aria-selected="false">건의 관리</button>
     </div>
 
     <div class="view on" id="v-dashboard">
@@ -129,6 +137,13 @@
         <div class="tw"><table id="matchTable"></table></div>
       </div>
     </div>
+
+    <div class="view" id="v-suggestions">
+      <div class="card">
+        <h3>건의 목록 <span id="sugCount" class="tag"></span></h3>
+        <div id="sugList"></div>
+      </div>
+    </div>
   </section>
 </main>
 
@@ -169,14 +184,6 @@ $$(".tab").forEach(t=>t.addEventListener("click",()=>{
 }));
 
 /* ── 데이터 로드 ── */
-async function loadAll(){
-  META=await jget('/api/meta');
-  LINE_ORDER=META.lineOrder; TIER_ORDER=META.tierOrder;
-  fillSelect($("#a_tier"),TIER_ORDER); $("#a_tier").value='언랭';
-  fillSelect($("#a_role"),ROLES); $("#a_role").value='단원';
-  await loadDashConfig();
-  await loadMembers(); await loadMatches();
-}
 function fillSelect(sel,arr,cur){sel.innerHTML=arr.map(v=>`<option value="${v}">${v}</option>`).join('');if(cur!=null)sel.value=cur;}
 
 /* ── 대시보드 설정 ── */
@@ -260,47 +267,115 @@ async function refreshAll(){ await loadMembers(); await loadMatches(); }
 
 /* ── 내전 관리 ── */
 let MATCHES=[];
+function memberOpts(selId){
+  return MEMBERS.filter(m=>!m.hidden).map(m=>
+    `<option value="${m.id}" ${m.id===selId?'selected':''}>${m.name} (${m.tier})</option>`
+  ).join('');
+}
 async function loadMatches(){
   const {matches}=await jget('/api/matches');
   MATCHES=matches;
-  const byId=Object.fromEntries(MEMBERS.map(m=>[m.id,m.name]));
   $("#matchTable").innerHTML=`<thead><tr><th>날짜</th><th>모드</th><th>결과</th><th>블루팀</th><th>레드팀</th><th></th></tr></thead>
     <tbody>${matches.map(mt=>{
-      return `<tr data-id="${mt.id}" data-blue='${JSON.stringify(mt.blue.map(p=>({id:p.id})))}' data-red='${JSON.stringify(mt.red.map(p=>({id:p.id})))}' data-date="${mt.date}" data-mode="${mt.mode||'협곡'}">
+      return `<tr data-id="${mt.id}">
         <td class="num">${mt.date.slice(0,10)}</td>
         <td><span class="tag">${mt.mode||'협곡'}</span></td>
-        <td>
-          <select data-f="winner" style="padding:4px 6px;font-size:12px;min-width:80px">
-            <option value="blue" ${mt.blueWin?'selected':''}>블루 승</option>
-            <option value="red" ${!mt.blueWin?'selected':''}>레드 승</option>
-          </select>
-        </td>
+        <td><b style="color:${mt.blueWin?'var(--blue)':'var(--red)'}">${mt.blueWin?'블루 승':'레드 승'}</b></td>
         <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${mt.blue.map(p=>p.name).join(', ')}</td>
         <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${mt.red.map(p=>p.name).join(', ')}</td>
         <td style="white-space:nowrap">
-          <button class="btn sm save">저장</button>
+          <button class="btn sm edit-match">수정</button>
           <button class="btn sm danger del">삭제</button>
         </td>
       </tr>`;}).join('')}</tbody>`;
 }
 $("#matchTable").addEventListener("click",async e=>{
   const tr=e.target.closest("tr"); if(!tr)return; const id=tr.dataset.id;
-  if(e.target.classList.contains("save")){
-    const winner=$("[data-f=winner]",tr).value;
-    const blue=JSON.parse(tr.dataset.blue);
-    const red=JSON.parse(tr.dataset.red);
-    const date=tr.dataset.date;
-    const mode=tr.dataset.mode;
-    try{
-      await jsend('PUT','/api/matches/'+id,{date,winner,mode,blue,red});
-      toast('수정했습니다');
-      await refreshAll();
-    }catch(ex){toast('수정 실패: '+(ex.payload&&ex.payload.messages&&ex.payload.messages[0]||ex.message));}
+  if(e.target.classList.contains("edit-match")){
+    // 이미 열린 편집 패널 닫기
+    const existing=tr.nextElementSibling;
+    if(existing&&existing.classList.contains('edit-row')){existing.remove();return}
+    $$(".edit-row",$("#matchTable")).forEach(r=>r.remove());
+    const mt=MATCHES.find(m=>m.id===id); if(!mt)return;
+    const editTr=document.createElement('tr');
+    editTr.className='edit-row';
+    editTr.innerHTML=`<td colspan="6"><div class="edit-panel">
+      <div class="team-row">
+        <span class="team-label blue">블루팀</span>
+        ${mt.blue.map((p,i)=>`<select class="player-sel" data-team="blue" data-idx="${i}">${memberOpts(p.id)}</select>`).join('')}
+      </div>
+      <div class="team-row">
+        <span class="team-label red">레드팀</span>
+        ${mt.red.map((p,i)=>`<select class="player-sel" data-team="red" data-idx="${i}">${memberOpts(p.id)}</select>`).join('')}
+      </div>
+      <div class="edit-actions">
+        <span style="font-size:12px;font-weight:700;color:var(--ink-3)">승리팀:</span>
+        <select class="edit-winner" style="padding:5px 8px;font-size:12px">
+          <option value="blue" ${mt.blueWin?'selected':''}>블루 승</option>
+          <option value="red" ${!mt.blueWin?'selected':''}>레드 승</option>
+        </select>
+        <span style="flex:1"></span>
+        <button class="btn sm cancel-edit">취소</button>
+        <button class="btn sm primary save-edit">저장</button>
+      </div>
+    </div></td>`;
+    tr.after(editTr);
+    // 취소
+    $(".cancel-edit",editTr).addEventListener("click",()=>editTr.remove());
+    // 저장
+    $(".save-edit",editTr).addEventListener("click",async()=>{
+      const blue=$$("[data-team=blue]",editTr).map(s=>({id:+s.value}));
+      const red=$$("[data-team=red]",editTr).map(s=>({id:+s.value}));
+      const winner=$(".edit-winner",editTr).value;
+      const allIds=[...blue,...red].map(p=>p.id);
+      const dup=allIds.find((v,i)=>allIds.indexOf(v)!==i);
+      if(dup!=null){toast('같은 선수가 중복 선택되었습니다.');return}
+      try{
+        await jsend('PUT','/api/matches/'+id,{date:mt.date,winner,mode:mt.mode||'협곡',blue,red});
+        toast('수정했습니다');
+        await refreshAll();
+      }catch(ex){toast('수정 실패: '+(ex.payload&&ex.payload.messages&&ex.payload.messages[0]||ex.message));}
+    });
   } else if(e.target.classList.contains("del")){
     if(!confirm('이 내전 기록을 삭제할까요?'))return;
     try{ await jsend('DELETE','/api/matches/'+id); toast('삭제했습니다'); await loadMatches(); }catch(ex){toast('실패: '+ex.message);}
   }
 });
+
+/* ── 건의 관리 ── */
+async function loadSuggestions(){
+  try{
+    const {suggestions}=await jget('/api/suggestions');
+    $("#sugCount").textContent=suggestions.length+'건';
+    if(!suggestions.length){$("#sugList").innerHTML='<p style="color:var(--ink-3);font-size:13px">건의가 없습니다.</p>';return}
+    $("#sugList").innerHTML=suggestions.map(s=>`
+      <div style="border:1px solid var(--line-soft);border-radius:9px;padding:12px;margin-bottom:10px;background:var(--surface-2)" data-sid="${s.id}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:700;font-size:13px">${esc(s.author_name)}</span>
+          <span style="font-size:11px;color:var(--ink-3)">${new Date(s.created_at).toLocaleString('ko')}</span>
+        </div>
+        <p style="margin:0 0 8px;font-size:13px;white-space:pre-wrap;word-break:break-word">${esc(s.content)}</p>
+        <div style="text-align:right">
+          <button class="btn sm danger del-sug" data-sid="${s.id}">삭제</button>
+        </div>
+      </div>`).join('');
+    $$(".del-sug").forEach(btn=>btn.addEventListener("click",async()=>{
+      if(!confirm('이 건의를 삭제할까요?'))return;
+      try{await jsend('DELETE','/api/suggestions/'+btn.dataset.sid);toast('삭제했습니다');loadSuggestions();}catch(ex){toast('실패: '+ex.message)}
+    }));
+  }catch(ex){
+    $("#sugList").innerHTML=`<p style="color:var(--red);font-size:13px">건의 로딩 실패: ${ex.message}</p>`;
+  }
+}
+
+async function loadAll(){
+  META=await jget('/api/meta');
+  LINE_ORDER=META.lineOrder; TIER_ORDER=META.tierOrder;
+  fillSelect($("#a_tier"),TIER_ORDER); $("#a_tier").value='언랭';
+  fillSelect($("#a_role"),ROLES); $("#a_role").value='단원';
+  await loadDashConfig();
+  await loadMembers(); await loadMatches(); await loadSuggestions();
+}
 
 checkAuth().catch(ex=>{ $("#loginView").style.display='block'; console.error(ex); });
 </script>

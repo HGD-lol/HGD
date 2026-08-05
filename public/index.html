@@ -230,7 +230,7 @@
   .side .badge{font-size:10.5px;font-weight:800;letter-spacing:.1em;padding:3px 8px;border-radius:6px;text-transform:uppercase}
   .side.blue .badge{color:var(--blue);background:color-mix(in srgb,var(--blue) 15%,transparent)}
   .side.red .badge{color:var(--red);background:color-mix(in srgb,var(--red) 15%,transparent)}
-  .side .team{font-size:13px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px}
+  .side .team{font-size:12.5px;color:var(--ink-2);white-space:normal;word-break:keep-all;line-height:1.4}
   .win-tag{font-weight:800}
   .side.blue.won .team, .side.red.won .team{color:var(--ink)}
   .vs{text-align:center;min-width:96px}
@@ -419,7 +419,7 @@
 <header>
   <div class="wrap bar">
     <div class="mark">
-      <div class="crest"><span>⚔️</span></div>
+      <div class="crest"><span style="font-size:20px;font-weight:900;color:var(--gold-bright);font-family:serif">협</span></div>
       <div>
         <b>협곡단</b>
         <small>내전 기록실</small>
@@ -439,6 +439,7 @@
       <button class="tab" role="tab" aria-selected="false" data-view="rank">전적 순위</button>
       <button class="tab" role="tab" aria-selected="false" data-view="balance">팀 밸런서</button>
       <button class="tab tab-add" role="tab" aria-selected="false" data-view="add">＋ 내전 등록</button>
+      <button class="tab" role="tab" aria-selected="false" data-view="suggest">건의게시판</button>
     </nav>
   </div>
 </header>
@@ -495,14 +496,30 @@
   <!-- HISTORY (pending) -->
   <section class="view" id="view-history" role="tabpanel">
     <div class="sec-h"><span class="eyebrow">History</span><h2 style="font-size:22px">내전 히스토리</h2><div class="rule"></div></div>
-    <p style="color:var(--ink-2);font-size:13.5px;margin:0 0 18px;max-width:60ch">
+    <p style="color:var(--ink-2);font-size:13.5px;margin:0 0 14px;max-width:60ch">
       내전 등록에서 선수를 등록하면 여기에 표시됩니다. 레드팀/블루팀을 배정하고 승리팀을 지정한 뒤 저장하세요.</p>
+    <div class="chips" style="margin-bottom:16px">
+      <button class="chip hist-mode-chip" data-hmode="전체" aria-pressed="true">전체</button>
+      <button class="chip hist-mode-chip" data-hmode="협곡" aria-pressed="false">협곡</button>
+      <button class="chip hist-mode-chip" data-hmode="칼바람" aria-pressed="false">칼바람</button>
+    </div>
     <div id="pendingList"></div>
   </section>
 
   <!-- MATCHES -->
   <section class="view" id="view-matches" role="tabpanel">
     <div class="sec-h"><span class="eyebrow">Match Log</span><h2 style="font-size:22px">내전 기록</h2><div class="rule"></div></div>
+    <div class="toolbar" style="margin-bottom:16px">
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="matchSearch" type="search" placeholder="선수 이름으로 검색" aria-label="내전 기록 검색">
+      </div>
+      <div class="chips">
+        <button class="chip match-mode-chip" data-mmode="전체" aria-pressed="true">전체</button>
+        <button class="chip match-mode-chip" data-mmode="협곡" aria-pressed="false">협곡</button>
+        <button class="chip match-mode-chip" data-mmode="칼바람" aria-pressed="false">칼바람</button>
+      </div>
+    </div>
     <div class="matches" id="allMatches"></div>
   </section>
 
@@ -510,7 +527,7 @@
   <section class="view" id="view-rank" role="tabpanel">
     <div class="sec-h"><span class="eyebrow">Standings</span><h2 style="font-size:22px">전적 순위</h2><div class="rule"></div></div>
     <div class="tablewrap"><div class="tscroll"><table id="rankTable"></table></div></div>
-    <p style="color:var(--ink-3);font-size:12px;margin-top:12px">※ 내전 3회 이상 참여한 단원 기준 · 승률 순 정렬 (열 제목을 눌러 정렬 변경)</p>
+    <p style="color:var(--ink-3);font-size:12px;margin-top:12px">※ 내전 1회 이상 참여한 단원 기준 · 승률 순 정렬 (열 제목을 눌러 정렬 변경)</p>
   </section>
 
   <!-- TEAM BALANCER -->
@@ -526,6 +543,24 @@
     </div>
     <div class="pick-grid" id="pickGrid"></div>
     <div class="bal-result" id="balResult" style="display:none"></div>
+  </section>
+
+  <!-- SUGGESTION -->
+  <section class="view" id="view-suggest" role="tabpanel">
+    <div class="sec-h"><span class="eyebrow">Suggestion</span><h2 style="font-size:22px">건의게시판</h2><div class="rule"></div></div>
+    <div style="border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:22px;max-width:640px;margin-bottom:20px">
+      <h3 style="font-size:14px;margin:0 0 14px;color:var(--gold-bright)">건의 작성</h3>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <input id="sugName" type="text" placeholder="작성자 (선택, 미입력시 익명)" style="padding:9px 12px;font-size:13px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-family:inherit" maxlength="30">
+        <textarea id="sugContent" placeholder="건의 내용을 입력하세요" rows="4" style="padding:9px 12px;font-size:13px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-family:inherit;resize:vertical" maxlength="2000"></textarea>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="form-err" id="sugErr"></span>
+          <button class="btn primary" id="sugSubmit" type="button">작성</button>
+        </div>
+      </div>
+      <p style="color:var(--ink-3);font-size:11px;margin:10px 0 0">건의 내용은 관리자만 확인할 수 있습니다. 도배 방지를 위해 1시간에 1개만 작성 가능합니다.</p>
+    </div>
+    <div id="mySuggestions"></div>
   </section>
 
   <!-- ADD MATCH (내전 등록) -->
@@ -562,7 +597,9 @@
 
 <footer>
   <div class="wrap">
-    <span>📊 <b>협곡단 티어표</b> · Node.js + Express API</span>
+    <span>총괄 : <b>협곡단</b></span>
+    <span>·</span>
+    <span>만든이 : <b>이윤성</b></span>
     <span>·</span>
     <span>단원 <b id="fMembers">0</b>명</span>
     <span>·</span>
@@ -605,8 +642,8 @@ async function refreshData(){
   const [mRes,sRes]=await Promise.all([jget('/api/matches'),jget('/api/stats?minGames=0')]);
   S.matches=mRes.matches.map(m=>({...m,date:new Date(m.date)}));
   S.stats={};
-  S.members.forEach(m=>S.stats[m.id]={id:m.id,g:0,w:0,l:0,wr:0,mvp:0,streak:0,score:m.score||200});
-  sRes.standings.forEach(s=>{S.stats[s.id]={id:s.id,g:s.games,w:s.wins,l:s.losses,wr:s.winrate,mvp:s.mvp,streak:s.streak,score:s.score};});
+  S.members.forEach(m=>S.stats[m.id]={id:m.id,g:0,w:0,l:0,wr:0,mvp:0,streak:0,score:m.score||200,lastMatch:null});
+  sRes.standings.forEach(s=>{S.stats[s.id]={id:s.id,g:s.games,w:s.wins,l:s.losses,wr:s.winrate,mvp:s.mvp,streak:s.streak,score:s.score,lastMatch:s.lastMatch};});
   $("#cMatch").textContent=S.matches.length;
   $("#fMatches").textContent=S.matches.length;
 }
@@ -725,33 +762,64 @@ function teamCol(side,title,players){
   }).join("");
   return `<div class="teamcol ${side}"><h4>${title}</h4>${rows}</div>`;
 }
-function renderMatches(){
+let matchModeFilter="전체", matchSearchQ="";
+$$(".match-mode-chip").forEach(btn=>btn.addEventListener("click",()=>{
+  matchModeFilter=btn.dataset.mmode;
+  $$(".match-mode-chip").forEach(b=>b.setAttribute("aria-pressed",b===btn));
+  renderMatchList();
+}));
+$("#matchSearch").addEventListener("input",e=>{matchSearchQ=e.target.value.trim().toLowerCase();renderMatchList()});
+function renderMatchList(){
   const all=$("#allMatches");all.innerHTML="";
-  if(!S.matches.length){all.innerHTML=`<div class="empty">기록된 내전이 없습니다.</div>`;}
-  S.matches.forEach(mt=>all.appendChild(matchNode(mt)));
+  let list=S.matches;
+  if(matchModeFilter!=="전체") list=list.filter(mt=>(mt.mode||'협곡')===matchModeFilter);
+  if(matchSearchQ) list=list.filter(mt=>{
+    const names=[...mt.blue,...mt.red].map(p=>p.name.toLowerCase());
+    return names.some(n=>n.includes(matchSearchQ));
+  });
+  if(!list.length){all.innerHTML=`<div class="empty">조건에 맞는 내전 기록이 없습니다.</div>`;return}
+  list.forEach(mt=>all.appendChild(matchNode(mt)));
+}
+function renderMatches(){
+  renderMatchList();
   const rec=$("#recentMatches");rec.innerHTML="";
   S.matches.slice(0,4).forEach(mt=>rec.appendChild(matchNode(mt)));
 }
 
 /* ========== PENDING (내전 히스토리) ========== */
+let histMode="전체";
+$$(".hist-mode-chip").forEach(btn=>btn.addEventListener("click",()=>{
+  histMode=btn.dataset.hmode;
+  $$(".hist-mode-chip").forEach(b=>b.setAttribute("aria-pressed",b===btn));
+  renderPending();
+}));
 function renderPending(){
   const box=$("#pendingList");
-  if(!S.pending.length){box.innerHTML=`<div class="empty">대기 중인 내전이 없습니다. '내전 등록' 탭에서 선수를 등록하세요.</div>`;return}
-  box.innerHTML=S.pending.map(p=>{
+  let list=S.pending;
+  if(histMode!=="전체") list=list.filter(p=>p.mode===histMode);
+  if(!list.length){box.innerHTML=`<div class="empty">대기 중인 내전이 없습니다. '내전 등록' 탭에서 선수를 등록하세요.</div>`;return}
+  box.innerHTML=list.map(p=>{
     const modeClass=p.mode==='칼바람'?'aram':'rift';
-    return `<div class="pending-card" data-pid="${p.id}">
+    const isAram=p.mode==='칼바람';
+    return `<div class="pending-card" data-pid="${p.id}" data-mode="${p.mode}">
       <div class="pending-header">
         <span class="mode-badge ${modeClass}">${p.mode}</span>
         <span style="color:var(--ink-3);font-size:12px">${new Date(p.date).toLocaleString('ko')}</span>
+        ${isAram?`<button class="btn ghost rand-team-btn" style="font-size:12px;padding:5px 10px" data-pid="${p.id}">🎲 랜덤 팀 배정</button>`:''}
         <button class="btn ghost" style="font-size:12px;padding:5px 10px;color:var(--red)" onclick="deletePending('${p.id}')">삭제</button>
       </div>
       <p style="color:var(--ink-3);font-size:12px;margin:0 0 10px">선수를 클릭하여 블루팀(좌클릭)/레드팀(우클릭)으로 배정하세요.</p>
       <div class="pending-players" data-pid="${p.id}">
-        ${p.players.map(pl=>`<div class="pp-item" data-id="${pl.id}">
-          <span class="pp-name">${pl.name}</span>
-          ${tierBadge(pl.tier)}
-          <span class="pp-score">${pl.score}점</span>
-        </div>`).join("")}
+        ${p.players.map(pl=>{
+          const m=memberById(pl.id);
+          const lanes=m?m.lines.slice(0,2).join("/"):"";
+          return `<div class="pp-item" data-id="${pl.id}">
+            <span class="pp-name">${pl.name}</span>
+            ${tierBadge(pl.tier)}
+            ${lanes?`<span style="font-size:10px;color:var(--ink-3);font-weight:600">${lanes}</span>`:''}
+            <span class="pp-score">${pl.score}점</span>
+          </div>`;
+        }).join("")}
       </div>
       <div class="winner-pick">
         <span style="font-size:12px;font-weight:700;color:var(--ink-3);margin-right:8px">승리팀:</span>
@@ -763,6 +831,18 @@ function renderPending(){
       </div>
     </div>`;
   }).join("");
+
+  // 칼바람 랜덤 팀 배정
+  $$(".rand-team-btn").forEach(btn=>btn.addEventListener("click",()=>{
+    const pid=btn.dataset.pid;
+    const card=$(`.pending-card[data-pid="${pid}"]`);
+    const items=[...$$(".pp-item",card)];
+    items.forEach(it=>{it.classList.remove("blue-sel","red-sel")});
+    const shuffled=items.slice().sort(()=>Math.random()-.5);
+    shuffled.slice(0,5).forEach(it=>it.classList.add("blue-sel"));
+    shuffled.slice(5,10).forEach(it=>it.classList.add("red-sel"));
+    toast("랜덤으로 팀이 배정되었습니다!");
+  }));
 
   // attach click handlers for team assignment
   $$(".pending-players").forEach(grid=>{
@@ -878,12 +958,14 @@ const COLS=[
   {k:"wr",label:"승률",sort:true},
   {k:"streak",label:"연승",sort:true},
   {k:"score",label:"점수",sort:true},
+  {k:"lastMatch",label:"마지막 참여",cls:"",sort:true},
 ];
 function renderRank(){
-  const rows=Object.values(S.stats).filter(s=>s.g>=3);
+  const rows=Object.values(S.stats).filter(s=>s.g>=1);
   rows.sort((a,b)=>{
     let av=a[sortKey],bv=b[sortKey];
     if(sortKey==="name"){av=memberById(a.id).name;bv=memberById(b.id).name;return av.localeCompare(bv,"ko")*sortDir}
+    if(sortKey==="lastMatch"){av=av||"";bv=bv||"";return av.localeCompare(bv)*sortDir}
     return (av-bv)*sortDir || b.g-a.g;
   });
   const thead=`<thead><tr>${COLS.map(c=>{
@@ -895,6 +977,7 @@ function renderRank(){
     const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
     const wrPct=Math.round(s.wr*100);
     const wrCol=s.wr>=.55?'var(--good)':s.wr>=.45?'var(--ink)':'var(--red)';
+    const lastD=s.lastMatch?new Date(s.lastMatch).toLocaleDateString('ko',{month:'short',day:'numeric'}):'—';
     return `<tr>
       <td class="l"><span class="medal num">${medal}</span></td>
       <td class="l"><div class="pl-cell"><div class="info"><b>${m.name}</b><small>${m.tier}</small></div></div></td>
@@ -904,6 +987,7 @@ function renderRank(){
       <td><span class="wrbar"><span class="track"><i style="width:${wrPct}%;background:${wrCol}"></i></span><b style="color:${wrCol}">${wrPct}%</b></span></td>
       <td class="num"><span class="streak ${s.streak>0?'up':s.streak<0?'down':''}">${s.streak>0?`${s.streak}연승`:s.streak<0?`${-s.streak}연패`:'—'}</span></td>
       <td class="num"><span class="score-chip">${s.score}</span></td>
+      <td class="num" style="font-size:12px;color:var(--ink-3)">${lastD}</td>
     </tr>`;
   }).join("")}</tbody>`;
   const tbl=$("#rankTable");tbl.innerHTML=thead+tbody;
@@ -1048,6 +1132,53 @@ $("#clearPick").addEventListener("click",()=>{
 });
 $("#balanceBtn").addEventListener("click",()=>{if(picked.size===10){rerollN=0;renderBalance()}});
 
+/* ========== SUGGESTION ========== */
+function getSugTokens(){try{return JSON.parse(localStorage.getItem('hgd_sug_tokens')||'{}');}catch{return {}}}
+function saveSugToken(id,token){const t=getSugTokens();t[id]=token;localStorage.setItem('hgd_sug_tokens',JSON.stringify(t))}
+
+$("#sugSubmit").addEventListener("click",async()=>{
+  const err=$("#sugErr");err.textContent='';
+  const content=$("#sugContent").value.trim();
+  if(!content){err.textContent='내용을 입력하세요.';return}
+  try{
+    const res=await jsend('POST','/api/suggestions',{author_name:$("#sugName").value.trim()||'익명',content});
+    saveSugToken(res.id,res.edit_token);
+    $("#sugContent").value='';
+    toast('건의가 등록되었습니다!');
+    renderMySuggestions();
+  }catch(ex){
+    err.textContent=(ex.payload&&ex.payload.message)||ex.message;
+  }
+});
+
+function renderMySuggestions(){
+  const tokens=getSugTokens();
+  const ids=Object.keys(tokens);
+  const box=$("#mySuggestions");
+  if(!ids.length){box.innerHTML='';return}
+  box.innerHTML=`<h3 style="font-size:14px;color:var(--gold-bright);margin-bottom:12px">내가 작성한 건의</h3>
+    <p style="color:var(--ink-3);font-size:12px;margin:0 0 10px">이 브라우저에서 작성한 건의만 표시됩니다. 수정하려면 내용을 바꾸고 수정 버튼을 누르세요.</p>
+    ${ids.map(id=>`<div style="border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:14px;margin-bottom:10px" data-sid="${id}">
+      <textarea class="sug-edit-area" style="width:100%;min-height:50px;padding:8px;font-size:13px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-family:inherit;resize:vertical;margin-bottom:8px" placeholder="로딩 중..."></textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn ghost" style="font-size:12px;padding:5px 12px" onclick="editSuggestion('${id}')">수정</button>
+      </div>
+    </div>`).join("")}`;
+}
+
+async function editSuggestion(id){
+  const tokens=getSugTokens();
+  const token=tokens[id];if(!token)return;
+  const card=$(`[data-sid="${id}"]`);
+  const area=$(".sug-edit-area",card);
+  const content=area.value.trim();
+  if(!content){toast('내용을 입력하세요.');return}
+  try{
+    await jsend('PATCH','/api/suggestions/'+id,{edit_token:token,content});
+    toast('수정되었습니다.');
+  }catch(ex){toast('수정 실패: '+ex.message)}
+}
+
 /* ========== INIT ========== */
 (async function init(){
   try{
@@ -1055,7 +1186,7 @@ $("#balanceBtn").addEventListener("click",()=>{if(picked.size===10){rerollN=0;re
     await loadMembers();
     await Promise.all([refreshData(),loadPending()]);
     await loadDashConfig();
-    renderChips();renderAddPicker();renderPicker();renderAll();
+    renderChips();renderAddPicker();renderPicker();renderAll();renderMySuggestions();
   }catch(ex){
     document.querySelector("main").insertAdjacentHTML("afterbegin",
       `<div class="empty" style="color:var(--red)">API 로딩 실패: ${ex.message}<br>서버가 실행 중인지 확인하세요 (npm start).</div>`);

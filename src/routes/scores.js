@@ -11,7 +11,7 @@ router.get('/', (_req, res) => {
   const stats = store.stats();
   const rows = activeMembers()
     .map((m) => {
-      const s = stats[m.id] || { g: 0, w: 0, l: 0, wr: 0, mvp: 0, streak: 0, score: 200 };
+      const s = stats[m.id] || { g: 0, w: 0, l: 0, wr: 0, mvp: 0, streak: 0, score: 200, lastMatch: null };
       return {
         id: m.id,
         name: m.name,
@@ -23,6 +23,7 @@ router.get('/', (_req, res) => {
         winrate: Number(s.wr.toFixed(4)),
         streak: s.streak,
         score: s.score,
+        lastMatch: s.lastMatch ? (s.lastMatch instanceof Date ? s.lastMatch.toISOString() : s.lastMatch) : null,
       };
     })
     .sort((a, b) => b.score - a.score || b.winrate - a.winrate || a.name.localeCompare(b.name, 'ko'));

@@ -17,6 +17,7 @@ const dashboardRoute = require('./src/routes/dashboard');
 const scoresRoute = require('./src/routes/scores');
 const adminRoute = require('./src/routes/admin');
 const auctionRoute = require('./src/routes/auction');
+const suggestionsRoute = require('./src/routes/suggestions');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -136,6 +137,7 @@ app.use('/api/balance', balanceRoute);
 app.use('/api/dashboard', dashboardRoute);
 app.use('/api/admin', adminRoute);
 app.use('/api/auction', auctionRoute);
+app.use('/api/suggestions', suggestionsRoute);
 
 app.get('/health', (_req, res) => res.json({ ok: true, uptime: process.uptime() }));
 

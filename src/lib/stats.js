@@ -10,7 +10,7 @@ const { BASE_SCORE, WIN_POINTS, LOSS_POINTS } = require('./scoring');
 function computeStats(matches) {
   const stats = {};
   members.forEach((m) => {
-    stats[m.id] = { id: m.id, g: 0, w: 0, l: 0, mvp: 0, wr: 0, streak: 0, score: BASE_SCORE, _seq: [] };
+    stats[m.id] = { id: m.id, g: 0, w: 0, l: 0, mvp: 0, wr: 0, streak: 0, score: BASE_SCORE, lastMatch: null, _seq: [] };
   });
 
   // 전적 집계 (최신순)
@@ -23,6 +23,8 @@ function computeStats(matches) {
         if (won) s.w++;
         if (p.mvp) s.mvp++;
         s._seq.push(won);
+        // 최신순이므로 첫 만남이 마지막 참여 날짜
+        if (!s.lastMatch) s.lastMatch = mt.date;
       });
     proc(mt.blue, mt.blueWin);
     proc(mt.red, !mt.blueWin);
