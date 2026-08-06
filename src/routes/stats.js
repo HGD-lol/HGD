@@ -28,7 +28,8 @@ function row(s) {
 
 /* GET /api/stats — 전적 순위표 */
 router.get('/', (req, res) => {
-  const stats = store.stats();
+  const mode = req.query.mode || null; // '협곡' | '칼바람' | null(전체)
+  const stats = store.stats(mode);
   const minGames = req.query.minGames != null ? parseInt(req.query.minGames, 10) : 1;
   const sortKey = SORT_KEYS[req.query.sort] || 'winrate';
   const asc = req.query.order === 'asc';

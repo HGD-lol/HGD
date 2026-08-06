@@ -7,7 +7,10 @@ const { BASE_SCORE, WIN_POINTS, LOSS_POINTS } = require('./scoring');
  * 전체 매치 목록으로부터 단원별 누적 전적 + 내전 점수를 집계한다.
  * matches 는 최신순(newest-first)으로 전달된다.
  */
-function computeStats(matches) {
+function computeStats(matches, modeFilter) {
+  if (modeFilter) {
+    matches = matches.filter((m) => (m.mode || '협곡') === modeFilter);
+  }
   const stats = {};
   members.forEach((m) => {
     stats[m.id] = { id: m.id, g: 0, w: 0, l: 0, mvp: 0, wr: 0, streak: 0, score: BASE_SCORE, lastMatch: null, _seq: [] };

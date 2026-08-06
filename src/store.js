@@ -21,12 +21,14 @@ let dashConfig = { title: '협곡단 내전 기록실', description: '단원 명
 let rosterInfo = { source: 'uninitialized', count: 0 };
 let cachedAll = null;
 let cachedStats = null;
+let cachedStatsRift = null;
+let cachedStatsAram = null;
 let _useDb = false; // Supabase 연결 여부
 
 /* ── 유틸 ── */
 function ensureDir() { if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true }); }
 function readJson(file, fallback) { try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return fallback; } }
-function invalidate() { cachedAll = null; cachedStats = null; }
+function invalidate() { cachedAll = null; cachedStats = null; cachedStatsRift = null; cachedStatsAram = null; }
 
 /* ── DB ↔ App 변환 ── */
 function toDbMatch(m) {
@@ -164,7 +166,12 @@ async function init() {
 
 /* ── 조회 ── */
 function allMatches() { if (!cachedAll) cachedAll = [...userMatches].sort((a, b) => b.date - a.date); return cachedAll; }
-function stats() { if (!cachedStats) cachedStats = computeStats(allMatches()); return cachedStats; }
+function stats(mode) {
+  if (!mode) { if (!cachedStats) cachedStats = computeStats(allMatches()); return cachedStats; }
+  if (mode === '협곡') { if (!cachedStatsRift) cachedStatsRift = computeStats(allMatches(), '협곡'); return cachedStatsRift; }
+  if (mode === '칼바람') { if (!cachedStatsAram) cachedStatsAram = computeStats(allMatches(), '칼바람'); return cachedStatsAram; }
+  return computeStats(allMatches(), mode);
+}
 function findMatch(id) { return allMatches().find(m => String(m.id) === String(id)) || null; }
 
 /* ── 매치 변경 ── */
