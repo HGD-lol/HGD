@@ -439,7 +439,6 @@
       <button class="tab" role="tab" aria-selected="false" data-view="rank">전적 순위</button>
       <button class="tab" role="tab" aria-selected="false" data-view="balance">팀 밸런서</button>
       <button class="tab tab-add" role="tab" aria-selected="false" data-view="add">＋ 내전 등록</button>
-      <button class="tab" role="tab" aria-selected="false" data-view="suggest">건의게시판</button>
     </nav>
   </div>
 </header>
@@ -451,14 +450,13 @@
       <div class="hero-top">
         <div class="hero-title">
           <h1 id="dashTitle">협곡단 내전 기록실</h1>
-          <p id="dashDesc">단원 명단과 티어, 내전 전적을 한곳에서. 소환사의 협곡, 블루팀과 레드팀의 모든 대전을 기록합니다.</p>
+          <p id="dashDesc" style="white-space:pre-wrap">단원 명단과 티어, 내전 전적을 한곳에서. 소환사의 협곡, 블루팀과 레드팀의 모든 대전을 기록합니다.</p>
         </div>
         <div class="season">
           <div class="eyebrow">현재 시즌</div>
           <b id="seasonLabel">2026 Split 2</b>
         </div>
       </div>
-      <div class="tiles" id="tiles"></div>
     </div>
 
     <div class="grid2">
@@ -550,23 +548,6 @@
     <div class="bal-result" id="balResult" style="display:none"></div>
   </section>
 
-  <!-- SUGGESTION -->
-  <section class="view" id="view-suggest" role="tabpanel">
-    <div class="sec-h"><span class="eyebrow">Suggestion</span><h2 style="font-size:22px">건의게시판</h2><div class="rule"></div></div>
-    <div style="border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:22px;max-width:640px;margin-bottom:20px">
-      <h3 style="font-size:14px;margin:0 0 14px;color:var(--gold-bright)">건의 작성</h3>
-      <div style="display:flex;flex-direction:column;gap:12px">
-        <input id="sugName" type="text" placeholder="작성자 (선택, 미입력시 익명)" style="padding:9px 12px;font-size:13px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-family:inherit" maxlength="30">
-        <textarea id="sugContent" placeholder="건의 내용을 입력하세요" rows="4" style="padding:9px 12px;font-size:13px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-family:inherit;resize:vertical" maxlength="2000"></textarea>
-        <div style="display:flex;align-items:center;gap:12px">
-          <span class="form-err" id="sugErr"></span>
-          <button class="btn primary" id="sugSubmit" type="button">작성</button>
-        </div>
-      </div>
-      <p style="color:var(--ink-3);font-size:11px;margin:10px 0 0">건의 내용은 관리자만 확인할 수 있습니다. 도배 방지를 위해 1시간에 1개만 작성 가능합니다.</p>
-    </div>
-    <div id="mySuggestions"></div>
-  </section>
 
   <!-- ADD MATCH (내전 등록) -->
   <section class="view" id="view-add" role="tabpanel">
@@ -578,7 +559,13 @@
         <button class="mode-tab active" data-mode="협곡" type="button">협곡</button>
         <button class="mode-tab" data-mode="칼바람" type="button">칼바람</button>
       </div>
-      <div class="pick-count">선택 <b id="addPickCount">0</b> / 10</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+        <div class="pick-count" style="margin:0">선택 <b id="addPickCount">0</b> / 10</div>
+        <div class="chips">
+          <button class="chip add-sort-chip" data-asort="tier" aria-pressed="true">티어순</button>
+          <button class="chip add-sort-chip" data-asort="name" aria-pressed="false">이름순</button>
+        </div>
+      </div>
       <div class="player-pick-grid" id="addPickGrid"></div>
       <div class="form-actions">
         <div class="form-err" id="addFormErr" role="alert"></div>
@@ -661,10 +648,11 @@ async function loadDashConfig(){
   if(dash.config){
     $("#dashTitle").textContent=dash.config.title||'협곡단 내전 기록실';
     $("#dashDesc").textContent=dash.config.description||'';
+    $("#dashDesc").style.whiteSpace='pre-wrap';
     $("#seasonLabel").textContent=dash.config.season||'2026 Split 2';
   }
 }
-function renderAll(){renderTiles();renderDist();renderTopScores();renderTopPlayers();renderMatches();renderRoster();renderRank();renderPending();}
+function renderAll(){renderDist();renderTopScores();renderTopPlayers();renderMatches();renderRoster();renderRank();renderPending();}
 
 /* ========== HELPERS ========== */
 function tierBadge(t){const c=TIER_COLOR[t];
@@ -675,21 +663,6 @@ function laneChip(l,sub){const c=LINE_COLOR[l]||"#888";
 function fmtDate(d){return `${d.getMonth()+1}월 ${d.getDate()}일`}
 
 /* ========== DASHBOARD ========== */
-function renderTiles(){
-  const members=S.members;
-  const avgAge=members.length?Math.round(members.reduce((s,m)=>s+m.age,0)/members.length):0;
-  const masters=members.filter(m=>m.tier==="마스터").length;
-  const diaPlus=members.filter(m=>TIER_RANK[m.tier]>=6).length;
-  const tiles=[
-    {k:"총 단원",v:members.length,s:`활동 ${S.pool.length} · 예비 ${members.length-S.pool.length}`,cls:""},
-    {k:"내전 경기",v:S.matches.length,s:$("#seasonLabel").textContent+" 누적",cls:"gold"},
-    {k:"마스터 티어",v:masters,s:`다이아+ ${diaPlus}명`,cls:"blue"},
-    {k:"평균 연령",v:avgAge,s:"단원 나이 기준",cls:""},
-  ];
-  $("#tiles").innerHTML=tiles.map(t=>`
-    <div class="tile"><div class="k">${t.k}</div>
-      <div class="v ${t.cls} num">${t.v}</div><div class="s">${t.s}</div></div>`).join("");
-}
 function renderDist(){
   const counts={};TIER_ORDER.forEach(t=>counts[t]=0);
   S.members.forEach(m=>counts[m.tier]++);
@@ -819,11 +792,15 @@ function renderPending(){
         ${p.players.map(pl=>{
           const m=memberById(pl.id);
           const lanes=m?m.lines.slice(0,2).join("/"):"";
-          return `<div class="pp-item" data-id="${pl.id}">
-            <span class="pp-name">${pl.name}</span>
-            ${tierBadge(pl.tier)}
-            ${lanes?`<span style="font-size:10px;color:var(--ink-3);font-weight:600">${lanes}</span>`:''}
-            <span class="pp-score">${pl.score}점</span>
+          return `<div class="pp-item" data-id="${pl.id}" style="flex-direction:column;align-items:stretch;gap:4px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+              <span class="pp-name">${pl.name}</span>
+              ${tierBadge(pl.tier)}
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+              ${lanes?`<span style="font-size:10px;color:var(--ink-3);font-weight:600">${lanes}</span>`:'<span></span>'}
+              <span class="pp-score">${pl.score}점</span>
+            </div>
           </div>`;
         }).join("")}
       </div>
@@ -1042,14 +1019,22 @@ $("#tierModalClose").addEventListener("click",()=>$("#tierModal").classList.remo
 $("#tierModal").addEventListener("click",e=>{if(e.target.id==="tierModal")$("#tierModal").classList.remove("on")});
 
 /* ========== ADD-MATCH FORM (내전 등록) ========== */
-let addMode='협곡', addPicked=new Set();
+let addMode='협곡', addPicked=new Set(), addSortBy='tier';
 $$(".mode-tab").forEach(btn=>btn.addEventListener("click",()=>{
   $$(".mode-tab").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
   addMode=btn.dataset.mode;
 }));
+$$(".add-sort-chip").forEach(btn=>btn.addEventListener("click",()=>{
+  addSortBy=btn.dataset.asort;
+  $$(".add-sort-chip").forEach(b=>b.setAttribute("aria-pressed",b===btn));
+  renderAddPicker();
+}));
 function renderAddPicker(){
-  const list=S.members.slice().sort((a,b)=>TIER_RANK[b.tier]-TIER_RANK[a.tier]||a.name.localeCompare(b.name,"ko"));
+  const list=S.members.slice().sort((a,b)=>{
+    if(addSortBy==='name') return a.name.localeCompare(b.name,"ko");
+    return TIER_RANK[b.tier]-TIER_RANK[a.tier]||a.name.localeCompare(b.name,"ko");
+  });
   $("#addPickGrid").innerHTML=list.map(m=>{
     const on=addPicked.has(m.id),full=addPicked.size>=10&&!on;
     return `<button class="ppchip${on?' on':''}" type="button" data-id="${m.id}" ${full?'disabled':''}>
@@ -1154,53 +1139,6 @@ $("#clearPick").addEventListener("click",()=>{
 });
 $("#balanceBtn").addEventListener("click",()=>{if(picked.size===10){rerollN=0;renderBalance()}});
 
-/* ========== SUGGESTION ========== */
-function getSugTokens(){try{return JSON.parse(localStorage.getItem('hgd_sug_tokens')||'{}');}catch{return {}}}
-function saveSugToken(id,token){const t=getSugTokens();t[id]=token;localStorage.setItem('hgd_sug_tokens',JSON.stringify(t))}
-
-$("#sugSubmit").addEventListener("click",async()=>{
-  const err=$("#sugErr");err.textContent='';
-  const content=$("#sugContent").value.trim();
-  if(!content){err.textContent='내용을 입력하세요.';return}
-  try{
-    const res=await jsend('POST','/api/suggestions',{author_name:$("#sugName").value.trim()||'익명',content});
-    saveSugToken(res.id,res.edit_token);
-    $("#sugContent").value='';
-    toast('건의가 등록되었습니다!');
-    renderMySuggestions();
-  }catch(ex){
-    err.textContent=(ex.payload&&ex.payload.message)||ex.message;
-  }
-});
-
-function renderMySuggestions(){
-  const tokens=getSugTokens();
-  const ids=Object.keys(tokens);
-  const box=$("#mySuggestions");
-  if(!ids.length){box.innerHTML='';return}
-  box.innerHTML=`<h3 style="font-size:14px;color:var(--gold-bright);margin-bottom:12px">내가 작성한 건의</h3>
-    <p style="color:var(--ink-3);font-size:12px;margin:0 0 10px">이 브라우저에서 작성한 건의만 표시됩니다. 수정하려면 내용을 바꾸고 수정 버튼을 누르세요.</p>
-    ${ids.map(id=>`<div style="border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:14px;margin-bottom:10px" data-sid="${id}">
-      <textarea class="sug-edit-area" style="width:100%;min-height:50px;padding:8px;font-size:13px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-family:inherit;resize:vertical;margin-bottom:8px" placeholder="로딩 중..."></textarea>
-      <div style="display:flex;gap:8px;justify-content:flex-end">
-        <button class="btn ghost" style="font-size:12px;padding:5px 12px" onclick="editSuggestion('${id}')">수정</button>
-      </div>
-    </div>`).join("")}`;
-}
-
-async function editSuggestion(id){
-  const tokens=getSugTokens();
-  const token=tokens[id];if(!token)return;
-  const card=$(`[data-sid="${id}"]`);
-  const area=$(".sug-edit-area",card);
-  const content=area.value.trim();
-  if(!content){toast('내용을 입력하세요.');return}
-  try{
-    await jsend('PATCH','/api/suggestions/'+id,{edit_token:token,content});
-    toast('수정되었습니다.');
-  }catch(ex){toast('수정 실패: '+ex.message)}
-}
-
 /* ========== INIT ========== */
 (async function init(){
   try{
@@ -1208,7 +1146,7 @@ async function editSuggestion(id){
     await loadMembers();
     await Promise.all([refreshData(),loadPending()]);
     await loadDashConfig();
-    renderChips();renderAddPicker();renderPicker();renderAll();renderMySuggestions();
+    renderChips();renderAddPicker();renderPicker();renderAll();
   }catch(ex){
     document.querySelector("main").insertAdjacentHTML("afterbegin",
       `<div class="empty" style="color:var(--red)">API 로딩 실패: ${ex.message}<br>서버가 실행 중인지 확인하세요 (npm start).</div>`);

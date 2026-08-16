@@ -82,6 +82,16 @@ router.post('/', (req, res) => {
   if (errors.length) return res.status(400).json({ error: 'validation_failed', messages: errors });
   const match = buildMatch({ id: 'u' + Date.now(), ...params });
   store.addUserMatch(match);
+
+  // 예비 단원이 내전에 참여하면 자동으로 '단원'으로 변경
+  const allPlayerIds = [...params.blue, ...params.red].map(p => p.id);
+  allPlayerIds.forEach(id => {
+    const m = memberById(id);
+    if (m && m.role === '예비') {
+      store.editMember(id, { role: '단원' });
+    }
+  });
+
   res.status(201).json(serializeMatch(match));
 });
 

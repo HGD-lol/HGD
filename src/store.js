@@ -262,6 +262,17 @@ function removeMember(id) {
   invalidate();
   return true;
 }
+function permanentDeleteMember(id) {
+  const idx = members.findIndex(x => x.id === Number(id));
+  if (idx < 0) return false;
+  const stored = members.map(toStoredMember).filter(m => m.id !== Number(id));
+  loadMembers(stored);
+  if (_useDb) dbWrite(() => sb.del('members', `id=eq.${Number(id)}`));
+  else saveMembersJson();
+  invalidate();
+  return true;
+}
+
 function restoreMember(id) {
   const idx = members.findIndex(x => x.id === Number(id));
   if (idx < 0) return false;
@@ -284,6 +295,6 @@ module.exports = {
   addUserMatch, replaceUserMatch, deleteUserMatch,
   addPending, getPending, findPending, deletePending,
   getDashConfig, setDashConfig,
-  editMember, addMember, removeMember, restoreMember,
+  editMember, addMember, removeMember, permanentDeleteMember, restoreMember,
   counts, roster,
 };

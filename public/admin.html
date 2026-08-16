@@ -91,7 +91,6 @@
       <button class="tab" data-t="dashboard" aria-selected="true">대시보드 설정</button>
       <button class="tab" data-t="members" aria-selected="false">단원 관리</button>
       <button class="tab" data-t="matches" aria-selected="false">내전 기록 관리</button>
-      <button class="tab" data-t="suggestions" aria-selected="false">건의 관리</button>
     </div>
 
     <div class="view on" id="v-dashboard">
@@ -117,16 +116,18 @@
           <label class="fld">출생연도<input id="a_birth" type="number" value="2000" style="width:90px"></label>
           <label class="fld">닉네임<input id="a_nick" style="width:150px"></label>
           <label class="fld">티어<select id="a_tier"></select></label>
-          <label class="fld">주라인<input id="a_main" placeholder="미드, 탑" style="width:110px"></label>
-          <label class="fld">부라인<input id="a_sub" placeholder="정글" style="width:110px"></label>
+          <label class="fld">주라인<select id="a_main" multiple style="width:110px;min-height:60px"></select></label>
+          <label class="fld">부라인<select id="a_sub" multiple style="width:110px;min-height:60px"></select></label>
           <label class="fld">직책<select id="a_role"></select></label>
           <button class="btn primary" id="addMemberBtn">추가</button>
         </div>
         <div class="err" id="addErr"></div>
-        <p style="color:var(--ink-3);font-size:12px;margin:6px 0 0">라인은 쉼표로 구분 (탑/정글/미드/원딜/서폿, 올라운더는 부라인에 "올라이너").</p>
+        <p style="color:var(--ink-3);font-size:12px;margin:6px 0 0">라인: 탑/정글/미드/원딜/서폿/올라이너 (쉼표로 구분).</p>
       </div>
       <div class="card">
-        <h3>단원 목록 <span id="memCount" class="tag"></span></h3>
+        <h3>단원 목록 <span id="memCount" class="tag"></span>
+          <button class="btn sm" id="sortNameBtn" style="margin-left:12px;font-size:11px">이름 ▲</button>
+        </h3>
         <div class="tw"><table id="memTable"></table></div>
       </div>
     </div>
@@ -138,12 +139,6 @@
       </div>
     </div>
 
-    <div class="view" id="v-suggestions">
-      <div class="card">
-        <h3>건의 목록 <span id="sugCount" class="tag"></span></h3>
-        <div id="sugList"></div>
-      </div>
-    </div>
   </section>
 </main>
 
@@ -156,6 +151,8 @@ function toast(msg){let t=$("#toast");if(!t){t=document.createElement('div');t.c
 
 let META={}, MEMBERS=[], LINE_ORDER=[], TIER_ORDER=[];
 const ROLES=['단장','부단장','단원','예비'];
+const LINE_VALUES=['탑','정글','미드','원딜','서폿','올라이너'];
+let memSortDir=1; // 1=오름차순, -1=내림차순
 
 /* ── 인증 ── */
 async function checkAuth(){
@@ -211,9 +208,18 @@ $("#saveDashConfig").addEventListener("click",async()=>{
 async function loadMembers(){
   const {members}=await jget('/api/members?includeHidden=1');
   MEMBERS=members;
+  members.sort((a,b)=>a.name.localeCompare(b.name,'ko')*memSortDir);
   $("#memCount").textContent=members.length+'명';
   const tierOpts=t=>TIER_ORDER.map(x=>`<option ${x===t?'selected':''}>${x}</option>`).join('');
   const roleOpts=r=>ROLES.map(x=>`<option ${x===r?'selected':''}>${x}</option>`).join('');
+  const lineOpts=(vals)=>{
+    const arr=Array.isArray(vals)?vals:[];
+    return arr.map(v=>`<option selected>${v}</option>`).join('');
+  };
+  const lineMultiSel=(field,vals)=>{
+    const arr=Array.isArray(vals)?vals:[];
+    return LINE_VALUES.map(l=>`<option value="${l}" ${arr.includes(l)?'selected':''}>${l}</option>`).join('');
+  };
   $("#memTable").innerHTML=`<thead><tr>
     <th>이름</th><th>출생</th><th>닉네임</th><th>티어</th><th>주라인</th><th>부라인</th><th>직책</th><th>점수</th><th></th></tr></thead>
     <tbody>${members.map(m=>`<tr data-id="${m.id}" class="${m.hidden?'hidden-row':''}">
@@ -221,13 +227,13 @@ async function loadMembers(){
       <td><input data-f="birth" type="number" value="${m.birth}" style="width:70px"></td>
       <td><input data-f="nick" value="${esc(m.nick)}" style="width:130px"></td>
       <td><select data-f="tier">${tierOpts(m.tier)}</select></td>
-      <td><input data-f="main" value="${esc(m.main.join(', '))}" style="width:100px"></td>
-      <td><input data-f="sub" value="${esc(m.sub.join(', '))}" style="width:100px"></td>
+      <td><select data-f="main" multiple style="width:110px;min-height:60px">${lineMultiSel('main',m.main)}</select></td>
+      <td><select data-f="sub" multiple style="width:110px;min-height:60px">${lineMultiSel('sub',m.sub)}</select></td>
       <td><select data-f="role">${roleOpts(m.role)}</select></td>
       <td class="num"><span class="tag">${m.score}</span></td>
       <td style="white-space:nowrap">
         <button class="btn sm save">저장</button>
-        ${m.hidden?'<button class="btn sm restore">복원</button>':'<button class="btn sm danger del">삭제</button>'}
+        ${m.hidden?'<button class="btn sm restore">복원</button> <button class="btn sm danger perm-del">완전삭제</button>':'<button class="btn sm danger del">삭제</button>'}
       </td></tr>`).join('')}</tbody>`;
 }
 function esc(s){return String(s==null?'':s).replace(/"/g,'&quot;').replace(/</g,'&lt;')}
@@ -237,7 +243,7 @@ $("#memTable").addEventListener("click",async e=>{
     const patch={};
     $$("[data-f]",tr).forEach(inp=>{
       const f=inp.dataset.f;
-      if(f==='main'||f==='sub') patch[f]=inp.value.split(',').map(s=>s.trim()).filter(Boolean);
+      if(f==='main'||f==='sub') patch[f]=[...inp.selectedOptions].map(o=>o.value);
       else patch[f]=inp.value;
     });
     try{ await jsend('PATCH','/api/admin/members/'+id,patch); toast('저장했습니다'); await refreshAll(); }
@@ -245,21 +251,29 @@ $("#memTable").addEventListener("click",async e=>{
   } else if(e.target.classList.contains("del")){
     if(!confirm('이 단원을 명단에서 숨기시겠어요? (과거 기록은 유지됩니다)'))return;
     try{ await jsend('DELETE','/api/admin/members/'+id); toast('삭제(숨김)했습니다'); await refreshAll(); }catch(ex){toast('실패: '+ex.message);}
+  } else if(e.target.classList.contains("perm-del")){
+    if(!confirm('이 단원을 완전히 삭제합니다. 과거 기록에서도 이름이 표시되지 않습니다. 정말 삭제할까요?'))return;
+    try{ await jsend('DELETE','/api/admin/members/'+id+'/permanent'); toast('완전 삭제했습니다'); await refreshAll(); }catch(ex){toast('실패: '+ex.message);}
   } else if(e.target.classList.contains("restore")){
     try{ await jsend('POST','/api/admin/members/'+id+'/restore'); toast('복원했습니다'); await refreshAll(); }catch(ex){toast('실패: '+ex.message);}
   }
+});
+$("#sortNameBtn").addEventListener("click",()=>{
+  memSortDir*=-1;
+  $("#sortNameBtn").textContent='이름 '+(memSortDir>0?'▲':'▼');
+  loadMembers();
 });
 $("#addMemberBtn").addEventListener("click",async()=>{
   const err=$("#addErr");err.textContent='';
   const body={
     name:$("#a_name").value.trim(), birth:Number($("#a_birth").value),
     nick:$("#a_nick").value.trim(), tier:$("#a_tier").value,
-    main:$("#a_main").value.split(',').map(s=>s.trim()).filter(Boolean),
-    sub:$("#a_sub").value.split(',').map(s=>s.trim()).filter(Boolean),
+    main:[...$("#a_main").selectedOptions].map(o=>o.value),
+    sub:[...$("#a_sub").selectedOptions].map(o=>o.value),
     role:$("#a_role").value,
   };
   try{ await jsend('POST','/api/admin/members',body); toast('단원을 추가했습니다');
-    $("#a_name").value='';$("#a_nick").value='';$("#a_main").value='';$("#a_sub").value='';
+    $("#a_name").value='';$("#a_nick").value='';[...$("#a_main").options].forEach(o=>o.selected=false);[...$("#a_sub").options].forEach(o=>o.selected=false);
     await refreshAll();
   }catch(ex){ err.textContent=(ex.payload&&ex.payload.messages&&ex.payload.messages[0])||('추가 실패: '+ex.message); }
 });
@@ -342,39 +356,15 @@ $("#matchTable").addEventListener("click",async e=>{
   }
 });
 
-/* ── 건의 관리 ── */
-async function loadSuggestions(){
-  try{
-    const {suggestions}=await jget('/api/suggestions');
-    $("#sugCount").textContent=suggestions.length+'건';
-    if(!suggestions.length){$("#sugList").innerHTML='<p style="color:var(--ink-3);font-size:13px">건의가 없습니다.</p>';return}
-    $("#sugList").innerHTML=suggestions.map(s=>`
-      <div style="border:1px solid var(--line-soft);border-radius:9px;padding:12px;margin-bottom:10px;background:var(--surface-2)" data-sid="${s.id}">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span style="font-weight:700;font-size:13px">${esc(s.author_name)}</span>
-          <span style="font-size:11px;color:var(--ink-3)">${new Date(s.created_at).toLocaleString('ko')}</span>
-        </div>
-        <p style="margin:0 0 8px;font-size:13px;white-space:pre-wrap;word-break:break-word">${esc(s.content)}</p>
-        <div style="text-align:right">
-          <button class="btn sm danger del-sug" data-sid="${s.id}">삭제</button>
-        </div>
-      </div>`).join('');
-    $$(".del-sug").forEach(btn=>btn.addEventListener("click",async()=>{
-      if(!confirm('이 건의를 삭제할까요?'))return;
-      try{await jsend('DELETE','/api/suggestions/'+btn.dataset.sid);toast('삭제했습니다');loadSuggestions();}catch(ex){toast('실패: '+ex.message)}
-    }));
-  }catch(ex){
-    $("#sugList").innerHTML=`<p style="color:var(--red);font-size:13px">건의 로딩 실패: ${ex.message}</p>`;
-  }
-}
-
 async function loadAll(){
   META=await jget('/api/meta');
   LINE_ORDER=META.lineOrder; TIER_ORDER=META.tierOrder;
   fillSelect($("#a_tier"),TIER_ORDER); $("#a_tier").value='언랭';
-  fillSelect($("#a_role"),ROLES); $("#a_role").value='단원';
+  fillSelect($("#a_role"),ROLES); $("#a_role").value='예비';
+  fillSelect($("#a_main"),LINE_VALUES);
+  fillSelect($("#a_sub"),LINE_VALUES);
   await loadDashConfig();
-  await loadMembers(); await loadMatches(); await loadSuggestions();
+  await loadMembers(); await loadMatches();
 }
 
 checkAuth().catch(ex=>{ $("#loginView").style.display='block'; console.error(ex); });

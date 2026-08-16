@@ -98,7 +98,7 @@ router.post('/members', requireAdmin, (req, res) => {
     tier: value.tier || '언랭',
     main: value.main || [],
     sub: value.sub || [],
-    role: value.role || '단원',
+    role: value.role || '예비',
   });
   res.status(201).json(memberById(id));
 });
@@ -123,6 +123,13 @@ router.post('/members/:id/restore', requireAdmin, (req, res) => {
   const id = Number(req.params.id);
   store.restoreMember(id);
   res.json({ restored: true, id });
+});
+
+router.delete('/members/:id/permanent', requireAdmin, (req, res) => {
+  const id = Number(req.params.id);
+  if (!memberById(id)) return res.status(404).json({ error: 'member_not_found', id: req.params.id });
+  store.permanentDeleteMember(id);
+  res.json({ permanentlyDeleted: true, id });
 });
 
 module.exports = router;
