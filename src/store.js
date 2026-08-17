@@ -17,7 +17,7 @@ const DASH_CONFIG_FILE = path.join(DATA_DIR, 'dashboard-config.json');
 
 let userMatches = [];
 let pendingMatches = [];
-let dashConfig = { title: '협곡단 내전 기록실', description: '단원 명단과 티어, 내전 전적을 한곳에서.', season: '2026 Split 2' };
+let dashConfig = { title: '협곡단 내전 기록실', description: '단원 명단과 티어, 내전 전적을 한곳에서.', season: '2026 Split 2', matchRegistrationEnabled: true };
 let rosterInfo = { source: 'uninitialized', count: 0 };
 let cachedAll = null;
 let cachedStats = null;
@@ -138,7 +138,7 @@ async function init() {
     // 대시보드 설정
     if (sbConfig && sbConfig.length > 0) {
       const c = sbConfig[0];
-      dashConfig = { title: c.title, description: c.description, season: c.season };
+      dashConfig = { title: c.title, description: c.description, season: c.season, matchRegistrationEnabled: c.match_registration_enabled !== false };
     } else {
       dashConfig = readJson(DASH_CONFIG_FILE, dashConfig);
       await dbWrite(() => sb.upsert('dashboard_config', [{ id: 1, ...dashConfig }]));
@@ -223,8 +223,10 @@ function deletePending(id) {
 function getDashConfig() { return { ...dashConfig }; }
 function setDashConfig(cfg) {
   dashConfig = { ...dashConfig, ...cfg };
-  if (_useDb) dbWrite(() => sb.update('dashboard_config', 'id=eq.1', dashConfig));
-  else saveDashConfigJson();
+  if (_useDb) {
+    const dbCfg = { title: dashConfig.title, description: dashConfig.description, season: dashConfig.season, match_registration_enabled: dashConfig.matchRegistrationEnabled !== false };
+    dbWrite(() => sb.update('dashboard_config', 'id=eq.1', dbCfg));
+  } else saveDashConfigJson();
   return dashConfig;
 }
 

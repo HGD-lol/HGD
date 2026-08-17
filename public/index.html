@@ -437,7 +437,6 @@
       <button class="tab" role="tab" aria-selected="false" data-view="history">내전 히스토리</button>
       <button class="tab" role="tab" aria-selected="false" data-view="matches">내전 기록 <span class="c" id="cMatch">0</span></button>
       <button class="tab" role="tab" aria-selected="false" data-view="rank">전적 순위</button>
-      <button class="tab" role="tab" aria-selected="false" data-view="balance">팀 밸런서</button>
       <button class="tab tab-add" role="tab" aria-selected="false" data-view="add">＋ 내전 등록</button>
     </nav>
   </div>
@@ -487,6 +486,10 @@
       </div>
       <div class="chips" id="lineChips" aria-label="라인 필터"></div>
       <div class="chips" id="tierChips" aria-label="티어 필터"></div>
+      <div class="chips">
+        <button class="chip roster-sort-chip" data-rsort="tier" aria-pressed="true">티어순</button>
+        <button class="chip roster-sort-chip" data-rsort="name" aria-pressed="false">이름순</button>
+      </div>
     </div>
     <div class="roster" id="roster"></div>
   </section>
@@ -533,20 +536,6 @@
     <p style="color:var(--ink-3);font-size:12px;margin-top:12px">※ 내전 1회 이상 참여한 단원 기준 · 승률 순 정렬 (열 제목을 눌러 정렬 변경)</p>
   </section>
 
-  <!-- TEAM BALANCER -->
-  <section class="view" id="view-balance" role="tabpanel">
-    <div class="sec-h"><span class="eyebrow">Balancer</span><h2 style="font-size:22px">팀 밸런서</h2><div class="rule"></div></div>
-    <p class="bal-intro">오늘 내전에 참여할 <b>10명</b>을 선택하면 티어를 기준으로 최대한 균형 잡힌 블루팀·레드팀을 자동 편성합니다.</p>
-    <div class="bal-toolbar">
-      <button class="chip" id="randomPick" type="button">🎲 무작위 10명</button>
-      <button class="chip" id="clearPick" type="button">전체 해제</button>
-      <span class="bal-count">선택 <b id="pickCount">0</b> / 10</span>
-      <span style="flex:1"></span>
-      <button class="btn primary" id="balanceBtn" type="button" disabled>⚖ 팀 짜기</button>
-    </div>
-    <div class="pick-grid" id="pickGrid"></div>
-    <div class="bal-result" id="balResult" style="display:none"></div>
-  </section>
 
 
   <!-- ADD MATCH (내전 등록) -->
@@ -643,6 +632,7 @@ async function loadPending(){
   const res=await jget('/api/pending');
   S.pending=res.pending;
 }
+let matchRegEnabled=true;
 async function loadDashConfig(){
   const dash=await jget('/api/dashboard');
   if(dash.config){
@@ -650,6 +640,16 @@ async function loadDashConfig(){
     $("#dashDesc").textContent=dash.config.description||'';
     $("#dashDesc").style.whiteSpace='pre-wrap';
     $("#seasonLabel").textContent=dash.config.season||'2026 Split 2';
+    matchRegEnabled=dash.config.matchRegistrationEnabled!==false;
+    applyMatchRegState();
+  }
+}
+function applyMatchRegState(){
+  const addView=$("#view-add");
+  const addTab=$('[data-view="add"]');
+  if(!matchRegEnabled){
+    addTab.style.opacity='0.4';
+    addView.innerHTML=`<div class="empty" style="padding:60px 20px;color:var(--ink-3);font-size:15px">내전 등록이 현재 비활성화 상태입니다.<br>관리자가 활성화하면 사용할 수 있습니다.</div>`;
   }
 }
 function renderAll(){renderDist();renderTopScores();renderTopPlayers();renderMatches();renderRoster();renderRank();renderPending();}
@@ -882,7 +882,12 @@ async function deletePending(pid){
 }
 
 /* ========== ROSTER ========== */
-let filterLine="전체", filterTier="전체", searchQ="";
+let filterLine="전체", filterTier="전체", searchQ="", rosterSortBy="tier";
+$$(".roster-sort-chip").forEach(btn=>btn.addEventListener("click",()=>{
+  rosterSortBy=btn.dataset.rsort;
+  $$(".roster-sort-chip").forEach(b=>b.setAttribute("aria-pressed",b===btn));
+  renderRoster();
+}));
 function renderChips(){
   const lc=$("#lineChips");
   lc.innerHTML=["전체",...LINE_ORDER].map(l=>
@@ -902,7 +907,8 @@ function renderRoster(){
       if(!(m.name.toLowerCase().includes(q)||m.nick.toLowerCase().includes(q))) return false;}
     return true;
   });
-  list.sort((a,b)=>TIER_RANK[b.tier]-TIER_RANK[a.tier]||a.name.localeCompare(b.name,"ko"));
+  if(rosterSortBy==='name') list.sort((a,b)=>a.name.localeCompare(b.name,"ko"));
+  else list.sort((a,b)=>TIER_RANK[b.tier]-TIER_RANK[a.tier]||a.name.localeCompare(b.name,"ko"));
   if(!list.length){wrap.innerHTML=`<div class="empty" style="grid-column:1/-1">조건에 맞는 단원이 없습니다.</div>`;return}
   wrap.innerHTML=list.map(m=>{
     const s=S.stats[m.id]||{g:0,w:0,l:0,wr:0,streak:0,score:200};
@@ -1070,75 +1076,6 @@ function toast(msg){
   clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2600);
 }
 
-/* ========== TEAM BALANCER ========== */
-let picked=new Set(), lastBalance=null, rerollN=0;
-const VERDICT_COLOR={perfect:'var(--good)',great:'var(--good)',good:'var(--blue-2)',warn:'var(--warn)',bad:'var(--red)'};
-function renderPicker(){
-  const list=S.members.slice().sort((a,b)=>TIER_RANK[b.tier]-TIER_RANK[a.tier]||a.name.localeCompare(b.name,"ko"));
-  $("#pickGrid").innerHTML=list.map(m=>{
-    const on=picked.has(m.id),full=picked.size>=10&&!on;
-    return `<button class="pchip${on?' on':''}" type="button" data-id="${m.id}" aria-pressed="${on}" ${full?'disabled':''}>
-      <span class="pdot" style="background:${TIER_COLOR[m.tier]}"></span>${m.name}
-      <span class="ptier" style="color:${TIER_COLOR[m.tier]}">${m.tier}</span></button>`;
-  }).join("");
-  $("#pickCount").textContent=picked.size;
-  $("#balanceBtn").disabled=picked.size!==10;
-}
-function lineupCol(side,title,players,score){
-  const rows=players.map(p=>{
-    return `<div class="prow bp">
-      <span class="pn">${p.name}<span class="tinytier" style="color:${TIER_COLOR[p.tier]}">${p.tier}</span></span>
-      <span class="fit fit${p.fit}">${p.fitLabel}</span></div>`;
-  }).join("");
-  return `<div class="teamcol ${side}"><h4>${title} · 티어합 ${score}</h4>${rows}</div>`;
-}
-async function renderBalance(){
-  const box=$("#balResult");
-  box.innerHTML=`<div class="bal-summary"><span style="color:var(--ink-3)">팀을 편성하는 중…</span></div>`;
-  box.style.display="block";
-  let c;
-  try{ c=await jsend('POST','/api/balance',{ids:[...picked],reroll:rerollN}); }
-  catch(ex){ box.innerHTML=`<div class="bal-summary"><span style="color:var(--red)">편성 실패: ${ex.message}</span></div>`; return; }
-  lastBalance=c;
-  const vColor=VERDICT_COLOR[c.verdict.level]||'var(--ink)';
-  const bsum=c.blue.tierSum, rsum=c.red.tierSum, tot=bsum+rsum||1;
-  box.innerHTML=`
-    <div class="bal-summary">
-      <div class="bal-score">
-        <span class="s b num">${bsum}</span>
-        <span class="bal-bar"><i class="ib" style="width:${bsum/tot*100}%"></i><i class="ir" style="width:${rsum/tot*100}%"></i></span>
-        <span class="s r num">${rsum}</span>
-      </div>
-      <div class="bal-verdict">
-        <div class="eyebrow">티어 균형</div>
-        <b style="color:${vColor}">${c.verdict.t}</b>
-        <span style="font-size:11px;color:var(--ink-3)">티어합 차이 ${c.tierDiff}</span>
-      </div>
-    </div>
-    <div class="bal-teams">
-      ${lineupCol("blue","블루팀",c.blue.players,bsum)}
-      ${lineupCol("red","레드팀",c.red.players,rsum)}
-    </div>
-    <div class="bal-actions">
-      <button class="btn ghost" type="button" id="rerollBtn">🔄 다시 섞기</button>
-    </div>`;
-  $("#rerollBtn").onclick=()=>{rerollN++;renderBalance()};
-}
-$("#pickGrid").addEventListener("click",e=>{
-  const b=e.target.closest(".pchip");if(!b||b.disabled)return;
-  const id=+b.dataset.id;
-  if(picked.has(id))picked.delete(id);else if(picked.size<10)picked.add(id);
-  $("#balResult").style.display="none";rerollN=0;renderPicker();
-});
-$("#randomPick").addEventListener("click",()=>{
-  picked=new Set(S.members.slice().sort(()=>Math.random()-.5).slice(0,10).map(m=>m.id));
-  $("#balResult").style.display="none";rerollN=0;renderPicker();
-});
-$("#clearPick").addEventListener("click",()=>{
-  picked.clear();$("#balResult").style.display="none";rerollN=0;renderPicker();
-});
-$("#balanceBtn").addEventListener("click",()=>{if(picked.size===10){rerollN=0;renderBalance()}});
-
 /* ========== INIT ========== */
 (async function init(){
   try{
@@ -1146,7 +1083,7 @@ $("#balanceBtn").addEventListener("click",()=>{if(picked.size===10){rerollN=0;re
     await loadMembers();
     await Promise.all([refreshData(),loadPending()]);
     await loadDashConfig();
-    renderChips();renderAddPicker();renderPicker();renderAll();
+    renderChips();renderAddPicker();renderAll();
   }catch(ex){
     document.querySelector("main").insertAdjacentHTML("afterbegin",
       `<div class="empty" style="color:var(--red)">API 로딩 실패: ${ex.message}<br>서버가 실행 중인지 확인하세요 (npm start).</div>`);

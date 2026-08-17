@@ -41,11 +41,12 @@ router.get('/dashboard-config', requireAdmin, (req, res) => {
 });
 
 router.patch('/dashboard-config', requireAdmin, (req, res) => {
-  const { title, description, season } = req.body || {};
+  const { title, description, season, matchRegistrationEnabled } = req.body || {};
   const patch = {};
   if (title !== undefined) patch.title = String(title).trim();
   if (description !== undefined) patch.description = String(description).trim();
   if (season !== undefined) patch.season = String(season).trim();
+  if (matchRegistrationEnabled !== undefined) patch.matchRegistrationEnabled = !!matchRegistrationEnabled;
   const cfg = store.setDashConfig(patch);
   res.json(cfg);
 });

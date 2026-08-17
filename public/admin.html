@@ -100,6 +100,10 @@
           <label class="fld">제목<input id="dc_title" style="width:100%"></label>
           <label class="fld">설명<textarea id="dc_desc" style="width:100%"></textarea></label>
           <label class="fld">현재 시즌<input id="dc_season" style="width:100%"></label>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
+            <span style="font-size:13px;font-weight:700;color:var(--ink-2)">내전 등록:</span>
+            <button class="btn sm" id="toggleMatchReg">로딩 중...</button>
+          </div>
           <div style="text-align:right">
             <button class="btn primary" id="saveDashConfig">저장</button>
           </div>
@@ -116,13 +120,14 @@
           <label class="fld">출생연도<input id="a_birth" type="number" value="2000" style="width:90px"></label>
           <label class="fld">닉네임<input id="a_nick" style="width:150px"></label>
           <label class="fld">티어<select id="a_tier"></select></label>
-          <label class="fld">주라인<select id="a_main" multiple style="width:110px;min-height:60px"></select></label>
-          <label class="fld">부라인<select id="a_sub" multiple style="width:110px;min-height:60px"></select></label>
+          <label class="fld">주라인<select id="a_main" style="width:110px"></select></label>
+          <label class="fld">부라인1<select id="a_sub1" style="width:110px"></select></label>
+          <label class="fld">부라인2<select id="a_sub2" style="width:110px"></select></label>
           <label class="fld">직책<select id="a_role"></select></label>
           <button class="btn primary" id="addMemberBtn">추가</button>
         </div>
         <div class="err" id="addErr"></div>
-        <p style="color:var(--ink-3);font-size:12px;margin:6px 0 0">라인: 탑/정글/미드/원딜/서폿/올라이너 (쉼표로 구분).</p>
+        <p style="color:var(--ink-3);font-size:12px;margin:6px 0 0">주라인 1개, 부라인 최대 2개를 선택하세요.</p>
       </div>
       <div class="card">
         <h3>단원 목록 <span id="memCount" class="tag"></span>
@@ -184,14 +189,30 @@ $$(".tab").forEach(t=>t.addEventListener("click",()=>{
 function fillSelect(sel,arr,cur){sel.innerHTML=arr.map(v=>`<option value="${v}">${v}</option>`).join('');if(cur!=null)sel.value=cur;}
 
 /* ── 대시보드 설정 ── */
+let matchRegEnabled=true;
 async function loadDashConfig(){
   try{
     const cfg=await jget('/api/admin/dashboard-config');
     $("#dc_title").value=cfg.title||'';
     $("#dc_desc").value=cfg.description||'';
     $("#dc_season").value=cfg.season||'';
+    matchRegEnabled=cfg.matchRegistrationEnabled!==false;
+    updateMatchRegBtn();
   }catch(ex){console.log('dash config load error',ex)}
 }
+function updateMatchRegBtn(){
+  const btn=$("#toggleMatchReg");
+  if(matchRegEnabled){btn.textContent='활성화됨 (클릭하여 비활성화)';btn.style.borderColor='var(--good)';btn.style.color='var(--good)';}
+  else{btn.textContent='비활성화됨 (클릭하여 활성화)';btn.style.borderColor='var(--red)';btn.style.color='var(--red)';}
+}
+$("#toggleMatchReg").addEventListener("click",async()=>{
+  matchRegEnabled=!matchRegEnabled;
+  try{
+    await jsend('PATCH','/api/admin/dashboard-config',{matchRegistrationEnabled:matchRegEnabled});
+    updateMatchRegBtn();
+    toast(matchRegEnabled?'내전 등록이 활성화되었습니다':'내전 등록이 비활성화되었습니다');
+  }catch(ex){matchRegEnabled=!matchRegEnabled;toast('실패: '+ex.message);}
+});
 $("#saveDashConfig").addEventListener("click",async()=>{
   const err=$("#dashErr");err.textContent='';
   try{
@@ -212,29 +233,27 @@ async function loadMembers(){
   $("#memCount").textContent=members.length+'명';
   const tierOpts=t=>TIER_ORDER.map(x=>`<option ${x===t?'selected':''}>${x}</option>`).join('');
   const roleOpts=r=>ROLES.map(x=>`<option ${x===r?'selected':''}>${x}</option>`).join('');
-  const lineOpts=(vals)=>{
-    const arr=Array.isArray(vals)?vals:[];
-    return arr.map(v=>`<option selected>${v}</option>`).join('');
-  };
-  const lineMultiSel=(field,vals)=>{
-    const arr=Array.isArray(vals)?vals:[];
-    return LINE_VALUES.map(l=>`<option value="${l}" ${arr.includes(l)?'selected':''}>${l}</option>`).join('');
-  };
+  const lineSel=(cur)=>['없음',...LINE_VALUES].map(l=>`<option value="${l}" ${l===cur?'selected':''}>${l}</option>`).join('');
   $("#memTable").innerHTML=`<thead><tr>
-    <th>이름</th><th>출생</th><th>닉네임</th><th>티어</th><th>주라인</th><th>부라인</th><th>직책</th><th>점수</th><th></th></tr></thead>
-    <tbody>${members.map(m=>`<tr data-id="${m.id}" class="${m.hidden?'hidden-row':''}">
+    <th>이름</th><th>출생</th><th>닉네임</th><th>티어</th><th>주라인</th><th>부라인1</th><th>부라인2</th><th>직책</th><th>점수</th><th></th></tr></thead>
+    <tbody>${members.map(m=>{
+      const mainVal=(m.main&&m.main[0])||'없음';
+      const sub1Val=(m.sub&&m.sub[0])||'없음';
+      const sub2Val=(m.sub&&m.sub[1])||'없음';
+      return `<tr data-id="${m.id}" class="${m.hidden?'hidden-row':''}">
       <td><input data-f="name" value="${esc(m.name)}" style="width:90px"></td>
       <td><input data-f="birth" type="number" value="${m.birth}" style="width:70px"></td>
       <td><input data-f="nick" value="${esc(m.nick)}" style="width:130px"></td>
       <td><select data-f="tier">${tierOpts(m.tier)}</select></td>
-      <td><select data-f="main" multiple style="width:110px;min-height:60px">${lineMultiSel('main',m.main)}</select></td>
-      <td><select data-f="sub" multiple style="width:110px;min-height:60px">${lineMultiSel('sub',m.sub)}</select></td>
+      <td><select data-f="main">${lineSel(mainVal)}</select></td>
+      <td><select data-f="sub1">${lineSel(sub1Val)}</select></td>
+      <td><select data-f="sub2">${lineSel(sub2Val)}</select></td>
       <td><select data-f="role">${roleOpts(m.role)}</select></td>
       <td class="num"><span class="tag">${m.score}</span></td>
       <td style="white-space:nowrap">
         <button class="btn sm save">저장</button>
         ${m.hidden?'<button class="btn sm restore">복원</button> <button class="btn sm danger perm-del">완전삭제</button>':'<button class="btn sm danger del">삭제</button>'}
-      </td></tr>`).join('')}</tbody>`;
+      </td></tr>`;}).join('')}</tbody>`;
 }
 function esc(s){return String(s==null?'':s).replace(/"/g,'&quot;').replace(/</g,'&lt;')}
 $("#memTable").addEventListener("click",async e=>{
@@ -243,9 +262,18 @@ $("#memTable").addEventListener("click",async e=>{
     const patch={};
     $$("[data-f]",tr).forEach(inp=>{
       const f=inp.dataset.f;
-      if(f==='main'||f==='sub') patch[f]=[...inp.selectedOptions].map(o=>o.value);
-      else patch[f]=inp.value;
+      if(f==='main'){
+        const v=inp.value;
+        patch.main=v&&v!=='없음'?[v]:[];
+      } else if(f==='sub1'||f==='sub2'){
+        // handled below
+      } else {
+        patch[f]=inp.value;
+      }
     });
+    const s1=$('[data-f="sub1"]',tr).value;
+    const s2=$('[data-f="sub2"]',tr).value;
+    patch.sub=[s1,s2].filter(v=>v&&v!=='없음');
     try{ await jsend('PATCH','/api/admin/members/'+id,patch); toast('저장했습니다'); await refreshAll(); }
     catch(ex){ toast((ex.payload&&ex.payload.messages&&ex.payload.messages[0])||'저장 실패'); }
   } else if(e.target.classList.contains("del")){
@@ -268,12 +296,12 @@ $("#addMemberBtn").addEventListener("click",async()=>{
   const body={
     name:$("#a_name").value.trim(), birth:Number($("#a_birth").value),
     nick:$("#a_nick").value.trim(), tier:$("#a_tier").value,
-    main:[...$("#a_main").selectedOptions].map(o=>o.value),
-    sub:[...$("#a_sub").selectedOptions].map(o=>o.value),
+    main:$("#a_main").value&&$("#a_main").value!=='없음'?[$("#a_main").value]:[],
+    sub:[$("#a_sub1").value,$("#a_sub2").value].filter(Boolean).filter(v=>v!=='없음'),
     role:$("#a_role").value,
   };
   try{ await jsend('POST','/api/admin/members',body); toast('단원을 추가했습니다');
-    $("#a_name").value='';$("#a_nick").value='';[...$("#a_main").options].forEach(o=>o.selected=false);[...$("#a_sub").options].forEach(o=>o.selected=false);
+    $("#a_name").value='';$("#a_nick").value='';$("#a_main").value='없음';$("#a_sub1").value='없음';$("#a_sub2").value='없음';
     await refreshAll();
   }catch(ex){ err.textContent=(ex.payload&&ex.payload.messages&&ex.payload.messages[0])||('추가 실패: '+ex.message); }
 });
@@ -361,8 +389,9 @@ async function loadAll(){
   LINE_ORDER=META.lineOrder; TIER_ORDER=META.tierOrder;
   fillSelect($("#a_tier"),TIER_ORDER); $("#a_tier").value='언랭';
   fillSelect($("#a_role"),ROLES); $("#a_role").value='예비';
-  fillSelect($("#a_main"),LINE_VALUES);
-  fillSelect($("#a_sub"),LINE_VALUES);
+  fillSelect($("#a_main"),['없음',...LINE_VALUES]); $("#a_main").value='없음';
+  fillSelect($("#a_sub1"),['없음',...LINE_VALUES]); $("#a_sub1").value='없음';
+  fillSelect($("#a_sub2"),['없음',...LINE_VALUES]); $("#a_sub2").value='없음';
   await loadDashConfig();
   await loadMembers(); await loadMatches();
 }
