@@ -68,6 +68,11 @@ app.post('/api/roster/refresh', async (_req, res, next) => {
   }
 });
 
+/* ── 시즌 ── */
+app.get('/api/seasons', (_req, res) => {
+  res.json({ seasons: store.getSeasons(), current: store.getCurrentSeason() });
+});
+
 /* ── 스케일/메타 상수 ── */
 app.get('/api/meta', (_req, res) => {
   res.json({
@@ -84,26 +89,36 @@ app.get('/api/meta', (_req, res) => {
 
 /* ── Pending (대기 내전) ── */
 app.get('/api/pending', (_req, res) => {
-  const list = store.getPending().map((p) => ({
-    ...p,
-    players: p.playerIds.map((id) => {
+  const list = store.getPending().map((p) => {
+    const regularPlayers = p.playerIds.map((id) => {
       const m = memberById(id);
       const s = store.stats()[id] || { score: 200 };
       return { id, name: m ? m.name : `#${id}`, tier: m ? m.tier : '언랭', score: s.score };
-    }),
-  }));
+    });
+    const mercPlayers = (p.mercenaries || []).map(merc => ({
+      id: merc.tempId,
+      name: merc.name,
+      tier: merc.tier || '언랭',
+      score: null,
+      mercenary: true,
+      lanes: merc.lanes || [],
+    }));
+    return { ...p, players: [...regularPlayers, ...mercPlayers] };
+  });
   res.json({ count: list.length, pending: list });
 });
 
 app.post('/api/pending', (req, res) => {
-  const { playerIds, mode } = req.body || {};
-  if (!Array.isArray(playerIds) || playerIds.length !== 10) {
+  const { playerIds, mercenaries, mode } = req.body || {};
+  const mercList = Array.isArray(mercenaries) ? mercenaries : [];
+  const ids = Array.isArray(playerIds) ? playerIds.map(Number) : [];
+  const totalCount = ids.length + mercList.length;
+  if (totalCount !== 10) {
     return res.status(400).json({ error: 'validation_failed', messages: ['정확히 10명을 선택하세요.'] });
   }
   if (mode && mode !== '협곡' && mode !== '칼바람') {
     return res.status(400).json({ error: 'validation_failed', messages: ["모드는 '협곡' 또는 '칼바람' 이어야 합니다."] });
   }
-  const ids = playerIds.map(Number);
   const bad = ids.filter((id) => !memberById(id));
   if (bad.length) {
     return res.status(400).json({ error: 'validation_failed', messages: [`존재하지 않는 단원 id: ${bad.join(', ')}`] });
@@ -112,11 +127,18 @@ app.post('/api/pending', (req, res) => {
   if (dup != null) {
     return res.status(400).json({ error: 'validation_failed', messages: ['중복된 단원이 있습니다.'] });
   }
+  // 용병 검증
+  for (const merc of mercList) {
+    if (!merc.name || !String(merc.name).trim()) {
+      return res.status(400).json({ error: 'validation_failed', messages: ['용병 이름을 입력하세요.'] });
+    }
+  }
   const pending = {
     id: 'p' + Date.now(),
     date: new Date().toISOString(),
     mode: mode || '협곡',
     playerIds: ids,
+    mercenaries: mercList.map(m => ({ tempId: 'merc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6), name: String(m.name).trim(), tier: m.tier || '언랭', lanes: m.lanes || [] })),
   };
   store.addPending(pending);
   res.status(201).json(pending);

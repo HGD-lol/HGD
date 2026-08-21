@@ -1,37 +1,33 @@
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
-
 const sb = require('./lib/supabase');
 const { buildMatch, toStored } = require('./lib/match');
 const { computeStats } = require('./lib/stats');
 const { loadMembers, toStoredMember, memberById, members, nextId } = require('./lib/members');
 
-/* ── JSON 파일 (폴백 전용) ── */
-const DATA_DIR = path.join(__dirname, '..', 'data');
-const MATCH_FILE = path.join(DATA_DIR, 'matches.json');
-const MEMBERS_FILE = path.join(DATA_DIR, 'members.json');
-const PENDING_FILE = path.join(DATA_DIR, 'pending.json');
-const DASH_CONFIG_FILE = path.join(DATA_DIR, 'dashboard-config.json');
-
 let userMatches = [];
 let pendingMatches = [];
+let seasons = [];
 let dashConfig = { title: '협곡단 내전 기록실', description: '단원 명단과 티어, 내전 전적을 한곳에서.', season: '2026 Split 2', matchRegistrationEnabled: true };
 let rosterInfo = { source: 'uninitialized', count: 0 };
 let cachedAll = null;
 let cachedStats = null;
 let cachedStatsRift = null;
 let cachedStatsAram = null;
-let _useDb = false; // Supabase 연결 여부
 
 /* ── 유틸 ── */
-function ensureDir() { if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true }); }
-function readJson(file, fallback) { try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return fallback; } }
 function invalidate() { cachedAll = null; cachedStats = null; cachedStatsRift = null; cachedStatsAram = null; }
+
+/* DB 쓰기 (실패 시 로그만, 앱 안 죽음) */
+function dbWrite(fn) { return fn().catch(e => console.error('[DB write error]', e.message)); }
 
 /* ── DB ↔ App 변환 ── */
 function toDbMatch(m) {
+  const dbPlayer = (p) => {
+    const out = { id: p.id, lane: p.lane || null };
+    if (p.mercenary) { out.mercenary = true; out.name = p.name; out.tier = p.tier; }
+    return out;
+  };
   return {
     id: m.id,
     date: m.date instanceof Date ? m.date.toISOString() : m.date,
@@ -39,32 +35,26 @@ function toDbMatch(m) {
     mode: m.mode || '협곡',
     blue_win: m.blueWin,
     mvp_id: m.mvpId || null,
-    blue: m.blue.map(p => ({ id: p.id, lane: p.lane || null })),
-    red: m.red.map(p => ({ id: p.id, lane: p.lane || null })),
+    blue: m.blue.map(dbPlayer),
+    red: m.red.map(dbPlayer),
+    season_id: m.seasonId || null,
   };
 }
 function fromDbMatch(row) {
-  return { id: row.id, date: new Date(row.date), dur: row.dur, mode: row.mode, blueWin: row.blue_win, mvpId: row.mvp_id, blue: row.blue, red: row.red };
+  return { id: row.id, date: new Date(row.date), dur: row.dur, mode: row.mode, blueWin: row.blue_win, mvpId: row.mvp_id, blue: row.blue, red: row.red, seasonId: row.season_id || null };
 }
 function toDbPending(p) {
-  return { id: p.id, date: p.date, mode: p.mode || '협곡', player_ids: p.playerIds };
+  return { id: p.id, date: p.date, mode: p.mode || '협곡', player_ids: p.playerIds, mercenaries: p.mercenaries || [] };
 }
 function fromDbPending(row) {
-  return { id: row.id, date: row.date, mode: row.mode, playerIds: row.player_ids };
+  return { id: row.id, date: row.date, mode: row.mode, playerIds: row.player_ids, mercenaries: row.mercenaries || [] };
 }
-
-/* DB 쓰기 (실패 시 로그만, 앱 안 죽음) */
-function dbWrite(fn) { return fn().catch(e => console.error('[DB write error]', e.message)); }
-
-/* ── JSON 로드/저장 (폴백) ── */
-function loadUserJson() {
-  const raw = readJson(MATCH_FILE, []);
-  return Array.isArray(raw) ? raw.map(m => buildMatch({ ...m, date: new Date(m.date) })) : [];
+function toDbSeason(s) {
+  return { id: s.id, name: s.name, is_current: !!s.isCurrent, created_at: s.createdAt };
 }
-function saveUserJson() { ensureDir(); fs.writeFileSync(MATCH_FILE, JSON.stringify(userMatches.map(toStored), null, 2), 'utf8'); }
-function saveMembersJson() { ensureDir(); fs.writeFileSync(MEMBERS_FILE, JSON.stringify(members.map(toStoredMember), null, 2), 'utf8'); }
-function savePendingJson() { ensureDir(); fs.writeFileSync(PENDING_FILE, JSON.stringify(pendingMatches, null, 2), 'utf8'); }
-function saveDashConfigJson() { ensureDir(); fs.writeFileSync(DASH_CONFIG_FILE, JSON.stringify(dashConfig, null, 2), 'utf8'); }
+function fromDbSeason(row) {
+  return { id: row.id, name: row.name, isCurrent: !!row.is_current, createdAt: row.created_at };
+}
 
 /* ── Google Sheets → 가져오기 ── */
 async function importFromSheet() {
@@ -77,96 +67,104 @@ async function importFromSheet() {
     role: row[6] || '단원', hidden: false,
   }));
   loadMembers(memberList);
-  if (_useDb) { await dbWrite(() => sb.upsert('members', memberList)); }
-  else { saveMembersJson(); }
+  await dbWrite(() => sb.upsert('members', memberList));
   invalidate();
   rosterInfo = { source: r.source, count: memberList.length, fetchedAt: new Date().toISOString() };
   return rosterInfo;
 }
 
 /* ══════════════════════════════════════
-   부팅: Supabase 우선 → JSON 폴백
+   부팅: Supabase 전용
    ══════════════════════════════════════ */
 async function init() {
-  try {
-    const [sbMembers, sbMatches, sbPending, sbConfig] = await Promise.all([
-      sb.select('members', '', '*', 'id.asc'),
-      sb.select('matches', '', '*', 'date.desc'),
-      sb.select('pending', '', '*', 'date.desc'),
-      sb.select('dashboard_config', 'id=eq.1'),
-    ]);
-    _useDb = true;
-    console.log('  ✓ Supabase 연결 성공');
+  const [sbMembers, sbMatches, sbPending, sbConfig, sbSeasons] = await Promise.all([
+    sb.select('members', '', '*', 'id.asc'),
+    sb.select('matches', '', '*', 'date.desc'),
+    sb.select('pending', '', '*', 'date.desc'),
+    sb.select('dashboard_config', 'id=eq.1'),
+    sb.select('seasons', '', '*', 'created_at.asc'),
+  ]);
+  console.log('  ✓ Supabase 연결 성공');
 
-    // 단원
-    if (sbMembers && sbMembers.length > 0) {
-      loadMembers(sbMembers);
-      rosterInfo = { source: 'supabase', count: members.length };
-    } else {
-      // DB 테이블은 있지만 비어있음 → JSON에서 마이그레이션 시도
-      const jsonMembers = readJson(MEMBERS_FILE, null);
-      if (jsonMembers && jsonMembers.length) {
-        loadMembers(jsonMembers);
-        await dbWrite(() => sb.upsert('members', jsonMembers));
-        rosterInfo = { source: 'supabase(migrated)', count: members.length };
-      } else {
-        await importFromSheet();
-      }
-    }
-
-    // 내전 기록
-    if (sbMatches && sbMatches.length > 0) {
-      userMatches = sbMatches.map(row => buildMatch(fromDbMatch(row)));
-    } else {
-      userMatches = loadUserJson();
-      // JSON 데이터가 있으면 DB로 마이그레이션
-      if (userMatches.length) {
-        await dbWrite(() => sb.upsert('matches', userMatches.map(m => toDbMatch(toStored(m)))));
-      }
-    }
-
-    // 대기 내전
-    if (sbPending && sbPending.length > 0) {
-      pendingMatches = sbPending.map(fromDbPending);
-    } else {
-      pendingMatches = readJson(PENDING_FILE, []);
-      if (pendingMatches.length) {
-        await dbWrite(() => sb.upsert('pending', pendingMatches.map(toDbPending)));
-      }
-    }
-
-    // 대시보드 설정
-    if (sbConfig && sbConfig.length > 0) {
-      const c = sbConfig[0];
-      dashConfig = { title: c.title, description: c.description, season: c.season, matchRegistrationEnabled: c.match_registration_enabled !== false };
-    } else {
-      dashConfig = readJson(DASH_CONFIG_FILE, dashConfig);
-      await dbWrite(() => sb.upsert('dashboard_config', [{ id: 1, ...dashConfig }]));
-    }
-
-  } catch (e) {
-    console.warn('  ⚠ Supabase 연결 실패 → JSON 파일 모드:', e.message);
-    _useDb = false;
-
-    const saved = readJson(MEMBERS_FILE, null);
-    if (saved && Array.isArray(saved) && saved.length > 0) {
-      loadMembers(saved);
-      rosterInfo = { source: 'json', count: saved.length };
-    } else {
-      await importFromSheet();
-    }
-    userMatches = loadUserJson();
-    pendingMatches = readJson(PENDING_FILE, []);
-    dashConfig = readJson(DASH_CONFIG_FILE, dashConfig);
+  // 단원
+  if (sbMembers && sbMembers.length > 0) {
+    loadMembers(sbMembers);
+    rosterInfo = { source: 'supabase', count: members.length };
+  } else {
+    await importFromSheet();
   }
+
+  // 내전 기록
+  if (sbMatches && sbMatches.length > 0) {
+    userMatches = sbMatches.map(row => buildMatch(fromDbMatch(row)));
+  }
+
+  // 대기 내전
+  if (sbPending && sbPending.length > 0) {
+    pendingMatches = sbPending.map(fromDbPending);
+  }
+
+  // 대시보드 설정
+  if (sbConfig && sbConfig.length > 0) {
+    const c = sbConfig[0];
+    dashConfig = { title: c.title, description: c.description, season: c.season, matchRegistrationEnabled: c.match_registration_enabled !== false };
+  }
+
+  // 시즌
+  if (sbSeasons && sbSeasons.length > 0) {
+    seasons = sbSeasons.map(fromDbSeason);
+  }
+  await ensureDefaultSeason();
 
   invalidate();
   return rosterInfo;
 }
 
+/* ── 시즌 관리 ── */
+function getSeasons() { return seasons; }
+function getCurrentSeason() { return seasons.find(s => s.isCurrent) || seasons[0] || null; }
+
+async function ensureDefaultSeason() {
+  if (seasons.length === 0) {
+    const def = { id: 's_default', name: dashConfig.season || '시즌 1', isCurrent: true, createdAt: new Date().toISOString() };
+    seasons.push(def);
+    await dbWrite(() => sb.insert('seasons', toDbSeason(def)));
+  }
+  // 기존 매치 중 seasonId가 없는 것은 첫 번째 시즌에 배정
+  const defaultId = seasons[0].id;
+  const needUpdate = userMatches.filter(m => !m.seasonId);
+  needUpdate.forEach(m => { m.seasonId = defaultId; });
+  // DB에도 반영
+  if (needUpdate.length > 0) {
+    for (const m of needUpdate) {
+      await dbWrite(() => sb.update('matches', `id=eq.${m.id}`, { season_id: defaultId }));
+    }
+  }
+}
+
+async function createSeason(name) {
+  // 기존 시즌 모두 비활성화
+  seasons.forEach(s => { s.isCurrent = false; });
+  await dbWrite(() => sb.update('seasons', 'is_current=eq.true', { is_current: false }));
+
+  const newSeason = { id: 's_' + Date.now(), name, isCurrent: true, createdAt: new Date().toISOString() };
+  seasons.push(newSeason);
+  await dbWrite(() => sb.insert('seasons', toDbSeason(newSeason)));
+
+  // 대시보드 시즌 이름도 업데이트
+  setDashConfig({ season: name });
+  invalidate();
+  return newSeason;
+}
+
 /* ── 조회 ── */
-function allMatches() { if (!cachedAll) cachedAll = [...userMatches].sort((a, b) => b.date - a.date); return cachedAll; }
-function stats(mode) {
+function allMatches(seasonId) {
+  if (!cachedAll) cachedAll = [...userMatches].sort((a, b) => b.date - a.date);
+  if (seasonId) return cachedAll.filter(m => m.seasonId === seasonId);
+  return cachedAll;
+}
+function stats(mode, seasonId) {
+  if (seasonId) return computeStats(allMatches(seasonId), mode || undefined);
   if (!mode) { if (!cachedStats) cachedStats = computeStats(allMatches()); return cachedStats; }
   if (mode === '협곡') { if (!cachedStatsRift) cachedStatsRift = computeStats(allMatches(), '협곡'); return cachedStatsRift; }
   if (mode === '칼바람') { if (!cachedStatsAram) cachedStatsAram = computeStats(allMatches(), '칼바람'); return cachedStatsAram; }
@@ -176,9 +174,10 @@ function findMatch(id) { return allMatches().find(m => String(m.id) === String(i
 
 /* ── 매치 변경 ── */
 function addUserMatch(match) {
+  const cur = getCurrentSeason();
+  if (cur && !match.seasonId) match.seasonId = cur.id;
   userMatches.unshift(match);
-  if (_useDb) dbWrite(() => sb.insert('matches', toDbMatch(toStored(match))));
-  else saveUserJson();
+  dbWrite(() => sb.insert('matches', toDbMatch(toStored(match))));
   invalidate();
   return match;
 }
@@ -186,8 +185,7 @@ function replaceUserMatch(id, match) {
   const idx = userMatches.findIndex(m => String(m.id) === String(id));
   if (idx < 0) return false;
   userMatches[idx] = match;
-  if (_useDb) dbWrite(() => sb.update('matches', `id=eq.${id}`, toDbMatch(toStored(match))));
-  else saveUserJson();
+  dbWrite(() => sb.update('matches', `id=eq.${id}`, toDbMatch(toStored(match))));
   invalidate();
   return true;
 }
@@ -195,8 +193,7 @@ function deleteUserMatch(id) {
   const before = userMatches.length;
   userMatches = userMatches.filter(m => String(m.id) !== String(id));
   if (userMatches.length === before) return false;
-  if (_useDb) dbWrite(() => sb.del('matches', `id=eq.${id}`));
-  else saveUserJson();
+  dbWrite(() => sb.del('matches', `id=eq.${id}`));
   invalidate();
   return true;
 }
@@ -204,8 +201,7 @@ function deleteUserMatch(id) {
 /* ── 대기 매치 ── */
 function addPending(p) {
   pendingMatches.unshift(p);
-  if (_useDb) dbWrite(() => sb.insert('pending', toDbPending(p)));
-  else savePendingJson();
+  dbWrite(() => sb.insert('pending', toDbPending(p)));
   return p;
 }
 function getPending() { return pendingMatches; }
@@ -214,8 +210,7 @@ function deletePending(id) {
   const before = pendingMatches.length;
   pendingMatches = pendingMatches.filter(p => String(p.id) !== String(id));
   if (pendingMatches.length === before) return false;
-  if (_useDb) dbWrite(() => sb.del('pending', `id=eq.${id}`));
-  else savePendingJson();
+  dbWrite(() => sb.del('pending', `id=eq.${id}`));
   return true;
 }
 
@@ -223,10 +218,8 @@ function deletePending(id) {
 function getDashConfig() { return { ...dashConfig }; }
 function setDashConfig(cfg) {
   dashConfig = { ...dashConfig, ...cfg };
-  if (_useDb) {
-    const dbCfg = { title: dashConfig.title, description: dashConfig.description, season: dashConfig.season, match_registration_enabled: dashConfig.matchRegistrationEnabled !== false };
-    dbWrite(() => sb.update('dashboard_config', 'id=eq.1', dbCfg));
-  } else saveDashConfigJson();
+  const dbCfg = { title: dashConfig.title, description: dashConfig.description, season: dashConfig.season, match_registration_enabled: dashConfig.matchRegistrationEnabled !== false };
+  dbWrite(() => sb.update('dashboard_config', 'id=eq.1', dbCfg));
   return dashConfig;
 }
 
@@ -237,8 +230,7 @@ function editMember(id, patch) {
   const stored = members.map(toStoredMember);
   stored[idx] = { ...stored[idx], ...patch };
   loadMembers(stored);
-  if (_useDb) dbWrite(() => sb.update('members', `id=eq.${Number(id)}`, stored[idx]));
-  else saveMembersJson();
+  dbWrite(() => sb.update('members', `id=eq.${Number(id)}`, stored[idx]));
   invalidate();
   return true;
 }
@@ -248,8 +240,7 @@ function addMember(obj) {
   const stored = members.map(toStoredMember);
   stored.push(newMember);
   loadMembers(stored);
-  if (_useDb) dbWrite(() => sb.insert('members', newMember));
-  else saveMembersJson();
+  dbWrite(() => sb.insert('members', newMember));
   invalidate();
   return id;
 }
@@ -259,8 +250,7 @@ function removeMember(id) {
   const stored = members.map(toStoredMember);
   stored[idx].hidden = true;
   loadMembers(stored);
-  if (_useDb) dbWrite(() => sb.update('members', `id=eq.${Number(id)}`, { hidden: true }));
-  else saveMembersJson();
+  dbWrite(() => sb.update('members', `id=eq.${Number(id)}`, { hidden: true }));
   invalidate();
   return true;
 }
@@ -269,34 +259,31 @@ function permanentDeleteMember(id) {
   if (idx < 0) return false;
   const stored = members.map(toStoredMember).filter(m => m.id !== Number(id));
   loadMembers(stored);
-  if (_useDb) dbWrite(() => sb.del('members', `id=eq.${Number(id)}`));
-  else saveMembersJson();
+  dbWrite(() => sb.del('members', `id=eq.${Number(id)}`));
   invalidate();
   return true;
 }
-
 function restoreMember(id) {
   const idx = members.findIndex(x => x.id === Number(id));
   if (idx < 0) return false;
   const stored = members.map(toStoredMember);
   stored[idx].hidden = false;
   loadMembers(stored);
-  if (_useDb) dbWrite(() => sb.update('members', `id=eq.${Number(id)}`, { hidden: false }));
-  else saveMembersJson();
+  dbWrite(() => sb.update('members', `id=eq.${Number(id)}`, { hidden: false }));
   invalidate();
   return true;
 }
 
 function counts() { return { matches: allMatches().length, userMatches: userMatches.length, pending: pendingMatches.length }; }
 function roster() { return rosterInfo; }
-function isDbMode() { return _useDb; }
 
 module.exports = {
-  init, importFromSheet, isDbMode,
+  init, importFromSheet,
   allMatches, stats, findMatch,
   addUserMatch, replaceUserMatch, deleteUserMatch,
   addPending, getPending, findPending, deletePending,
   getDashConfig, setDashConfig,
   editMember, addMember, removeMember, permanentDeleteMember, restoreMember,
+  getSeasons, getCurrentSeason, createSeason,
   counts, roster,
 };

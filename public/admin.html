@@ -94,12 +94,25 @@
     </div>
 
     <div class="view on" id="v-dashboard">
+      <div class="card" style="margin-bottom:18px">
+        <h3>시즌 관리</h3>
+        <p style="color:var(--ink-3);font-size:12px;margin:0 0 12px">새 시즌을 시작하면 내전기록, 전적 순위, 내전 점수가 초기화됩니다. 과거 시즌 기록은 보존됩니다.</p>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <span style="font-size:13px;font-weight:700;color:var(--ink-2)">현재 시즌:</span>
+          <span id="currentSeasonName" style="font-size:14px;font-weight:800;color:var(--gold-bright)">로딩 중...</span>
+        </div>
+        <div id="seasonList" style="margin-bottom:12px"></div>
+        <div class="row" style="align-items:flex-end">
+          <label class="fld">새 시즌 이름<input id="newSeasonName" placeholder="예: 2026 Split 3" style="width:200px"></label>
+          <button class="btn primary" id="addSeasonBtn">새 시즌 시작</button>
+        </div>
+        <div class="err" id="seasonErr"></div>
+      </div>
       <div class="card">
         <h3>대시보드 텍스트 설정</h3>
         <div class="row" style="flex-direction:column;gap:14px;align-items:stretch">
           <label class="fld">제목<input id="dc_title" style="width:100%"></label>
           <label class="fld">설명<textarea id="dc_desc" style="width:100%"></textarea></label>
-          <label class="fld">현재 시즌<input id="dc_season" style="width:100%"></label>
           <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
             <span style="font-size:13px;font-weight:700;color:var(--ink-2)">내전 등록:</span>
             <button class="btn sm" id="toggleMatchReg">로딩 중...</button>
@@ -109,6 +122,11 @@
           </div>
         </div>
         <div class="err" id="dashErr"></div>
+      </div>
+      <div class="card" style="margin-top:18px">
+        <h3>데이터 백업</h3>
+        <p style="color:var(--ink-3);font-size:12px;margin:0 0 12px">Supabase에 저장된 모든 데이터(단원, 내전 기록, 시즌, 설정)를 JSON 파일로 다운로드합니다.</p>
+        <button class="btn primary" id="backupBtn">백업 다운로드</button>
       </div>
     </div>
 
@@ -139,7 +157,13 @@
 
     <div class="view" id="v-matches">
       <div class="card">
-        <h3>내전 기록 관리</h3>
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap">
+          <h3 style="margin:0">내전 기록 관리</h3>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:12px;color:var(--ink-3);font-weight:700">시즌:</span>
+            <select id="adminSeasonSel" style="padding:5px 10px;font-size:12px"></select>
+          </div>
+        </div>
         <div class="tw"><table id="matchTable"></table></div>
       </div>
     </div>
@@ -188,6 +212,35 @@ $$(".tab").forEach(t=>t.addEventListener("click",()=>{
 /* ── 데이터 로드 ── */
 function fillSelect(sel,arr,cur){sel.innerHTML=arr.map(v=>`<option value="${v}">${v}</option>`).join('');if(cur!=null)sel.value=cur;}
 
+/* ── 시즌 관리 ── */
+async function loadSeasons(){
+  try{
+    const res=await jget('/api/admin/seasons');
+    const seasons=res.seasons||[];
+    const current=res.current;
+    $("#currentSeasonName").textContent=current?current.name:'없음';
+    const listEl=$("#seasonList");
+    if(seasons.length<=1){listEl.innerHTML='';return;}
+    listEl.innerHTML='<div style="font-size:12px;color:var(--ink-3);margin-bottom:6px">과거 시즌:</div>'+
+      seasons.filter(s=>!s.isCurrent).map(s=>
+        `<span class="tag" style="margin:2px 4px;font-size:12px">${esc(s.name)}</span>`
+      ).join('');
+  }catch(ex){console.log('seasons load error',ex)}
+}
+$("#addSeasonBtn").addEventListener("click",async()=>{
+  const err=$("#seasonErr");err.textContent='';
+  const name=$("#newSeasonName").value.trim();
+  if(!name){err.textContent='시즌 이름을 입력하세요.';return}
+  if(!confirm(`'${name}' 시즌을 시작합니다.\n새 시즌이 시작되면 내전기록, 전적 순위, 내전 점수가 새로 시작됩니다.\n계속할까요?`))return;
+  try{
+    await jsend('POST','/api/admin/seasons',{name});
+    toast('새 시즌이 시작되었습니다: '+name);
+    $("#newSeasonName").value='';
+    await loadSeasons();
+    await loadDashConfig();
+  }catch(ex){err.textContent='실패: '+(ex.payload&&ex.payload.messages&&ex.payload.messages[0]||ex.message);}
+});
+
 /* ── 대시보드 설정 ── */
 let matchRegEnabled=true;
 async function loadDashConfig(){
@@ -195,7 +248,6 @@ async function loadDashConfig(){
     const cfg=await jget('/api/admin/dashboard-config');
     $("#dc_title").value=cfg.title||'';
     $("#dc_desc").value=cfg.description||'';
-    $("#dc_season").value=cfg.season||'';
     matchRegEnabled=cfg.matchRegistrationEnabled!==false;
     updateMatchRegBtn();
   }catch(ex){console.log('dash config load error',ex)}
@@ -219,7 +271,6 @@ $("#saveDashConfig").addEventListener("click",async()=>{
     await jsend('PATCH','/api/admin/dashboard-config',{
       title:$("#dc_title").value,
       description:$("#dc_desc").value,
-      season:$("#dc_season").value,
     });
     toast('대시보드 설정이 저장되었습니다');
   }catch(ex){err.textContent='저장 실패: '+ex.message;}
@@ -308,14 +359,22 @@ $("#addMemberBtn").addEventListener("click",async()=>{
 async function refreshAll(){ await loadMembers(); await loadMatches(); }
 
 /* ── 내전 관리 ── */
-let MATCHES=[];
+let MATCHES=[], SEASONS=[], adminCurrentSeason=null, adminSeasonFilter=null;
 function memberOpts(selId){
   return MEMBERS.filter(m=>!m.hidden).map(m=>
     `<option value="${m.id}" ${m.id===selId?'selected':''}>${m.name} (${m.tier})</option>`
   ).join('');
 }
+function populateAdminSeasonSel(){
+  const sel=$("#adminSeasonSel");if(!sel)return;
+  sel.innerHTML=SEASONS.map(s=>
+    `<option value="${s.id}" ${s.isCurrent?'selected':''}>${s.name}${s.isCurrent?' (현재)':''}</option>`
+  ).join('');
+}
 async function loadMatches(){
-  const {matches}=await jget('/api/matches');
+  const sid=adminSeasonFilter||((adminCurrentSeason&&adminCurrentSeason.id)||'');
+  const url=sid?'/api/matches?season='+encodeURIComponent(sid):'/api/matches';
+  const {matches}=await jget(url);
   MATCHES=matches;
   $("#matchTable").innerHTML=`<thead><tr><th>날짜</th><th>모드</th><th>결과</th><th>블루팀</th><th>레드팀</th><th></th></tr></thead>
     <tbody>${matches.map(mt=>{
@@ -384,6 +443,11 @@ $("#matchTable").addEventListener("click",async e=>{
   }
 });
 
+$("#adminSeasonSel").addEventListener("change",e=>{
+  adminSeasonFilter=e.target.value;
+  loadMatches();
+});
+
 async function loadAll(){
   META=await jget('/api/meta');
   LINE_ORDER=META.lineOrder; TIER_ORDER=META.tierOrder;
@@ -393,8 +457,32 @@ async function loadAll(){
   fillSelect($("#a_sub1"),['없음',...LINE_VALUES]); $("#a_sub1").value='없음';
   fillSelect($("#a_sub2"),['없음',...LINE_VALUES]); $("#a_sub2").value='없음';
   await loadDashConfig();
+  await loadSeasons();
+  // 시즌 목록 가져오기
+  try{
+    const sRes=await jget('/api/seasons');
+    SEASONS=sRes.seasons||[];
+    adminCurrentSeason=sRes.current;
+    populateAdminSeasonSel();
+  }catch(ex){console.log('seasons load error',ex)}
   await loadMembers(); await loadMatches();
 }
+
+/* ── 데이터 백업 ── */
+$("#backupBtn").addEventListener("click",async()=>{
+  try{
+    const r=await fetch('/api/admin/backup');
+    if(!r.ok) throw new Error('백업 실패: '+r.status);
+    const blob=await r.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=r.headers.get('content-disposition')?.match(/filename="(.+)"/)?.[1]||'hgd-backup.json';
+    document.body.appendChild(a);a.click();a.remove();
+    URL.revokeObjectURL(url);
+    toast('백업 파일이 다운로드되었습니다');
+  }catch(ex){toast('백업 실패: '+ex.message);}
+});
 
 checkAuth().catch(ex=>{ $("#loginView").style.display='block'; console.error(ex); });
 </script>

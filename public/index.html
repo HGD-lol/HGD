@@ -281,6 +281,25 @@
   .mvpn{color:var(--gold-bright);font-weight:800}
   .medal{font-weight:800}
 
+  /* ============ SEASON SELECTOR ============ */
+  .season-sel{display:inline-flex;align-items:center;gap:8px}
+  .season-sel select{background:var(--surface);border:1px solid var(--line);color:var(--ink);
+    border-radius:8px;padding:7px 12px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
+  .season-sel select:focus{outline:none;border-color:var(--gold)}
+  .season-sel label{font-size:12px;color:var(--ink-3);font-weight:700}
+
+  /* ============ MERCENARY ============ */
+  .merc-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+  .merc-item{display:flex;gap:8px;align-items:center;padding:8px 12px;border:1px solid var(--line);
+    border-radius:9px;background:var(--surface-2);flex-wrap:wrap}
+  .merc-item input,.merc-item select{background:var(--surface);border:1px solid var(--line);color:var(--ink);
+    border-radius:7px;padding:6px 8px;font-family:inherit;font-size:12px}
+  .merc-badge{font-size:10px;font-weight:800;padding:2px 7px;border-radius:5px;
+    background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn);letter-spacing:.03em}
+  .merc-remove{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--red);
+    width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1;display:grid;place-items:center}
+  .merc-remove:hover{border-color:var(--red);background:color-mix(in srgb,var(--red) 12%,transparent)}
+
   /* ============ ADD-MATCH FORM ============ */
   :root{color-scheme:dark}
   :root[data-theme="light"]{color-scheme:light}
@@ -434,7 +453,6 @@
     <nav id="nav" role="tablist">
       <button class="tab" role="tab" aria-selected="true" data-view="dash">대시보드</button>
       <button class="tab" role="tab" aria-selected="false" data-view="roster">단원 명단 <span class="c" id="cRoster">0</span></button>
-      <button class="tab" role="tab" aria-selected="false" data-view="history">내전 히스토리</button>
       <button class="tab" role="tab" aria-selected="false" data-view="matches">내전 기록 <span class="c" id="cMatch">0</span></button>
       <button class="tab" role="tab" aria-selected="false" data-view="rank">전적 순위</button>
       <button class="tab tab-add" role="tab" aria-selected="false" data-view="add">＋ 내전 등록</button>
@@ -494,19 +512,6 @@
     <div class="roster" id="roster"></div>
   </section>
 
-  <!-- HISTORY (pending) -->
-  <section class="view" id="view-history" role="tabpanel">
-    <div class="sec-h"><span class="eyebrow">History</span><h2 style="font-size:22px">내전 히스토리</h2><div class="rule"></div></div>
-    <p style="color:var(--ink-2);font-size:13.5px;margin:0 0 14px;max-width:60ch">
-      내전 등록에서 선수를 등록하면 여기에 표시됩니다. 레드팀/블루팀을 배정하고 승리팀을 지정한 뒤 저장하세요.</p>
-    <div class="chips" style="margin-bottom:16px">
-      <button class="chip hist-mode-chip" data-hmode="전체" aria-pressed="true">전체</button>
-      <button class="chip hist-mode-chip" data-hmode="협곡" aria-pressed="false">협곡</button>
-      <button class="chip hist-mode-chip" data-hmode="칼바람" aria-pressed="false">칼바람</button>
-    </div>
-    <div id="pendingList"></div>
-  </section>
-
   <!-- MATCHES -->
   <section class="view" id="view-matches" role="tabpanel">
     <div class="sec-h"><span class="eyebrow">Match Log</span><h2 style="font-size:22px">내전 기록</h2><div class="rule"></div></div>
@@ -520,6 +525,10 @@
         <button class="chip match-mode-chip" data-mmode="협곡" aria-pressed="false">협곡</button>
         <button class="chip match-mode-chip" data-mmode="칼바람" aria-pressed="false">칼바람</button>
       </div>
+      <div class="season-sel">
+        <label>시즌:</label>
+        <select id="matchSeasonSel"></select>
+      </div>
     </div>
     <div class="matches" id="allMatches"></div>
   </section>
@@ -527,10 +536,16 @@
   <!-- RANK -->
   <section class="view" id="view-rank" role="tabpanel">
     <div class="sec-h"><span class="eyebrow">Standings</span><h2 style="font-size:22px">전적 순위</h2><div class="rule"></div></div>
-    <div class="chips" style="margin-bottom:16px">
-      <button class="chip rank-mode-chip" data-rmode="전체" aria-pressed="true">전체</button>
-      <button class="chip rank-mode-chip" data-rmode="협곡" aria-pressed="false">협곡</button>
-      <button class="chip rank-mode-chip" data-rmode="칼바람" aria-pressed="false">칼바람</button>
+    <div class="toolbar" style="margin-bottom:16px">
+      <div class="chips">
+        <button class="chip rank-mode-chip" data-rmode="전체" aria-pressed="true">전체</button>
+        <button class="chip rank-mode-chip" data-rmode="협곡" aria-pressed="false">협곡</button>
+        <button class="chip rank-mode-chip" data-rmode="칼바람" aria-pressed="false">칼바람</button>
+      </div>
+      <div class="season-sel">
+        <label>시즌:</label>
+        <select id="rankSeasonSel"></select>
+      </div>
     </div>
     <div class="tablewrap"><div class="tscroll"><table id="rankTable"></table></div></div>
     <p style="color:var(--ink-3);font-size:12px;margin-top:12px">※ 내전 1회 이상 참여한 단원 기준 · 승률 순 정렬 (열 제목을 눌러 정렬 변경)</p>
@@ -542,8 +557,9 @@
   <section class="view" id="view-add" role="tabpanel">
     <div class="sec-h"><span class="eyebrow">Register</span><h2 style="font-size:22px">내전 등록</h2><div class="rule"></div></div>
     <p style="color:var(--ink-2);font-size:13.5px;margin:0 0 18px;max-width:60ch">
-      내전에 참여할 10명의 선수를 선택하세요. 등록 후 내전 히스토리 탭에서 팀 배정과 승리팀을 지정할 수 있습니다.</p>
+      10명의 선수를 선택하고, 팀을 배정한 뒤 승리팀을 지정하여 내전을 기록하세요.</p>
     <div class="addform">
+      <!-- STEP 1: 모드 + 선수 선택 -->
       <div class="mode-tabs">
         <button class="mode-tab active" data-mode="협곡" type="button">협곡</button>
         <button class="mode-tab" data-mode="칼바람" type="button">칼바람</button>
@@ -556,10 +572,36 @@
         </div>
       </div>
       <div class="player-pick-grid" id="addPickGrid"></div>
+
+      <div style="margin-top:14px;margin-bottom:6px;display:flex;align-items:center;gap:12px">
+        <h3 style="font-size:14px;margin:0;color:var(--warn)">용병</h3>
+        <button type="button" class="btn ghost" id="addMercBtn" style="font-size:12px;padding:5px 12px;color:var(--warn);border-color:var(--warn)">＋ 용병 추가</button>
+        <span style="font-size:11px;color:var(--ink-3)">일회성 참여 선수 (라인, 티어 입력)</span>
+      </div>
+      <div class="merc-list" id="mercList"></div>
+
+      <!-- STEP 2: 팀 배정 (10명 선택 후 표시) -->
+      <div id="teamAssignArea" style="display:none;margin-top:22px">
+        <div style="border-top:1px solid var(--line);padding-top:18px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+            <h3 style="font-size:15px;margin:0;color:var(--gold-bright)">팀 배정</h3>
+            <button type="button" class="btn ghost" id="randTeamBtn" style="font-size:12px;padding:5px 12px">🎲 랜덤 배정</button>
+          </div>
+          <p style="color:var(--ink-3);font-size:12px;margin:0 0 12px">클릭: 블루팀 → 레드팀 → 해제 · 우클릭: 레드팀 → 블루팀 → 해제</p>
+          <div class="pending-players" id="teamAssignGrid"></div>
+
+          <div class="winner-pick" style="margin-top:16px">
+            <span style="font-size:13px;font-weight:700;color:var(--ink-2);margin-right:8px">승리팀:</span>
+            <label style="font-size:13px;font-weight:700;color:var(--ink-2);display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="addWinner" value="blue" style="accent-color:var(--blue);width:15px;height:15px"> 블루팀</label>
+            <label style="font-size:13px;font-weight:700;color:var(--ink-2);display:inline-flex;align-items:center;gap:6px;cursor:pointer;margin-left:12px"><input type="radio" name="addWinner" value="red" style="accent-color:var(--red);width:15px;height:15px"> 레드팀</label>
+          </div>
+        </div>
+      </div>
+
       <div class="form-actions">
         <div class="form-err" id="addFormErr" role="alert"></div>
         <button type="button" class="btn ghost" id="addClearBtn">초기화</button>
-        <button type="button" class="btn primary" id="addSubmitBtn" disabled>선수 등록</button>
+        <button type="button" class="btn primary" id="addSubmitBtn" disabled>내전 기록 저장</button>
       </div>
     </div>
   </section>
@@ -602,7 +644,7 @@ async function jsend(method,p,body){
 }
 
 let TIER_ORDER=[],TIER_RANK={},TIER_COLOR={},LINE_ORDER=[],LINE_COLOR={},LINE_SHORT={},ROLE_LABEL={};
-const S={members:[],byId:new Map(),pool:[],matches:[],stats:{},pending:[]};
+const S={members:[],byId:new Map(),pool:[],matches:[],stats:{},seasons:[],currentSeason:null};
 function memberById(id){return S.byId.get(+id)}
 
 async function loadMeta(){
@@ -611,6 +653,23 @@ async function loadMeta(){
   LINE_ORDER=meta.lineOrder;LINE_COLOR=meta.lineColor;LINE_SHORT=meta.lineShort;ROLE_LABEL=meta.roleLabel;
   $("#seasonLabel").textContent=meta.season.label;
 }
+async function loadSeasons(){
+  const res=await jget('/api/seasons');
+  S.seasons=res.seasons||[];
+  S.currentSeason=res.current;
+  // 시즌 선택 드롭다운 업데이트
+  populateSeasonSelect($("#matchSeasonSel"),"match");
+  populateSeasonSelect($("#rankSeasonSel"),"rank");
+}
+function populateSeasonSelect(sel,prefix){
+  if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML=S.seasons.map(s=>
+    `<option value="${s.id}" ${s.isCurrent?'selected':''}>${s.name}${s.isCurrent?' (현재)':''}</option>`
+  ).join('');
+  if(cur&&[...sel.options].some(o=>o.value===cur))sel.value=cur;
+}
+let matchSeasonFilter=null, rankSeasonFilter=null;
 async function loadMembers(){
   const {members}=await jget('/api/members');
   S.members=members;
@@ -620,17 +679,18 @@ async function loadMembers(){
   $("#fMembers").textContent=members.length;
 }
 async function refreshData(){
-  const [mRes,sRes]=await Promise.all([jget('/api/matches'),jget('/api/stats?minGames=0')]);
+  const sid=S.currentSeason?S.currentSeason.id:'';
+  const seasonParam=sid?`&season=${encodeURIComponent(sid)}`:'';
+  const [mRes,sRes]=await Promise.all([
+    jget('/api/matches?season='+encodeURIComponent(sid)),
+    jget('/api/stats?minGames=0'+seasonParam)
+  ]);
   S.matches=mRes.matches.map(m=>({...m,date:new Date(m.date)}));
   S.stats={};
   S.members.forEach(m=>S.stats[m.id]={id:m.id,g:0,w:0,l:0,wr:0,mvp:0,streak:0,score:m.score||200,lastMatch:null});
   sRes.standings.forEach(s=>{S.stats[s.id]={id:s.id,g:s.games,w:s.wins,l:s.losses,wr:s.winrate,mvp:s.mvp,streak:s.streak,score:s.score,lastMatch:s.lastMatch};});
   $("#cMatch").textContent=S.matches.length;
   $("#fMatches").textContent=S.matches.length;
-}
-async function loadPending(){
-  const res=await jget('/api/pending');
-  S.pending=res.pending;
 }
 let matchRegEnabled=true;
 async function loadDashConfig(){
@@ -652,7 +712,7 @@ function applyMatchRegState(){
     addView.innerHTML=`<div class="empty" style="padding:60px 20px;color:var(--ink-3);font-size:15px">내전 등록이 현재 비활성화 상태입니다.<br>관리자가 활성화하면 사용할 수 있습니다.</div>`;
   }
 }
-function renderAll(){renderDist();renderTopScores();renderTopPlayers();renderMatches();renderRoster();renderRank();renderPending();}
+function renderAll(){renderDist();renderTopScores();renderTopPlayers();renderMatches();renderRoster();renderRank();}
 
 /* ========== HELPERS ========== */
 function tierBadge(t){const c=TIER_COLOR[t];
@@ -733,8 +793,9 @@ function matchNode(mt){
 }
 function teamCol(side,title,players){
   const rows=players.map(p=>{
+    const mercTag=p.mercenary?` <span class="merc-badge" style="font-size:9px;padding:1px 5px">용병</span>`:'';
     return `<div class="prow bp">
-      <span class="pn">${p.name}</span>
+      <span class="pn">${p.name}${mercTag}</span>
       <span class="tinytier" style="color:${TIER_COLOR[p.tier]}">${p.tier}</span>
     </div>`;
   }).join("");
@@ -747,6 +808,17 @@ $$(".match-mode-chip").forEach(btn=>btn.addEventListener("click",()=>{
   renderMatchList();
 }));
 $("#matchSearch").addEventListener("input",e=>{matchSearchQ=e.target.value.trim().toLowerCase();renderMatchList()});
+$("#matchSeasonSel").addEventListener("change",e=>{
+  matchSeasonFilter=e.target.value;
+  loadMatchesBySeason();
+});
+async function loadMatchesBySeason(){
+  const sid=matchSeasonFilter||((S.currentSeason&&S.currentSeason.id)||'');
+  const mRes=await jget('/api/matches?season='+encodeURIComponent(sid));
+  S.matches=mRes.matches.map(m=>({...m,date:new Date(m.date)}));
+  $("#cMatch").textContent=mRes.count;
+  renderMatchList();
+}
 function renderMatchList(){
   const all=$("#allMatches");all.innerHTML="";
   let list=S.matches;
@@ -764,122 +836,11 @@ function renderMatches(){
   S.matches.slice(0,4).forEach(mt=>rec.appendChild(matchNode(mt)));
 }
 
-/* ========== PENDING (내전 히스토리) ========== */
-let histMode="전체";
-$$(".hist-mode-chip").forEach(btn=>btn.addEventListener("click",()=>{
-  histMode=btn.dataset.hmode;
-  $$(".hist-mode-chip").forEach(b=>b.setAttribute("aria-pressed",b===btn));
-  renderPending();
-}));
 $$(".rank-mode-chip").forEach(btn=>btn.addEventListener("click",()=>switchRankMode(btn.dataset.rmode)));
-function renderPending(){
-  const box=$("#pendingList");
-  let list=S.pending;
-  if(histMode!=="전체") list=list.filter(p=>p.mode===histMode);
-  if(!list.length){box.innerHTML=`<div class="empty">대기 중인 내전이 없습니다. '내전 등록' 탭에서 선수를 등록하세요.</div>`;return}
-  box.innerHTML=list.map(p=>{
-    const modeClass=p.mode==='칼바람'?'aram':'rift';
-    const isAram=p.mode==='칼바람';
-    return `<div class="pending-card" data-pid="${p.id}" data-mode="${p.mode}">
-      <div class="pending-header">
-        <span class="mode-badge ${modeClass}">${p.mode}</span>
-        <span style="color:var(--ink-3);font-size:12px">${new Date(p.date).toLocaleString('ko')}</span>
-        ${isAram?`<button class="btn ghost rand-team-btn" style="font-size:12px;padding:5px 10px" data-pid="${p.id}">🎲 랜덤 팀 배정</button>`:''}
-        <button class="btn ghost" style="font-size:12px;padding:5px 10px;color:var(--red)" onclick="deletePending('${p.id}')">삭제</button>
-      </div>
-      <p style="color:var(--ink-3);font-size:12px;margin:0 0 10px">선수를 클릭하여 블루팀(좌클릭)/레드팀(우클릭)으로 배정하세요.</p>
-      <div class="pending-players" data-pid="${p.id}">
-        ${p.players.map(pl=>{
-          const m=memberById(pl.id);
-          const lanes=m?m.lines.slice(0,2).join("/"):"";
-          return `<div class="pp-item" data-id="${pl.id}" style="flex-direction:column;align-items:stretch;gap:4px">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
-              <span class="pp-name">${pl.name}</span>
-              ${tierBadge(pl.tier)}
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
-              ${lanes?`<span style="font-size:10px;color:var(--ink-3);font-weight:600">${lanes}</span>`:'<span></span>'}
-              <span class="pp-score">${pl.score}점</span>
-            </div>
-          </div>`;
-        }).join("")}
-      </div>
-      <div class="winner-pick">
-        <span style="font-size:12px;font-weight:700;color:var(--ink-3);margin-right:8px">승리팀:</span>
-        <label><input type="radio" name="winner_${p.id}" value="blue"> 블루팀</label>
-        <label><input type="radio" name="winner_${p.id}" value="red"> 레드팀</label>
-      </div>
-      <div style="text-align:right">
-        <button class="btn primary" onclick="savePending('${p.id}')" style="font-size:13px;padding:8px 18px">내전 기록 저장</button>
-      </div>
-    </div>`;
-  }).join("");
-
-  // 칼바람 랜덤 팀 배정
-  $$(".rand-team-btn").forEach(btn=>btn.addEventListener("click",()=>{
-    const pid=btn.dataset.pid;
-    const card=$(`.pending-card[data-pid="${pid}"]`);
-    const items=[...$$(".pp-item",card)];
-    items.forEach(it=>{it.classList.remove("blue-sel","red-sel")});
-    const shuffled=items.slice().sort(()=>Math.random()-.5);
-    shuffled.slice(0,5).forEach(it=>it.classList.add("blue-sel"));
-    shuffled.slice(5,10).forEach(it=>it.classList.add("red-sel"));
-    toast("랜덤으로 팀이 배정되었습니다!");
-  }));
-
-  // attach click handlers for team assignment
-  $$(".pending-players").forEach(grid=>{
-    grid.addEventListener("click",e=>{
-      const item=e.target.closest(".pp-item");if(!item)return;
-      if(item.classList.contains("blue-sel")){item.classList.remove("blue-sel");item.classList.add("red-sel");}
-      else if(item.classList.contains("red-sel")){item.classList.remove("red-sel");}
-      else{item.classList.add("blue-sel");}
-    });
-    grid.addEventListener("contextmenu",e=>{
-      e.preventDefault();
-      const item=e.target.closest(".pp-item");if(!item)return;
-      if(item.classList.contains("red-sel")){item.classList.remove("red-sel");item.classList.add("blue-sel");}
-      else if(item.classList.contains("blue-sel")){item.classList.remove("blue-sel");}
-      else{item.classList.add("red-sel");}
-    });
-  });
-}
-
-async function savePending(pid){
-  const card=$(`.pending-card[data-pid="${pid}"]`);
-  const blueIds=[...$$(".pp-item.blue-sel",card)].map(el=>+el.dataset.id);
-  const redIds=[...$$(".pp-item.red-sel",card)].map(el=>+el.dataset.id);
-  if(blueIds.length!==5||redIds.length!==5){toast("블루팀 5명, 레드팀 5명을 배정하세요.");return}
-  const winnerRadio=$(`input[name="winner_${pid}"]:checked`,card);
-  if(!winnerRadio){toast("승리팀을 선택하세요.");return}
-  const pending=S.pending.find(p=>p.id===pid);
-  const mode=pending?pending.mode:'협곡';
-  try{
-    await jsend('POST','/api/matches',{
-      date:new Date().toISOString(),
-      winner:winnerRadio.value,
-      mode,
-      blue:blueIds.map(id=>({id})),
-      red:redIds.map(id=>({id})),
-    });
-    await jsend('DELETE','/api/pending/'+pid);
-    await Promise.all([refreshData(),loadPending(),loadMembers()]);
-    renderAll();
-    toast("내전 기록이 저장되었습니다!");
-  }catch(ex){
-    toast((ex.payload&&ex.payload.messages&&ex.payload.messages[0])||("저장 실패: "+ex.message));
-  }
-}
-
-async function deletePending(pid){
-  if(!confirm("이 대기 내전을 삭제할까요?"))return;
-  try{
-    await jsend('DELETE','/api/pending/'+pid);
-    await loadPending();
-    renderPending();
-    toast("삭제되었습니다.");
-  }catch(ex){toast("실패: "+ex.message)}
-}
+$("#rankSeasonSel").addEventListener("change",e=>{
+  rankSeasonFilter=e.target.value;
+  switchRankMode(rankMode);
+});
 
 /* ========== ROSTER ========== */
 let filterLine="전체", filterTier="전체", searchQ="", rosterSortBy="tier";
@@ -954,14 +915,14 @@ const COLS=[
 async function switchRankMode(mode){
   rankMode=mode;
   $$(".rank-mode-chip").forEach(c=>c.setAttribute("aria-pressed",c.dataset.rmode===mode));
-  if(mode==="전체"){rankModeStats=null;}
-  else{
-    const res=await jget(`/api/stats?minGames=0&mode=${encodeURIComponent(mode)}`);
-    const st={};
-    S.members.forEach(m=>st[m.id]={id:m.id,g:0,w:0,l:0,wr:0,mvp:0,streak:0,score:200,lastMatch:null});
-    res.standings.forEach(s=>{st[s.id]={id:s.id,g:s.games,w:s.wins,l:s.losses,wr:s.winrate,mvp:s.mvp,streak:s.streak,score:s.score,lastMatch:s.lastMatch};});
-    rankModeStats=st;
-  }
+  const sid=rankSeasonFilter||((S.currentSeason&&S.currentSeason.id)||'');
+  let url=`/api/stats?minGames=0&season=${encodeURIComponent(sid)}`;
+  if(mode!=="전체") url+=`&mode=${encodeURIComponent(mode)}`;
+  const res=await jget(url);
+  const st={};
+  S.members.forEach(m=>st[m.id]={id:m.id,g:0,w:0,l:0,wr:0,mvp:0,streak:0,score:200,lastMatch:null});
+  res.standings.forEach(s=>{st[s.id]={id:s.id,g:s.games,w:s.wins,l:s.losses,wr:s.winrate,mvp:s.mvp,streak:s.streak,score:s.score,lastMatch:s.lastMatch};});
+  rankModeStats=st;
   renderRank();
 }
 function renderRank(){
@@ -1026,6 +987,8 @@ $("#tierModal").addEventListener("click",e=>{if(e.target.id==="tierModal")$("#ti
 
 /* ========== ADD-MATCH FORM (내전 등록) ========== */
 let addMode='협곡', addPicked=new Set(), addSortBy='tier';
+let mercenaries=[]; // [{name, tier, lane}]
+const LINE_VALUES_ADD=['탑','정글','미드','원딜','서폿'];
 $$(".mode-tab").forEach(btn=>btn.addEventListener("click",()=>{
   $$(".mode-tab").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
@@ -1036,37 +999,186 @@ $$(".add-sort-chip").forEach(btn=>btn.addEventListener("click",()=>{
   $$(".add-sort-chip").forEach(b=>b.setAttribute("aria-pressed",b===btn));
   renderAddPicker();
 }));
+function totalPicked(){return addPicked.size+mercenaries.length}
 function renderAddPicker(){
   const list=S.members.slice().sort((a,b)=>{
     if(addSortBy==='name') return a.name.localeCompare(b.name,"ko");
     return TIER_RANK[b.tier]-TIER_RANK[a.tier]||a.name.localeCompare(b.name,"ko");
   });
+  const total=totalPicked();
   $("#addPickGrid").innerHTML=list.map(m=>{
-    const on=addPicked.has(m.id),full=addPicked.size>=10&&!on;
+    const on=addPicked.has(m.id),full=total>=10&&!on;
     return `<button class="ppchip${on?' on':''}" type="button" data-id="${m.id}" ${full?'disabled':''}>
       <span class="pdot" style="background:${TIER_COLOR[m.tier]}"></span>${m.name}
       <span class="ptier" style="color:${TIER_COLOR[m.tier]}">${m.tier}</span></button>`;
   }).join("");
-  $("#addPickCount").textContent=addPicked.size;
-  $("#addSubmitBtn").disabled=addPicked.size!==10;
+  $("#addPickCount").textContent=total;
+  renderMercList();
+  renderTeamAssign();
 }
+function renderMercList(){
+  const box=$("#mercList");
+  if(!mercenaries.length){box.innerHTML='';return}
+  box.innerHTML=mercenaries.map((m,i)=>{
+    const tierOpts=TIER_ORDER.map(t=>`<option ${t===m.tier?'selected':''}>${t}</option>`).join('');
+    const laneOpts=['없음',...LINE_VALUES_ADD].map(l=>`<option value="${l}" ${l===m.lane?'selected':''}>${l}</option>`).join('');
+    return `<div class="merc-item" data-idx="${i}">
+      <span class="merc-badge">용병</span>
+      <input data-f="name" value="${m.name}" placeholder="이름" style="width:100px">
+      <select data-f="tier">${tierOpts}</select>
+      <select data-f="lane">${laneOpts}</select>
+      <button class="merc-remove" data-idx="${i}" title="제거">✕</button>
+    </div>`;
+  }).join('');
+}
+$("#addMercBtn").addEventListener("click",()=>{
+  if(totalPicked()>=10){toast("최대 10명까지 선택할 수 있습니다.");return}
+  mercenaries.push({name:'',tier:'언랭',lane:'없음'});
+  renderAddPicker();
+});
+$("#mercList").addEventListener("click",e=>{
+  const btn=e.target.closest(".merc-remove");
+  if(!btn)return;
+  mercenaries.splice(+btn.dataset.idx,1);
+  renderAddPicker();
+});
+$("#mercList").addEventListener("change",e=>{
+  const item=e.target.closest(".merc-item");if(!item)return;
+  const idx=+item.dataset.idx;
+  const f=e.target.dataset.f;
+  if(f==='name')mercenaries[idx].name=e.target.value;
+  else if(f==='tier')mercenaries[idx].tier=e.target.value;
+  else if(f==='lane')mercenaries[idx].lane=e.target.value;
+});
+$("#mercList").addEventListener("input",e=>{
+  const item=e.target.closest(".merc-item");if(!item)return;
+  const idx=+item.dataset.idx;
+  if(e.target.dataset.f==='name')mercenaries[idx].name=e.target.value;
+});
 $("#addPickGrid").addEventListener("click",e=>{
   const b=e.target.closest(".ppchip");if(!b||b.disabled)return;
   const id=+b.dataset.id;
-  if(addPicked.has(id))addPicked.delete(id);else if(addPicked.size<10)addPicked.add(id);
+  if(addPicked.has(id))addPicked.delete(id);else if(totalPicked()<10)addPicked.add(id);
   renderAddPicker();
 });
-$("#addClearBtn").addEventListener("click",()=>{addPicked.clear();renderAddPicker()});
+$("#addClearBtn").addEventListener("click",()=>{
+  addPicked.clear();mercenaries=[];
+  $$('input[name="addWinner"]').forEach(r=>r.checked=false);
+  renderAddPicker();
+});
+
+/* ── 팀 배정 영역 ── */
+function renderTeamAssign(){
+  const area=$("#teamAssignArea");
+  const total=totalPicked();
+  if(total!==10){area.style.display='none';$("#addSubmitBtn").disabled=true;return}
+  area.style.display='block';
+  const grid=$("#teamAssignGrid");
+  // 선택된 단원 + 용병 목록
+  const players=[];
+  addPicked.forEach(id=>{
+    const m=memberById(id);
+    if(m) players.push({id:m.id,name:m.name,tier:m.tier,lanes:m.lines?m.lines.slice(0,2).join("/"):"",mercenary:false});
+  });
+  mercenaries.forEach((m,i)=>{
+    players.push({id:'merc_'+i,name:m.name||'용병',tier:m.tier,lanes:m.lane&&m.lane!=='없음'?m.lane:'',mercenary:true,mercIdx:i});
+  });
+  // 기존 배정 상태 보존
+  const oldStates={};
+  $$(".pp-item",grid).forEach(el=>{
+    const key=el.dataset.id;
+    if(el.classList.contains("blue-sel"))oldStates[key]='blue';
+    else if(el.classList.contains("red-sel"))oldStates[key]='red';
+  });
+  grid.innerHTML=players.map(p=>{
+    const cls=oldStates[String(p.id)]?(' '+(oldStates[String(p.id)]==='blue'?'blue-sel':'red-sel')):'';
+    return `<div class="pp-item${cls}" data-id="${p.id}" ${p.mercenary?'data-mercenary="true" data-merc-idx="'+p.mercIdx+'"':''} style="flex-direction:column;align-items:stretch;gap:4px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+        <span class="pp-name">${p.name}${p.mercenary?' <span class="merc-badge" style="margin-left:4px">용병</span>':''}</span>
+        ${tierBadge(p.tier)}
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+        ${p.lanes?`<span style="font-size:10px;color:var(--ink-3);font-weight:600">${p.lanes}</span>`:'<span></span>'}
+      </div>
+    </div>`;
+  }).join("");
+  updateSubmitState();
+}
+function updateSubmitState(){
+  const grid=$("#teamAssignGrid");
+  const blueCount=$$(".pp-item.blue-sel",grid).length;
+  const redCount=$$(".pp-item.red-sel",grid).length;
+  const winner=$('input[name="addWinner"]:checked');
+  $("#addSubmitBtn").disabled=!(blueCount===5&&redCount===5&&winner);
+}
+// 팀 배정 클릭/우클릭
+$("#teamAssignGrid").addEventListener("click",e=>{
+  const item=e.target.closest(".pp-item");if(!item)return;
+  if(item.classList.contains("blue-sel")){item.classList.remove("blue-sel");item.classList.add("red-sel");}
+  else if(item.classList.contains("red-sel")){item.classList.remove("red-sel");}
+  else{item.classList.add("blue-sel");}
+  updateSubmitState();
+});
+$("#teamAssignGrid").addEventListener("contextmenu",e=>{
+  e.preventDefault();
+  const item=e.target.closest(".pp-item");if(!item)return;
+  if(item.classList.contains("red-sel")){item.classList.remove("red-sel");item.classList.add("blue-sel");}
+  else if(item.classList.contains("blue-sel")){item.classList.remove("blue-sel");}
+  else{item.classList.add("red-sel");}
+  updateSubmitState();
+});
+// 승리팀 라디오 변경
+$$('input[name="addWinner"]').forEach(r=>r.addEventListener("change",updateSubmitState));
+// 랜덤 배정
+$("#randTeamBtn").addEventListener("click",()=>{
+  const items=[...$$(".pp-item",$("#teamAssignGrid"))];
+  items.forEach(it=>{it.classList.remove("blue-sel","red-sel")});
+  const shuffled=items.slice().sort(()=>Math.random()-.5);
+  shuffled.slice(0,5).forEach(it=>it.classList.add("blue-sel"));
+  shuffled.slice(5,10).forEach(it=>it.classList.add("red-sel"));
+  updateSubmitState();
+  toast("랜덤으로 팀이 배정되었습니다!");
+});
+
+/* ── 내전 기록 저장 ── */
 $("#addSubmitBtn").addEventListener("click",async()=>{
-  if(addPicked.size!==10){$("#addFormErr").textContent="10명을 선택하세요.";return}
+  const err=$("#addFormErr");err.textContent='';
+  const total=totalPicked();
+  if(total!==10){err.textContent="10명을 선택하세요.";return}
+  for(const m of mercenaries){
+    if(!m.name.trim()){err.textContent="용병 이름을 입력하세요.";return}
+  }
+  const grid=$("#teamAssignGrid");
+  const blueItems=[...$$(".pp-item.blue-sel",grid)];
+  const redItems=[...$$(".pp-item.red-sel",grid)];
+  if(blueItems.length!==5||redItems.length!==5){err.textContent="블루팀 5명, 레드팀 5명을 배정하세요.";return}
+  const winnerRadio=$('input[name="addWinner"]:checked');
+  if(!winnerRadio){err.textContent="승리팀을 선택하세요.";return}
+  const itemToPlayer=(el)=>{
+    if(el.dataset.mercenary==='true'){
+      const mi=+el.dataset.mercIdx;
+      const mc=mercenaries[mi];
+      return {mercenary:true,name:mc.name.trim(),tier:mc.tier,lane:mc.lane&&mc.lane!=='없음'?mc.lane:null};
+    }
+    return {id:+el.dataset.id};
+  };
   try{
-    await jsend('POST','/api/pending',{playerIds:[...addPicked],mode:addMode});
-    addPicked.clear();renderAddPicker();
-    await loadPending();renderPending();
-    toast("선수가 등록되었습니다! 내전 히스토리 탭에서 팀을 배정하세요.");
-    switchView("history");
+    await jsend('POST','/api/matches',{
+      date:new Date().toISOString(),
+      winner:winnerRadio.value,
+      mode:addMode,
+      blue:blueItems.map(itemToPlayer),
+      red:redItems.map(itemToPlayer),
+    });
+    addPicked.clear();mercenaries=[];
+    $$('input[name="addWinner"]').forEach(r=>r.checked=false);
+    renderAddPicker();
+    await Promise.all([refreshData(),loadMembers()]);
+    renderAll();
+    toast("내전 기록이 저장되었습니다!");
+    switchView("matches");
   }catch(ex){
-    $("#addFormErr").textContent=(ex.payload&&ex.payload.messages&&ex.payload.messages[0])||("등록 실패: "+ex.message);
+    err.textContent=(ex.payload&&ex.payload.messages&&ex.payload.messages[0])||("저장 실패: "+ex.message);
   }
 });
 
@@ -1081,7 +1193,8 @@ function toast(msg){
   try{
     await loadMeta();
     await loadMembers();
-    await Promise.all([refreshData(),loadPending()]);
+    await loadSeasons();
+    await refreshData();
     await loadDashConfig();
     renderChips();renderAddPicker();renderAll();
   }catch(ex){

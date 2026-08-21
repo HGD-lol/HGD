@@ -10,8 +10,10 @@ const router = express.Router();
 
 /* GET /api/dashboard — 대시보드 집계 */
 router.get('/', (req, res) => {
-  const matches = store.allMatches();
-  const stats = store.stats();
+  const currentSeason = store.getCurrentSeason();
+  const seasonId = currentSeason ? currentSeason.id : null;
+  const matches = store.allMatches(seasonId);
+  const stats = store.stats(null, seasonId);
   const members = activeMembers();
   const config = store.getDashConfig();
 

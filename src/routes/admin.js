@@ -51,6 +51,48 @@ router.patch('/dashboard-config', requireAdmin, (req, res) => {
   res.json(cfg);
 });
 
+/* ── 시즌 관리 ── */
+router.get('/seasons', requireAdmin, (req, res) => {
+  res.json({ seasons: store.getSeasons(), current: store.getCurrentSeason() });
+});
+
+router.post('/seasons', requireAdmin, (req, res) => {
+  const { name } = req.body || {};
+  if (!name || !String(name).trim()) {
+    return res.status(400).json({ error: 'validation_failed', messages: ['시즌 이름을 입력하세요.'] });
+  }
+  const season = store.createSeason(String(name).trim());
+  res.status(201).json(season);
+});
+
+/* ── 데이터 백업 ── */
+router.get('/backup', requireAdmin, async (req, res) => {
+  try {
+    const sb = require('../lib/supabase');
+    const [members, matches, pending, seasons, config] = await Promise.all([
+      sb.select('members', '', '*', 'id.asc'),
+      sb.select('matches', '', '*', 'date.desc'),
+      sb.select('pending', '', '*', 'date.desc'),
+      sb.select('seasons', '', '*', 'created_at.asc'),
+      sb.select('dashboard_config', 'id=eq.1'),
+    ]);
+    const backup = {
+      exportedAt: new Date().toISOString(),
+      members: members || [],
+      matches: matches || [],
+      pending: pending || [],
+      seasons: seasons || [],
+      dashboardConfig: (config && config[0]) || {},
+    };
+    const filename = `hgd-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.send(JSON.stringify(backup, null, 2));
+  } catch (e) {
+    res.status(500).json({ error: 'backup_failed', message: e.message });
+  }
+});
+
 /* ── 단원 입력 검증 ── */
 function validateMember(body, { partial } = {}) {
   const errors = [];

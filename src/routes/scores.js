@@ -7,8 +7,9 @@ const { activeMembers, memberById } = require('../lib/members');
 const router = express.Router();
 
 /* GET /api/scores — 내전 점수 순위 */
-router.get('/', (_req, res) => {
-  const stats = store.stats();
+router.get('/', (req, res) => {
+  const seasonId = req.query.season || null;
+  const stats = store.stats(null, seasonId);
   const rows = activeMembers()
     .map((m) => {
       const s = stats[m.id] || { g: 0, w: 0, l: 0, wr: 0, mvp: 0, streak: 0, score: 200, lastMatch: null };
