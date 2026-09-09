@@ -188,6 +188,8 @@
   .chip{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);
     font-family:inherit;font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:20px;cursor:pointer;transition:.15s}
   .chip:hover{border-color:var(--ink-3);color:var(--ink)}
+  .chip.sm{font-size:11.5px;font-weight:700;padding:4px 10px}
+  .panel-modes{margin-left:auto}
   .chip[aria-pressed="true"]{background:color-mix(in srgb,var(--gold) 16%,transparent);
     border-color:var(--gold);color:var(--gold-bright)}
 
@@ -353,6 +355,8 @@
   .pp-item.red-sel{border-color:var(--red);background:color-mix(in srgb,var(--red) 12%,transparent)}
   .pp-item .pp-name{font-weight:700;flex:1}
   .pp-item .pp-score{font-size:11px;font-weight:800;color:var(--gold-bright)}
+  .pp-item .pp-wr{font-size:10px;font-weight:700;white-space:nowrap}
+  .pp-item .pp-wr small{font-size:9.5px;font-weight:600;color:var(--ink-3);margin-left:4px}
   .team-assign{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
   .team-assign .ta-label{font-size:12px;font-weight:700;color:var(--ink-3)}
   .team-assign .ta-btn{appearance:none;border:1px solid var(--line);background:var(--surface-2);
@@ -478,11 +482,23 @@
 
     <div class="grid2">
       <div class="panel">
-        <h3><span class="dot"></span> 내전 점수 TOP 5</h3>
+        <h3><span class="dot"></span> 내전 점수 TOP 5
+          <span class="chips panel-modes" id="scoreModes">
+            <button class="chip sm" data-dmode="전체" aria-pressed="true">전체</button>
+            <button class="chip sm" data-dmode="협곡" aria-pressed="false">협곡</button>
+            <button class="chip sm" data-dmode="칼바람" aria-pressed="false">칼바람</button>
+          </span>
+        </h3>
         <div class="rankmini" id="topScores"></div>
       </div>
       <div class="panel">
-        <h3><span class="dot"></span> 내전 승률 TOP 5</h3>
+        <h3><span class="dot"></span> 내전 승률 TOP 5
+          <span class="chips panel-modes" id="wrModes">
+            <button class="chip sm" data-dmode="전체" aria-pressed="true">전체</button>
+            <button class="chip sm" data-dmode="협곡" aria-pressed="false">협곡</button>
+            <button class="chip sm" data-dmode="칼바람" aria-pressed="false">칼바람</button>
+          </span>
+        </h3>
         <div class="rankmini" id="topPlayers"></div>
       </div>
     </div>
@@ -570,6 +586,10 @@
           <button class="chip add-sort-chip" data-asort="tier" aria-pressed="true">티어순</button>
           <button class="chip add-sort-chip" data-asort="name" aria-pressed="false">이름순</button>
         </div>
+        <div class="search" style="margin-left:auto">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="addSearch" type="search" placeholder="이름으로 검색" aria-label="선수 이름 검색" autocomplete="off">
+        </div>
       </div>
       <div class="player-pick-grid" id="addPickGrid"></div>
 
@@ -587,7 +607,7 @@
             <h3 style="font-size:15px;margin:0;color:var(--gold-bright)">팀 배정</h3>
             <button type="button" class="btn ghost" id="randTeamBtn" style="font-size:12px;padding:5px 12px">🎲 랜덤 배정</button>
           </div>
-          <p style="color:var(--ink-3);font-size:12px;margin:0 0 12px">클릭: 블루팀 → 레드팀 → 해제 · 우클릭: 레드팀 → 블루팀 → 해제</p>
+          <p style="color:var(--ink-3);font-size:12px;margin:0 0 12px">클릭: 블루팀 → 레드팀 → 해제 · 우클릭: 레드팀 → 블루팀 → 해제 · 승률은 <b id="teamWrMode">협곡</b> 기준</p>
           <div class="pending-players" id="teamAssignGrid"></div>
 
           <div class="winner-pick" style="margin-top:16px">
@@ -689,6 +709,7 @@ async function refreshData(){
   S.stats={};
   S.members.forEach(m=>S.stats[m.id]={id:m.id,g:0,w:0,l:0,wr:0,mvp:0,streak:0,score:m.score||200,lastMatch:null});
   sRes.standings.forEach(s=>{S.stats[s.id]={id:s.id,g:s.games,w:s.wins,l:s.losses,wr:s.winrate,mvp:s.mvp,streak:s.streak,score:s.score,lastMatch:s.lastMatch};});
+  clearDashStatsCache();
   $("#cMatch").textContent=S.matches.length;
   $("#fMatches").textContent=S.matches.length;
 }
@@ -736,8 +757,42 @@ function renderDist(){
   }).join("");
   requestAnimationFrame(()=>$$("#dist .dist-bar i").forEach(i=>i.style.width=i.dataset.w+"%"));
 }
-function renderTopScores(){
-  const top=Object.values(S.stats).filter(s=>S.byId.has(s.id)).sort((a,b)=>b.score-a.score).slice(0,5);
+/* 대시보드 TOP 5 모드 필터 (전체 | 협곡 | 칼바람) */
+let dashScoreMode="전체", dashWrMode="전체";
+const dashStatsCache={};
+function clearDashStatsCache(){for(const k in dashStatsCache)delete dashStatsCache[k];}
+async function statsByMode(mode){
+  if(mode==="전체")return S.stats;
+  if(dashStatsCache[mode])return dashStatsCache[mode];
+  const sid=S.currentSeason?S.currentSeason.id:'';
+  const seasonParam=sid?`&season=${encodeURIComponent(sid)}`:'';
+  const res=await jget(`/api/stats?minGames=0${seasonParam}&mode=${encodeURIComponent(mode)}`);
+  const st={};
+  S.members.forEach(m=>st[m.id]={id:m.id,g:0,w:0,l:0,wr:0,mvp:0,streak:0,score:200,lastMatch:null});
+  res.standings.forEach(s=>{st[s.id]={id:s.id,g:s.games,w:s.wins,l:s.losses,wr:s.winrate,mvp:s.mvp,streak:s.streak,score:s.score,lastMatch:s.lastMatch};});
+  dashStatsCache[mode]=st;
+  return st;
+}
+function syncDashChips(){
+  $$("#scoreModes .chip").forEach(c=>c.setAttribute("aria-pressed",String(c.dataset.dmode===dashScoreMode)));
+  $$("#wrModes .chip").forEach(c=>c.setAttribute("aria-pressed",String(c.dataset.dmode===dashWrMode)));
+}
+$("#scoreModes").addEventListener("click",e=>{
+  const b=e.target.closest(".chip");if(!b||b.dataset.dmode===dashScoreMode)return;
+  dashScoreMode=b.dataset.dmode;syncDashChips();renderTopScores();
+});
+$("#wrModes").addEventListener("click",e=>{
+  const b=e.target.closest(".chip");if(!b||b.dataset.dmode===dashWrMode)return;
+  dashWrMode=b.dataset.dmode;syncDashChips();renderTopPlayers();
+});
+
+async function renderTopScores(){
+  const mode=dashScoreMode;
+  const src=await statsByMode(mode);
+  if(mode!==dashScoreMode)return; // 그 사이 모드가 바뀌면 무시
+  const top=Object.values(src)
+    .filter(s=>S.byId.has(s.id)&&(mode==="전체"||s.g>0))
+    .sort((a,b)=>b.score-a.score).slice(0,5);
   $("#topScores").innerHTML=top.map((s,i)=>{
     const m=memberById(s.id);
     return `<div class="r">
@@ -747,8 +802,11 @@ function renderTopScores(){
     </div>`;
   }).join("")||`<div class="empty">아직 데이터가 없습니다.</div>`;
 }
-function renderTopPlayers(){
-  const top=Object.values(S.stats).filter(s=>s.g>=3).sort((a,b)=>b.wr-a.wr||b.g-a.g).slice(0,5);
+async function renderTopPlayers(){
+  const mode=dashWrMode;
+  const src=await statsByMode(mode);
+  if(mode!==dashWrMode)return; // 그 사이 모드가 바뀌면 무시
+  const top=Object.values(src).filter(s=>s.g>=3).sort((a,b)=>b.wr-a.wr||b.g-a.g).slice(0,5);
   $("#topPlayers").innerHTML=top.map((s,i)=>{
     const m=memberById(s.id);
     return `<div class="r">
@@ -966,6 +1024,7 @@ function renderRank(){
 
 /* ========== NAV ========== */
 function switchView(v){
+  if(v==="add")ensureAddModeStats();
   $$(".tab").forEach(t=>t.setAttribute("aria-selected",t.dataset.view===v));
   $$(".view").forEach(s=>s.classList.toggle("on",s.id==="view-"+v));
   window.scrollTo({top:0,behavior:"smooth"});
@@ -986,14 +1045,19 @@ $("#tierModalClose").addEventListener("click",()=>$("#tierModal").classList.remo
 $("#tierModal").addEventListener("click",e=>{if(e.target.id==="tierModal")$("#tierModal").classList.remove("on")});
 
 /* ========== ADD-MATCH FORM (내전 등록) ========== */
-let addMode='협곡', addPicked=new Set(), addSortBy='tier';
+let addMode='협곡', addPicked=new Set(), addSortBy='tier', addSearchQ='';
 let mercenaries=[]; // [{name, tier, lane}]
 const LINE_VALUES_ADD=['탑','정글','미드','원딜','서폿'];
 $$(".mode-tab").forEach(btn=>btn.addEventListener("click",()=>{
   $$(".mode-tab").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
   addMode=btn.dataset.mode;
+  renderTeamAssign();
 }));
+$("#addSearch").addEventListener("input",e=>{
+  addSearchQ=e.target.value.trim();
+  renderAddPicker();
+});
 $$(".add-sort-chip").forEach(btn=>btn.addEventListener("click",()=>{
   addSortBy=btn.dataset.asort;
   $$(".add-sort-chip").forEach(b=>b.setAttribute("aria-pressed",b===btn));
@@ -1006,7 +1070,16 @@ function renderAddPicker(){
     return TIER_RANK[b.tier]-TIER_RANK[a.tier]||a.name.localeCompare(b.name,"ko");
   });
   const total=totalPicked();
-  $("#addPickGrid").innerHTML=list.map(m=>{
+  const q=addSearchQ.toLowerCase();
+  const shown=q?list.filter(m=>m.name.toLowerCase().includes(q)):list;
+  if(!shown.length){
+    $("#addPickGrid").innerHTML=`<div class="empty" style="padding:14px 2px;font-size:13px">'${addSearchQ}' 검색 결과가 없습니다.</div>`;
+    $("#addPickCount").textContent=total;
+    renderMercList();
+    renderTeamAssign();
+    return;
+  }
+  $("#addPickGrid").innerHTML=shown.map(m=>{
     const on=addPicked.has(m.id),full=total>=10&&!on;
     return `<button class="ppchip${on?' on':''}" type="button" data-id="${m.id}" ${full?'disabled':''}>
       <span class="pdot" style="background:${TIER_COLOR[m.tier]}"></span>${m.name}
@@ -1058,16 +1131,41 @@ $("#mercList").addEventListener("input",e=>{
 $("#addPickGrid").addEventListener("click",e=>{
   const b=e.target.closest(".ppchip");if(!b||b.disabled)return;
   const id=+b.dataset.id;
-  if(addPicked.has(id))addPicked.delete(id);else if(totalPicked()<10)addPicked.add(id);
+  if(addPicked.has(id))addPicked.delete(id);
+  else if(totalPicked()<10){
+    addPicked.add(id);
+    // 선택했으면 다음 이름을 바로 찾을 수 있게 검색어를 비운다
+    if(addSearchQ){addSearchQ='';$("#addSearch").value='';}
+  }
   renderAddPicker();
 });
 $("#addClearBtn").addEventListener("click",()=>{
   addPicked.clear();mercenaries=[];
+  addSearchQ='';$("#addSearch").value='';
   $$('input[name="addWinner"]').forEach(r=>r.checked=false);
   renderAddPicker();
 });
 
 /* ── 팀 배정 영역 ── */
+// 카드 승률은 등록 모드(협곡/칼바람) 기준 — 아직 안 받았으면 받아온 뒤 다시 그린다
+let addStatsPending=null;
+function ensureAddModeStats(){
+  const mode=addMode;
+  if(addStatsPending===mode)return;
+  addStatsPending=mode;
+  statsByMode(mode)
+    .then(()=>{addStatsPending=null;if(mode===addMode)renderTeamAssign();})
+    .catch(()=>{addStatsPending=null;});
+}
+// 카드에 표시할 현재 시즌 승률 (용병 · 무기록은 '기록 없음')
+function seasonWrTag(p){
+  if(p.statLoading)return `<span class="pp-wr" style="color:var(--ink-3)">…</span>`;
+  const st=p.stat;
+  if(!st||!st.g)return `<span class="pp-wr" style="color:var(--ink-3)">기록 없음</span>`;
+  const pct=Math.round(st.wr*100);
+  const col=st.wr>=.55?'var(--good)':st.wr>=.45?'var(--ink-2)':'var(--red)';
+  return `<span class="pp-wr" style="color:${col}">${pct}%<small>${st.w}승 ${st.l}패</small></span>`;
+}
 function renderTeamAssign(){
   const area=$("#teamAssignArea");
   const total=totalPicked();
@@ -1075,10 +1173,14 @@ function renderTeamAssign(){
   area.style.display='block';
   const grid=$("#teamAssignGrid");
   // 선택된 단원 + 용병 목록
+  const modeStats=dashStatsCache[addMode]||null;
+  if(!modeStats)ensureAddModeStats();
+  const wrNote=$("#teamWrMode");
+  if(wrNote)wrNote.textContent=addMode;
   const players=[];
   addPicked.forEach(id=>{
     const m=memberById(id);
-    if(m) players.push({id:m.id,name:m.name,tier:m.tier,lanes:m.lines?m.lines.slice(0,2).join("/"):"",mercenary:false});
+    if(m) players.push({id:m.id,name:m.name,tier:m.tier,lanes:m.lines?m.lines.slice(0,2).join("/"):"",mercenary:false,stat:modeStats?modeStats[m.id]||null:null,statLoading:!modeStats});
   });
   mercenaries.forEach((m,i)=>{
     players.push({id:'merc_'+i,name:m.name||'용병',tier:m.tier,lanes:m.lane&&m.lane!=='없음'?m.lane:'',mercenary:true,mercIdx:i});
@@ -1099,6 +1201,7 @@ function renderTeamAssign(){
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
         ${p.lanes?`<span style="font-size:10px;color:var(--ink-3);font-weight:600">${p.lanes}</span>`:'<span></span>'}
+        ${seasonWrTag(p)}
       </div>
     </div>`;
   }).join("");
@@ -1171,6 +1274,7 @@ $("#addSubmitBtn").addEventListener("click",async()=>{
       red:redItems.map(itemToPlayer),
     });
     addPicked.clear();mercenaries=[];
+    addSearchQ='';$("#addSearch").value='';
     $$('input[name="addWinner"]').forEach(r=>r.checked=false);
     renderAddPicker();
     await Promise.all([refreshData(),loadMembers()]);

@@ -49,9 +49,9 @@ function computeStats(matches, modeFilter) {
     delete s._seq;
   });
 
-  // 내전 점수 계산 (협곡만, 시간순으로 처리)
-  const riftMatches = matches.filter((m) => !m.mode || m.mode === '협곡');
-  const chronological = [...riftMatches].reverse(); // oldest first
+  // 내전 점수 계산 (기본은 협곡만 · 모드 필터가 지정되면 해당 모드 기준, 시간순으로 처리)
+  const scoreMatches = modeFilter ? matches : matches.filter((m) => !m.mode || m.mode === '협곡');
+  const chronological = [...scoreMatches].reverse(); // oldest first
   const scoreStreaks = {};
 
   chronological.forEach((mt) => {
