@@ -17,6 +17,8 @@ const dashboardRoute = require('./src/routes/dashboard');
 const scoresRoute = require('./src/routes/scores');
 const adminRoute = require('./src/routes/admin');
 const auctionRoute = require('./src/routes/auction');
+const synergyRoute = require('./src/routes/synergy');
+const badgesRoute = require('./src/routes/badges');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -47,6 +49,9 @@ app.get('/api', (_req, res) => {
       'POST /api/pending/:id/complete': '대기 내전 → 기록 저장',
       'GET /api/stats': '전적 순위',
       'GET /api/scores': '내전 점수 순위',
+      'GET /api/synergy': '듀오/맞대결 조합 통계',
+      'GET /api/synergy/:id': '단원별 궁합표',
+      'GET /api/badges': '기록 배지',
       'POST /api/balance': '팀 밸런서',
       'GET /api/meta': '스케일 상수',
     },
@@ -158,6 +163,8 @@ app.use('/api/balance', balanceRoute);
 app.use('/api/dashboard', dashboardRoute);
 app.use('/api/admin', adminRoute);
 app.use('/api/auction', auctionRoute);
+app.use('/api/synergy', synergyRoute);
+app.use('/api/badges', badgesRoute);
 
 app.get('/health', (_req, res) => res.json({ ok: true, uptime: process.uptime() }));
 

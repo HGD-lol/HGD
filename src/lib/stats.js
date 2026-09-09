@@ -13,7 +13,7 @@ function computeStats(matches, modeFilter) {
   }
   const stats = {};
   members.forEach((m) => {
-    stats[m.id] = { id: m.id, g: 0, w: 0, l: 0, mvp: 0, wr: 0, streak: 0, score: BASE_SCORE, lastMatch: null, _seq: [] };
+    stats[m.id] = { id: m.id, g: 0, w: 0, l: 0, mvp: 0, wr: 0, streak: 0, maxWin: 0, maxLose: 0, score: BASE_SCORE, lastMatch: null, _seq: [] };
   });
 
   // 전적 집계 (최신순)
@@ -45,6 +45,13 @@ function computeStats(matches, modeFilter) {
         else break;
       }
       s.streak = first ? n : -n;
+      // 역대 최장 연승/연패 (배지용)
+      let cw = 0, cl = 0;
+      for (const r of s._seq) {
+        if (r) { cw++; cl = 0; } else { cl++; cw = 0; }
+        if (cw > s.maxWin) s.maxWin = cw;
+        if (cl > s.maxLose) s.maxLose = cl;
+      }
     }
     delete s._seq;
   });
