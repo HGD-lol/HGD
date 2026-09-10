@@ -510,6 +510,7 @@
   footer{border-top:1px solid var(--line);margin-top:20px}
   footer .wrap{padding:22px;color:var(--ink-3);font-size:12px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
   footer b{color:var(--ink-2)}
+  footer .last-visit{margin-left:auto;white-space:nowrap}
 
   @media(max-width:820px){
     .grid2{grid-template-columns:1fr}
@@ -785,6 +786,7 @@
     <span>단원 <b id="fMembers">0</b>명</span>
     <span>·</span>
     <span>내전 <b id="fMatches">0</b>경기 기록</span>
+    <span class="last-visit" id="fLastVisit"></span>
   </div>
 </footer>
 
@@ -879,13 +881,15 @@ async function loadDashConfig(){
     matchRegEnabled=dash.config.matchRegistrationEnabled!==false;
     applyMatchRegState();
   }
+  setLastVisit(dash.lastVisit);
 }
 function applyMatchRegState(){
   const addView=$("#view-add");
   const addTab=$('[data-view="add"]');
   if(!matchRegEnabled){
     addTab.style.opacity='0.4';
-    addView.innerHTML=`<div class="empty" style="padding:60px 20px;color:var(--ink-3);font-size:15px">내전 등록이 현재 비활성화 상태입니다.<br>관리자가 활성화하면 사용할 수 있습니다.</div>`;
+    // 등록 화면을 통째로 비우므로, 아래 renderAddPicker() 는 여기 있던 요소를 더 찾지 못한다 → 반드시 건너뛴다
+    addView.innerHTML=`<div class="empty" style="padding:60px 20px;color:var(--ink-3);font-size:15px">내전 등록이 비활성화되었습니다.<br>관리자에게 문의하세요.</div>`;
   }
 }
 function renderAll(){renderDist();renderTopScores();renderTopPlayers();renderBadges();renderMatches();renderRoster();renderRank();}
@@ -897,6 +901,19 @@ function tierBadgeTxt(t){return `<span style="color:${TIER_COLOR[t]};font-weight
 function laneChip(l,sub){const c=LINE_COLOR[l]||"#888";
   return `<span class="lane${sub?' sub':''}" style="color:${c};background:${c}1c"><span class="ico" style="background:${c}"></span>${l}</span>`;}
 function fmtDate(d){return `${d.getMonth()+1}월 ${d.getDate()}일`}
+/* 마지막 접속 표기 — 오늘이면 시각만, 아니면 날짜까지 */
+function fmtVisit(d){
+  const hm=`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  const now=new Date();
+  const sameDay=d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()&&d.getDate()===now.getDate();
+  return sameDay?`오늘 ${hm}`:`${fmtDate(d)} ${hm}`;
+}
+function setLastVisit(iso){
+  const box=$("#fLastVisit"); if(!box)return;
+  const d=iso?new Date(iso):null;
+  // 서버가 켜진 뒤 첫 방문이면 보여줄 이전 기록이 없다
+  box.innerHTML=(d&&!Number.isNaN(d.getTime()))?`마지막 접속 <b>${fmtVisit(d)}</b>`:'';
+}
 
 /* ========== DASHBOARD ========== */
 function renderDist(){
@@ -1055,7 +1072,8 @@ function playerChip(p,q){
   const nick=m&&m.nick?m.nick:(p.mercenary?'용병':'');
   // 칩에는 툴팁을 달지 않는다 — 마우스를 올리면 상세 카드가 뜨므로 겹친다
   const badgeTags=p.mercenary?'':badgeIcons(p.id,'bs',false);
-  const key=p.mercenary?`data-merc="${escHtml(p.name)}" data-tier="${escHtml(p.tier)}"`:`data-pid="${p.id}"`;
+  const gone=!p.mercenary&&!m?` data-gone="${escHtml(p.name)}" data-tier="${escHtml(p.tier)}"`:'';
+  const key=p.mercenary?`data-merc="${escHtml(p.name)}" data-tier="${escHtml(p.tier)}"`:`data-pid="${p.id}"${gone}`;
   return `<div class="m-p" ${key}>
     <div class="n"><span class="mp-name">${hlName(p.name,q)}</span>${badgeTags}</div>
     <div class="s"><span class="k">${nick?hlName(nick,q):''}</span><span class="t" style="color:${TIER_COLOR[p.tier]}">${p.tier}</span></div>
@@ -1078,7 +1096,10 @@ function plCardHtml(chip){
       <hr><div class="none">일회성 참여라 전적·배지가 쌓이지 않습니다.</div>`;
   }
   const id=+chip.dataset.pid, m=memberById(id);
-  if(!m)return `<div class="h"><b>#${id}</b></div><div class="sub">명단에 없는 단원</div>`;
+  // 완전삭제된 단원 — 기록에 남은 이름만 보여준다 (누적 전적은 명단에서 빠져 집계되지 않는다)
+  if(!m)return `<div class="h"><b>${escHtml(chip.dataset.gone||('#'+id))}</b>${chip.dataset.gone?tierBadgeOf(chip.dataset.tier):''}</div>
+      <div class="sub">탈퇴한 단원 · 명단에서 삭제됨</div>
+      <hr><div class="none">명단에서 빠져 전적·배지가 더는 집계되지 않습니다.</div>`;
   const st=S.stats[id]||{g:0,w:0,l:0,wr:0,mvp:0,streak:0,score:200};
   const badges=S.matchBadges.get(id)||[];
   const main=(m.main&&m.main.length)?m.main.join(', '):'—';
@@ -1491,6 +1512,7 @@ $$(".add-sort-chip").forEach(btn=>btn.addEventListener("click",()=>{
 }));
 function totalPicked(){return addPicked.size+mercenaries.length}
 function renderAddPicker(){
+  if(!matchRegEnabled)return;   // 등록 화면이 비워진 상태 — 건드리면 없는 요소를 찾다가 터진다
   const list=S.members.slice().sort((a,b)=>{
     if(addSortBy==='name') return a.name.localeCompare(b.name,"ko");
     return TIER_RANK[b.tier]-TIER_RANK[a.tier]||a.name.localeCompare(b.name,"ko");

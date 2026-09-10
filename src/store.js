@@ -3,13 +3,14 @@
 const sb = require('./lib/supabase');
 const { buildMatch, toStored } = require('./lib/match');
 const { computeStats } = require('./lib/stats');
-const { loadMembers, toStoredMember, memberById, members, nextId } = require('./lib/members');
+const { loadMembers, toStoredMember, memberById, members, nextId, deletedMembers, DELETED_ROLE } = require('./lib/members');
 
 let userMatches = [];
 let pendingDraft = null;   // 내전 등록 화면에서 선택 중인 초안 (pending 테이블 1행)
 let seasons = [];
 let dashConfig = { title: '협곡단 내전 기록실', description: '단원 명단과 티어, 내전 전적을 한곳에서.', season: '2026 Split 2', matchRegistrationEnabled: true };
 let rosterInfo = { source: 'uninitialized', count: 0 };
+let lastVisitAt = null;    // 마지막으로 누군가 메인 화면을 연 시각 (dashboard_config.last_visit_at 에 보관)
 let cachedAll = null;
 let cachedStats = null;
 let cachedStatsRift = null;
@@ -82,7 +83,9 @@ async function importFromSheet() {
     sub: row[5] ? String(row[5]).split(',').map(s => s.trim()).filter(Boolean) : [],
     role: row[6] || '단원', joined: prevJoined.get(row[0]) || null, hidden: false,
   }));
-  loadMembers(memberList);
+  // 완전삭제된 단원(묘비)은 시트에 없지만 과거 기록의 이름 해석에 필요하다 — 그대로 들고 간다.
+  const tombs = deletedMembers().map(toStoredMember).filter(t => !memberList.some(m => m.id === t.id));
+  loadMembers([...memberList, ...tombs]);
   await dbWrite(() => sb.upsert('members', memberList));
   invalidate();
   rosterInfo = { source: r.source, count: memberList.length, fetchedAt: new Date().toISOString() };
@@ -124,6 +127,8 @@ async function init() {
   if (sbConfig && sbConfig.length > 0) {
     const c = sbConfig[0];
     dashConfig = { title: c.title, description: c.description, season: c.season, matchRegistrationEnabled: c.match_registration_enabled !== false };
+    // 컬럼이 아직 없으면 undefined — 그때는 이번 기동부터 다시 쌓인다
+    lastVisitAt = c.last_visit_at || null;
   }
 
   // 시즌
@@ -200,6 +205,8 @@ function addUserMatch(match) {
 function replaceUserMatch(id, match) {
   const idx = userMatches.findIndex(m => String(m.id) === String(id));
   if (idx < 0) return false;
+  // 수정 요청 본문에는 시즌이 없다 — 원래 시즌을 유지한다(안 그러면 시즌 필터에서 사라진다)
+  if (!match.seasonId) match.seasonId = userMatches[idx].seasonId || null;
   userMatches[idx] = match;
   dbWrite(() => sb.update('matches', `id=eq.${id}`, toDbMatch(toStored(match))));
   invalidate();
@@ -250,10 +257,15 @@ function setDashConfig(cfg) {
 }
 
 /* ── 단원 관리 ── */
+/* 저장용 전체 스냅샷 — 살아있는 단원 뒤에 묘비를 붙인다(앞쪽 인덱스는 members 와 동일). */
+function storedMembers() {
+  return [...members.map(toStoredMember), ...deletedMembers().map(toStoredMember)];
+}
+
 function editMember(id, patch) {
   const idx = members.findIndex(x => x.id === Number(id));
   if (idx < 0) return false;
-  const stored = members.map(toStoredMember);
+  const stored = storedMembers();
   stored[idx] = { ...stored[idx], ...patch };
   loadMembers(stored);
   dbWrite(() => sb.update('members', `id=eq.${Number(id)}`, stored[idx]));
@@ -263,7 +275,7 @@ function editMember(id, patch) {
 function addMember(obj) {
   const id = nextId();
   const newMember = { id, ...obj, hidden: false };
-  const stored = members.map(toStoredMember);
+  const stored = storedMembers();
   stored.push(newMember);
   loadMembers(stored);
   dbWrite(() => sb.insert('members', newMember));
@@ -273,31 +285,51 @@ function addMember(obj) {
 function removeMember(id) {
   const idx = members.findIndex(x => x.id === Number(id));
   if (idx < 0) return false;
-  const stored = members.map(toStoredMember);
+  const stored = storedMembers();
   stored[idx].hidden = true;
   loadMembers(stored);
   dbWrite(() => sb.update('members', `id=eq.${Number(id)}`, { hidden: true }));
   invalidate();
   return true;
 }
+/*
+ * 완전삭제 = 묘비화. 행을 지우지 않고 role 만 '삭제'로 바꾼다.
+ * 명단·풀·통계·순위에서는 사라지지만, 과거 내전 기록은 계속 이름을 해석할 수 있다.
+ */
 function permanentDeleteMember(id) {
-  const idx = members.findIndex(x => x.id === Number(id));
+  const num = Number(id);
+  const idx = members.findIndex(x => x.id === num);
   if (idx < 0) return false;
-  const stored = members.map(toStoredMember).filter(m => m.id !== Number(id));
+  const stored = storedMembers();
+  stored[idx] = { ...stored[idx], role: DELETED_ROLE, hidden: true };
   loadMembers(stored);
-  dbWrite(() => sb.del('members', `id=eq.${Number(id)}`));
+  dbWrite(() => sb.update('members', `id=eq.${num}`, stored[idx]));
   invalidate();
   return true;
 }
+/* 복원 — 숨김 단원은 물론 묘비도 되살린다(직책은 '예비'로 돌려놓는다). */
 function restoreMember(id) {
-  const idx = members.findIndex(x => x.id === Number(id));
+  const num = Number(id);
+  const stored = storedMembers();
+  const idx = stored.findIndex(x => x.id === num);
   if (idx < 0) return false;
-  const stored = members.map(toStoredMember);
-  stored[idx].hidden = false;
+  stored[idx] = { ...stored[idx], hidden: false };
+  if (stored[idx].role === DELETED_ROLE) stored[idx].role = '예비';
   loadMembers(stored);
-  dbWrite(() => sb.update('members', `id=eq.${Number(id)}`, { hidden: false }));
+  dbWrite(() => sb.update('members', `id=eq.${num}`, stored[idx]));
   invalidate();
   return true;
+}
+
+/*
+ * 방문 기록 — '직전' 방문 시각을 돌려주고 지금으로 갱신한다.
+ * 지금 보고 있는 사람 자신의 접속이 아니라 그 앞 사람의 접속 시각을 보여주기 위해서다.
+ */
+function touchVisit() {
+  const prev = lastVisitAt;
+  lastVisitAt = new Date().toISOString();
+  dbWrite(() => sb.update('dashboard_config', 'id=eq.1', { last_visit_at: lastVisitAt }));
+  return prev;
 }
 
 function counts() { return { matches: allMatches().length, userMatches: userMatches.length, pending: pendingDraft ? 1 : 0 }; }
@@ -310,6 +342,7 @@ module.exports = {
   getPending, savePending, clearPending,
   getDashConfig, setDashConfig,
   editMember, addMember, removeMember, permanentDeleteMember, restoreMember,
+  touchVisit,
   getSeasons, getCurrentSeason, createSeason,
   counts, roster,
 };

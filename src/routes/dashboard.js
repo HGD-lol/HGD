@@ -81,6 +81,7 @@ router.get('/', (req, res) => {
     topScores,
     recentMatches,
     counts: store.counts(),
+    lastVisit: store.touchVisit(),   // 이 화면을 열기 직전에 누가 접속했던 시각
   });
 });
 

@@ -1,6 +1,6 @@
 'use strict';
 
-const { memberById } = require('./members');
+const { displayMember } = require('./members');
 
 function buildMatch({ id, date, dur, blueWin, blue, red, mvpId, mode, seasonId }) {
   const mvpNum = mvpId == null ? null : Number(mvpId);
@@ -16,7 +16,7 @@ function buildMatch({ id, date, dur, blueWin, blue, red, mvpId, mode, seasonId }
           mercenary: true,
         };
       }
-      const m = memberById(p.id);
+      const m = displayMember(p.id);   // 완전삭제된 단원(묘비)도 이름을 해석한다
       return {
         id: Number(p.id),
         name: m ? m.name : `#${p.id}`,

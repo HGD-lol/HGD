@@ -70,7 +70,13 @@
   .edit-panel .team-label.blue{color:var(--blue)}
   .edit-panel .team-label.red{color:var(--red)}
   .edit-panel select.player-sel{padding:5px 6px;font-size:12px;min-width:110px;max-width:140px}
-  .edit-panel .edit-actions{display:flex;gap:8px;align-items:center;margin-top:10px}
+  .edit-panel .edit-actions{display:flex;flex-wrap:nowrap;gap:8px;align-items:center;margin-top:10px}
+  .edit-panel .edit-actions>*{flex:0 0 auto}
+  .edit-panel .edit-actions .lbl{font-size:12px;font-weight:700;color:var(--ink-3);white-space:nowrap}
+  .edit-panel .edit-actions .spacer{flex:1 1 auto;min-width:0}
+  .edit-panel .edit-actions input,
+  .edit-panel .edit-actions select{width:auto;padding:5px 8px;font-size:12px}
+  .edit-panel .edit-actions .edit-date{width:140px}
 </style>
 </head>
 <body>
@@ -346,7 +352,7 @@ $("#memTable").addEventListener("click",async e=>{
     if(!confirm('이 단원을 명단에서 숨기시겠어요? (과거 기록은 유지됩니다)'))return;
     try{ await jsend('DELETE','/api/admin/members/'+id); toast('삭제(숨김)했습니다'); await refreshAll(); }catch(ex){toast('실패: '+ex.message);}
   } else if(e.target.classList.contains("perm-del")){
-    if(!confirm('이 단원을 완전히 삭제합니다. 과거 기록에서도 이름이 표시되지 않습니다. 정말 삭제할까요?'))return;
+    if(!confirm('이 단원을 명단에서 완전히 삭제합니다. 순위·통계에서 빠지지만 과거 내전 기록에는 이름이 그대로 남습니다. 정말 삭제할까요?'))return;
     try{ await jsend('DELETE','/api/admin/members/'+id+'/permanent'); toast('완전 삭제했습니다'); await refreshAll(); }catch(ex){toast('실패: '+ex.message);}
   } else if(e.target.classList.contains("restore")){
     try{ await jsend('POST','/api/admin/members/'+id+'/restore'); toast('복원했습니다'); await refreshAll(); }catch(ex){toast('실패: '+ex.message);}
@@ -377,9 +383,19 @@ async function refreshAll(){ await loadMembers(); await loadMatches(); }
 
 /* ── 내전 관리 ── */
 let MATCHES=[], SEASONS=[], adminCurrentSeason=null, adminSeasonFilter=null;
-function memberOpts(selId){
-  return MEMBERS.filter(m=>!m.hidden).map(m=>
-    `<option value="${m.id}" ${m.id===selId?'selected':''}>${m.name} (${m.tier})</option>`
+/*
+ * 선수 선택 옵션. 용병·완전삭제된 단원은 명단에 없어서 아무 option 과도 안 맞고,
+ * 그러면 브라우저가 첫 항목을 고른 것처럼 보여준다(저장하면 그 사람으로 덮어써진다).
+ * 그래서 원래 값을 유지하는 option 을 맨 위에 하나 만들어 선택해 둔다.
+ */
+function memberOpts(p){
+  const live=MEMBERS.filter(m=>!m.hidden);
+  const known=!p.mercenary&&live.some(m=>m.id===p.id);
+  const hid=!p.mercenary&&MEMBERS.some(m=>m.id===p.id&&m.hidden);
+  const label=p.mercenary?`${esc(p.name)} (용병)`:`${esc(p.name)} (${hid?'숨김 단원':'삭제된 단원'})`;
+  const head=known?'':`<option value="${p.id}" data-keep="1" selected>${label}</option>`;
+  return head+live.map(m=>
+    `<option value="${m.id}" ${known&&m.id===p.id?'selected':''}>${esc(m.name)} (${esc(m.tier)})</option>`
   ).join('');
 }
 function populateAdminSeasonSel(){
@@ -420,19 +436,21 @@ $("#matchTable").addEventListener("click",async e=>{
     editTr.innerHTML=`<td colspan="6"><div class="edit-panel">
       <div class="team-row">
         <span class="team-label blue">블루팀</span>
-        ${mt.blue.map((p,i)=>`<select class="player-sel" data-team="blue" data-idx="${i}">${memberOpts(p.id)}</select>`).join('')}
+        ${mt.blue.map((p,i)=>`<select class="player-sel" data-team="blue" data-idx="${i}">${memberOpts(p)}</select>`).join('')}
       </div>
       <div class="team-row">
         <span class="team-label red">레드팀</span>
-        ${mt.red.map((p,i)=>`<select class="player-sel" data-team="red" data-idx="${i}">${memberOpts(p.id)}</select>`).join('')}
+        ${mt.red.map((p,i)=>`<select class="player-sel" data-team="red" data-idx="${i}">${memberOpts(p)}</select>`).join('')}
       </div>
       <div class="edit-actions">
-        <span style="font-size:12px;font-weight:700;color:var(--ink-3)">승리팀:</span>
-        <select class="edit-winner" style="padding:5px 8px;font-size:12px">
+        <span class="lbl">날짜:</span>
+        <input type="date" class="edit-date" value="${mt.date.slice(0,10)}">
+        <span class="lbl">승리팀:</span>
+        <select class="edit-winner">
           <option value="blue" ${mt.blueWin?'selected':''}>블루 승</option>
           <option value="red" ${!mt.blueWin?'selected':''}>레드 승</option>
         </select>
-        <span style="flex:1"></span>
+        <span class="spacer"></span>
         <button class="btn sm cancel-edit">취소</button>
         <button class="btn sm primary save-edit">저장</button>
       </div>
@@ -442,14 +460,27 @@ $("#matchTable").addEventListener("click",async e=>{
     $(".cancel-edit",editTr).addEventListener("click",()=>editTr.remove());
     // 저장
     $(".save-edit",editTr).addEventListener("click",async()=>{
-      const blue=$$("[data-team=blue]",editTr).map(s=>({id:+s.value}));
-      const red=$$("[data-team=red]",editTr).map(s=>({id:+s.value}));
+      // 손대지 않은 자리는 원래 선수를 그대로 돌려보낸다 (용병은 용병으로)
+      const readSide=team=>$$("[data-team="+team+"]",editTr).map((s,i)=>{
+        const orig=mt[team][i]||{};
+        const keep=s.selectedOptions[0]&&s.selectedOptions[0].dataset.keep;
+        if(!keep) return {id:+s.value,lane:orig.lane||null};
+        return orig.mercenary
+          ?{mercenary:true,name:orig.name,tier:orig.tier||'언랭',lane:orig.lane||null}
+          :{id:orig.id,lane:orig.lane||null};
+      });
+      const blue=readSide('blue'), red=readSide('red');
       const winner=$(".edit-winner",editTr).value;
-      const allIds=[...blue,...red].map(p=>p.id);
+      // 날짜만 바꾸고 시각은 원래 값을 유지한다 (같은 날 여러 판의 순서가 흐트러지지 않게)
+      const day=$(".edit-date",editTr).value;
+      if(!day){toast('경기 날짜를 입력하세요.');return}
+      const date=day+mt.date.slice(10);
+      const allIds=[...blue,...red].filter(p=>!p.mercenary).map(p=>p.id);
       const dup=allIds.find((v,i)=>allIds.indexOf(v)!==i);
       if(dup!=null){toast('같은 선수가 중복 선택되었습니다.');return}
       try{
-        await jsend('PUT','/api/matches/'+id,{date:mt.date,winner,mode:mt.mode||'협곡',blue,red});
+        // dur·mvpId 를 같이 보내지 않으면 수정할 때마다 경기시간·MVP 가 지워진다
+        await jsend('PUT','/api/matches/'+id,{date,dur:mt.dur,mvpId:mt.mvpId,winner,mode:mt.mode||'협곡',blue,red});
         toast('수정했습니다');
         await refreshAll();
       }catch(ex){toast('수정 실패: '+(ex.payload&&ex.payload.messages&&ex.payload.messages[0]||ex.message));}

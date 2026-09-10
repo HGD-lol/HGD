@@ -1,6 +1,6 @@
 'use strict';
 
-const { memberById } = require('../lib/members');
+const { memberById, displayMember } = require('../lib/members');
 const store = require('../store');
 const { TIER_RANK } = require('../lib/scales');
 
@@ -21,7 +21,7 @@ function genCode() {
 }
 
 function memberScore(id) {
-  const m = memberById(id);
+  const m = displayMember(id);
   if (!m) return { id, name: `#${id}`, tier: '언랭', score: 0 };
   const s = store.stats()[id] || { score: 200 };
   return { id, name: m.name, tier: m.tier, tierRank: TIER_RANK[m.tier] || 0, score: s.score };
