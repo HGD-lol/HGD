@@ -68,6 +68,16 @@ $env:ADMIN_PASSWORD="비밀번호"; $env:SESSION_SECRET="랜덤문자열"; npm s
 - MVP = 승리 팀 내 최고 스코어 `(k+a)/max(1,d)` 로 자동 계산
 - id 접두사: `s`=샘플(삭제 불가), `u`=사용자 등록
 
+**대기 내전(pending)** — 내전 등록 화면에서 선택 중인 상태. 테이블에 **항상 1행만** 유지된다
+```
+{ id:'draft', date, mode, player_ids, mercenaries:[{name, tier, lane}] }
+```
+- 선수를 고를 때마다 이 행을 덮어쓰므로 **페이지를 새로고침해도 선택이 그대로 복원**된다
+- 용병은 `player_ids` 에 들어가지 않고 `mercenaries` 에 이름을 직접 적는다.
+  전원 용병이면 `player_ids` 는 `NULL`
+- 내전 기록을 저장하면(`POST /api/matches`) 이 행은 삭제된다
+- 컬럼 변경 쿼리: [`sql/pending.sql`](sql/pending.sql) — Supabase SQL Editor 에서 실행
+
 ## API
 
 | 메서드 | 경로 | 설명 |
@@ -79,8 +89,11 @@ $env:ADMIN_PASSWORD="비밀번호"; $env:SESSION_SECRET="랜덤문자열"; npm s
 | GET | `/api/members/:id` | 단원 상세 |
 | GET | `/api/matches` | 내전 기록 최신순 (`?limit=`) |
 | GET | `/api/matches/:id` | 단일 매치 |
-| POST | `/api/matches` | 내전 등록 |
+| POST | `/api/matches` | 내전 등록 (저장 시 `pending` 행 삭제) |
 | DELETE | `/api/matches/:id` | 사용자 매치 삭제 |
+| GET | `/api/pending` | 선택 중인 선수 (새로고침 복원) |
+| PUT | `/api/pending` | 선택 상태 저장 — `{mode, playerIds, mercenaries}` |
+| DELETE | `/api/pending` | 선택 초기화 |
 | PUT | `/api/matches/:id` | 내전 수정 (관리자) |
 | DELETE | `/api/matches/:id` | 내전 삭제 (관리자) |
 | GET | `/api/stats` | 전적 순위 (`?minGames=3&sort=wr|score|streak&order=`) |

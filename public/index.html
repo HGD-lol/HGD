@@ -27,7 +27,7 @@
     --warn:#E0A335;
     --crit:#E84057;
     --shadow:0 10px 40px -12px rgba(0,0,0,.6);
-    --maxw:1140px;
+    --maxw:1280px;
     --font:"Pretendard","Pretendard Variable","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   }
   :root[data-theme="light"]{
@@ -187,6 +187,13 @@
     .helptip::before{display:none}
   }
   .badgegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:8px}
+  .panel-note{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--ink-3);white-space:nowrap}
+  .panel-note + .panel-modes{margin-left:8px}
+  .morebtn{display:block;width:100%;margin-top:9px;padding:8px 10px;border-radius:9px;
+    border:1px solid var(--line);background:transparent;color:var(--ink-2);
+    font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;transition:.15s}
+  .morebtn:hover{border-color:var(--gold-deep);color:var(--gold-bright);background:var(--surface-2)}
+  .morebtn[hidden]{display:none}
   .badge-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:12px 14px;
     display:flex;align-items:center;gap:11px}
   .badge-card .bi{font-size:22px;line-height:1;flex:0 0 auto}
@@ -194,6 +201,9 @@
   .badge-card .bl{font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.02em}
   .badge-card .bw{font-size:14px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .badge-card .bv{font-size:11.5px;font-weight:700;color:var(--gold-bright)}
+  /* 배지 기준 설명 — 서버가 desc 로 내려주는데 화면에 안 쓰이고 있었다 */
+  .badge-card .bd{display:block;margin-top:3px;font-size:10px;font-weight:600;color:var(--ink-3);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .rankmini{display:flex;flex-direction:column;gap:2px}
   .rankmini .r{display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:12px;
     padding:9px 8px;border-radius:9px}
@@ -202,6 +212,13 @@
   .rankmini .r:nth-child(1) .pos{color:var(--gold-bright)}
   .nm{display:flex;flex-direction:column;min-width:0}
   .nm b{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* 이름 + 기록배지를 한 줄에 (.nm 은 세로 flex 라 가로 줄을 따로 만든다) */
+  .nm .nmline{display:flex;align-items:center;gap:4px;min-width:0}
+  .nm .nmline b{min-width:0}
+  /* 이모지는 글자보다 커서 줄 높이를 밀어올린다 — 상자 높이를 고정한다 */
+  .rbadges{display:inline-flex;align-items:center;gap:0;flex:0 0 auto;cursor:default;
+    font-size:10.5px;line-height:1;height:14px}
+  .rbadges .more{font-size:8.5px;font-weight:800;color:var(--ink-3);margin-left:1px}
   .nm small{font-size:11px;color:var(--ink-3)}
   .wr{text-align:right}
   .wr b{font-size:14px;font-weight:800}
@@ -253,41 +270,80 @@
   .empty{text-align:center;padding:60px 20px;color:var(--ink-3);font-size:14px}
 
   /* ============ MATCHES ============ */
-  .matches{display:flex;flex-direction:column;gap:12px}
-  .match{border:1px solid var(--line);border-radius:13px;background:var(--surface);overflow:hidden}
-  .match-head{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;
-    padding:15px 18px;cursor:pointer;transition:.15s}
-  .match-head:hover{background:var(--surface-2)}
-  .side{display:flex;align-items:center;gap:10px}
-  .side.red{justify-content:flex-end;text-align:right}
-  .side .badge{font-size:10.5px;font-weight:800;letter-spacing:.1em;padding:3px 8px;border-radius:6px;text-transform:uppercase}
-  .side.blue .badge{color:var(--blue);background:color-mix(in srgb,var(--blue) 15%,transparent)}
-  .side.red .badge{color:var(--red);background:color-mix(in srgb,var(--red) 15%,transparent)}
-  .side .team{font-size:12.5px;color:var(--ink-2);white-space:normal;word-break:keep-all;line-height:1.4}
-  .win-tag{font-weight:800}
-  .side.blue.won .team, .side.red.won .team{color:var(--ink)}
-  .vs{text-align:center;min-width:96px}
-  .vs .score{font-size:20px;font-weight:800;letter-spacing:.02em}
-  .vs .score .b{color:var(--blue)}
-  .vs .score .r{color:var(--red)}
-  .vs .meta{font-size:10.5px;color:var(--ink-3);margin-top:2px;letter-spacing:.03em}
-  .match-body{display:none;border-top:1px solid var(--line-soft);padding:4px 0}
-  .match.open .match-body{display:block}
-  .match.open .caret{transform:rotate(180deg)}
-  .caret{transition:.2s;color:var(--ink-3);font-size:11px}
-  .teamgrid{display:grid;grid-template-columns:1fr 1fr;gap:0}
-  .teamcol{padding:14px 18px}
-  .teamcol:first-child{border-right:1px solid var(--line-soft)}
-  .teamcol h4{font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin:0 0 10px;font-weight:800}
-  .teamcol.blue h4{color:var(--blue)}
-  .teamcol.red h4{color:var(--red)}
-  .prow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
-    padding:6px 6px;border-radius:8px;font-size:12.5px}
-  .prow:hover{background:var(--surface-2)}
-  .prow .pn{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .prow .pn .mvp{color:var(--gold-bright);font-size:10px;font-weight:800;margin-left:5px}
-  .tinytier{font-weight:700;font-size:10.5px}
-  @media(max-width:620px){.teamgrid{grid-template-columns:1fr}.teamcol:first-child{border-right:0;border-bottom:1px solid var(--line-soft)}}
+  /* 한 카드 = 한 줄:  BLUE [블루 5명] (결과·날짜·모드) [레드 5명] RED
+     선수는 1줄 이름+배지 / 2줄 닉네임+티어. 양 팀 모두 5칸 고정 격자라 세로줄이 맞는다. */
+  .matches{display:flex;flex-direction:column;gap:10px}
+  .match{border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}
+
+  .m-row{display:grid;align-items:center;gap:10px;padding:10px 13px;--tagw:44px;
+    grid-template-columns:var(--tagw) minmax(0,1fr) 96px minmax(0,1fr) var(--tagw);
+    grid-template-areas:"btag blue mid red rtag"}
+  .m-tag{width:var(--tagw);text-align:center;font-size:9.5px;font-weight:800;letter-spacing:.08em;
+    padding:3px 0;border-radius:6px;text-transform:uppercase;white-space:nowrap}
+  .m-tag.blue{grid-area:btag;color:var(--blue);background:color-mix(in srgb,var(--blue) 15%,transparent)}
+  .m-tag.red{grid-area:rtag;color:var(--red);background:color-mix(in srgb,var(--red) 15%,transparent)}
+  .m-ps.blue{grid-area:blue}
+  .m-ps.red{grid-area:red}
+  /* 이긴 팀 쪽에서 시작하는 그라데이션 */
+  .match.blue-win .m-row{background-image:linear-gradient(90deg,
+    color-mix(in srgb,var(--blue) 17%,transparent), transparent 46%)}
+  .match.red-win .m-row{background-image:linear-gradient(270deg,
+    color-mix(in srgb,var(--red) 17%,transparent), transparent 46%)}
+
+  /* 가운데 결과 */
+  .m-mid{grid-area:mid;text-align:center;line-height:1.3}
+  .m-mid .res{display:block;font-size:12.5px;font-weight:800;letter-spacing:.02em}
+  .match.blue-win .m-mid .res{color:var(--blue)}
+  .match.red-win .m-mid .res{color:var(--red)}
+  .m-mid .sub{display:block;font-size:9.5px;font-weight:700;color:var(--ink-3);margin-top:1px}
+
+  /* 5칸 격자 */
+  .m-ps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0 8px}
+  .m-p{min-width:0}
+  .m-p{cursor:default}
+  /* 이름은 크게. 좁은 화면에서는 배지에 밀려 잘리므로 폭에 따라 줄어든다 */
+  .m-p .n{display:flex;align-items:center;gap:3px;min-width:0;min-height:17px;
+    font-size:clamp(11.5px,0.93vw,13px);font-weight:700;line-height:1.3}
+  /* 클래스명은 .nm 과 겹치지 않게 — 전역 .nm 은 display:flex 라 <mark> 가 줄바꿈을 유발한다 */
+  .m-p .mp-name{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* 이모지는 글자보다 커서 줄 높이를 밀어올린다 — 상자 높이를 고정한다 */
+  .m-p .bs{display:inline-flex;align-items:center;gap:0;flex:0 0 auto;cursor:default;
+    font-size:8.5px;line-height:1;height:12px}
+  /* 닉네임 줄은 비어 있어도 자리를 지킨다 — 두 팀 칩 높이가 어긋나지 않게 */
+  .m-p .s{display:flex;align-items:center;gap:4px;min-width:0;min-height:11px;
+    font-size:8.5px;line-height:1.3}
+  .m-p .k{color:var(--ink-3);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .m-p .t{font-weight:800;flex:0 0 auto;white-space:nowrap}
+  .m-p .bs .more{font-size:8px;font-weight:800;color:var(--ink-3);margin-left:1px}
+
+  /* 선수에 마우스를 올리면 뜨는 상세 카드 */
+  .plcard{position:fixed;z-index:90;width:236px;padding:12px 13px;border-radius:12px;
+    border:1px solid var(--line);background:var(--surface-2);box-shadow:var(--shadow);
+    pointer-events:none;opacity:0;transition:opacity .12s;font-size:11.5px;line-height:1.45}
+  .plcard.on{opacity:1}
+  .plcard .h{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+  .plcard .h b{font-size:15px;font-weight:800;color:var(--ink)}
+  .plcard .h .tr{font-size:11px;font-weight:800;white-space:nowrap}
+  .plcard .sub{font-size:10.5px;color:var(--ink-3);font-weight:600;margin-top:1px}
+  .plcard hr{border:0;border-top:1px solid var(--line);margin:9px 0}
+  .plcard .kv{display:flex;justify-content:space-between;gap:10px;color:var(--ink-2)}
+  .plcard .kv span:first-child{color:var(--ink-3);font-weight:600}
+  .plcard .kv b{font-weight:800;color:var(--ink)}
+  .plcard .bl{display:flex;align-items:center;gap:6px;margin-top:4px;color:var(--ink-2)}
+  .plcard .bl i{font-style:normal;font-size:12px}
+  .plcard .none{color:var(--ink-3);font-size:10.5px}
+
+  /* 좁아지면 블루 줄 / 결과 / 레드 줄로 접는다 */
+  /* 1120px 아래에선 한 줄에 10명이 안 들어가 이름이 잘린다 — 줄을 나눈다 */
+  @media(max-width:1199px){
+    .m-row{grid-template-columns:var(--tagw) minmax(0,1fr);
+      grid-template-areas:"btag blue" "mid mid" "rtag red";row-gap:8px}
+    .m-mid{display:flex;align-items:center;justify-content:center;gap:7px}
+    .m-mid .sub{margin-top:0}
+  }
+  @media(max-width:760px){ .m-ps{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px 8px} }
+  @media(max-width:520px){ .m-ps{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .m-row{--tagw:40px;padding:9px 10px} }
 
   /* ============ LEADERBOARD TABLE ============ */
   .tablewrap{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:var(--surface)}
@@ -332,6 +388,10 @@
   .merc-remove{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--red);
     width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1;display:grid;place-items:center}
   .merc-remove:hover{border-color:var(--red);background:color-mix(in srgb,var(--red) 12%,transparent)}
+
+  /* 검색어 일치 부분 강조 — 노란 배경엔 항상 어두운 글자를 써서 두 테마 모두 읽힌다 */
+  mark.hl{background:#FFE066;color:#131A28;font-weight:800;border-radius:3px;padding:0 2px;
+    box-decoration-break:clone;-webkit-box-decoration-break:clone}
 
   /* ============ ADD-MATCH FORM ============ */
   :root{color-scheme:dark}
@@ -429,14 +489,11 @@
   .bal-verdict{text-align:right}
   .bal-verdict .eyebrow{margin-bottom:3px}
   .bal-verdict b{font-size:15px;font-weight:800;display:block}
-  .bal-teams{display:grid;grid-template-columns:1fr 1fr;gap:0}
   .prow.bp{grid-template-columns:1fr auto}
   .fit{font-size:10px;font-weight:800;text-align:right;letter-spacing:.02em}
   .fit3{color:var(--good)} .fit2{color:var(--blue-2)} .fit1{color:var(--warn)} .fit0{color:var(--ink-3)}
   .bal-actions{display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--line-soft);justify-content:flex-end;flex-wrap:wrap}
   @media(max-width:620px){
-    .bal-teams{grid-template-columns:1fr}
-    .bal-teams .teamcol:first-child{border-right:0;border-bottom:1px solid var(--line-soft)}
   }
 
   /* tier dist modal */
@@ -462,9 +519,6 @@
   }
   @media(max-width:520px){
     .hero-title h1{font-size:24px}
-    .match-head{grid-template-columns:1fr auto}
-    .side.blue{grid-column:1}.vs{grid-column:2;grid-row:1 / span 2}.side.red{grid-column:1}
-    .side.red{justify-content:flex-start;text-align:left}
   }
 </style>
 </head>
@@ -518,16 +572,14 @@
             <button type="button" class="helpbtn" id="scoreHelpBtn" aria-label="내전 점수 설명 보기" aria-expanded="false" aria-describedby="scoreHelpTip">?</button>
             <span class="helptip" id="scoreHelpTip" role="tooltip"><span id="dashDesc"></span></span>
           </span>
-          <span class="chips panel-modes" id="scoreModes">
-            <button class="chip sm" data-dmode="전체" aria-pressed="true">전체</button>
-            <button class="chip sm" data-dmode="협곡" aria-pressed="false">협곡</button>
-            <button class="chip sm" data-dmode="칼바람" aria-pressed="false">칼바람</button>
-          </span>
+          <span class="panel-note">협곡 내전 기준</span>
         </h3>
         <div class="rankmini" id="topScores"></div>
+        <button type="button" class="morebtn" id="scoreMoreBtn"></button>
       </div>
       <div class="panel">
         <h3><span class="dot"></span> <span class="htitle">내전 승률 TOP 5</span>
+          <span class="panel-note" id="wrNote"></span>
           <span class="chips panel-modes" id="wrModes">
             <button class="chip sm" data-dmode="전체" aria-pressed="true">전체</button>
             <button class="chip sm" data-dmode="협곡" aria-pressed="false">협곡</button>
@@ -750,7 +802,8 @@ async function jsend(method,p,body){
 }
 
 let TIER_ORDER=[],TIER_RANK={},TIER_COLOR={},LINE_ORDER=[],LINE_COLOR={},LINE_SHORT={},ROLE_LABEL={};
-const S={members:[],byId:new Map(),pool:[],matches:[],stats:{},seasons:[],currentSeason:null};
+const S={members:[],byId:new Map(),pool:[],matches:[],stats:{},seasons:[],currentSeason:null,
+  matchBadges:new Map()};   // 단원 id → 그 시즌에 보유한 기록배지 [{icon,label,valueText}]
 function memberById(id){return S.byId.get(+id)}
 
 async function loadMeta(){
@@ -776,6 +829,20 @@ function populateSeasonSelect(sel,prefix){
   if(cur&&[...sel.options].some(o=>o.value===cur))sel.value=cur;
 }
 let matchSeasonFilter=null, rankSeasonFilter=null;
+/* 내전 기록 카드에 띄울 기록배지 — 보고 있는 시즌 기준, 모드는 전체 */
+async function loadMatchBadges(seasonId){
+  const map=new Map();
+  try{
+    const res=await jget('/api/badges?season='+encodeURIComponent(seasonId||''));
+    (res.badges||[]).forEach(b=>{
+      (b.winners||[]).forEach(w=>{
+        if(!map.has(w.id))map.set(w.id,[]);
+        map.get(w.id).push({icon:b.icon,label:b.label,valueText:b.valueText});
+      });
+    });
+  }catch(ex){ console.error('배지 로드 실패',ex); }   // 배지는 부가 정보 — 실패해도 기록은 보여준다
+  S.matchBadges=map;
+}
 async function loadMembers(){
   const {members}=await jget('/api/members');
   S.members=members;
@@ -789,7 +856,8 @@ async function refreshData(){
   const seasonParam=sid?`&season=${encodeURIComponent(sid)}`:'';
   const [mRes,sRes]=await Promise.all([
     jget('/api/matches?season='+encodeURIComponent(sid)),
-    jget('/api/stats?minGames=0'+seasonParam)
+    jget('/api/stats?minGames=0'+seasonParam),
+    loadMatchBadges(sid)
   ]);
   S.matches=mRes.matches.map(m=>({...m,date:new Date(m.date)}));
   S.stats={};
@@ -845,7 +913,7 @@ function renderDist(){
   requestAnimationFrame(()=>$$("#dist .dist-bar i").forEach(i=>i.style.width=i.dataset.w+"%"));
 }
 /* 대시보드 TOP 5 모드 필터 (전체 | 협곡 | 칼바람) */
-let dashScoreMode="전체", dashWrMode="전체";
+let dashWrMode="전체";   // 내전 점수는 모드 구분 없이 전체 합산만 쓴다
 const dashStatsCache={};
 function clearDashStatsCache(){for(const k in dashStatsCache)delete dashStatsCache[k];}
 async function statsByMode(mode){
@@ -861,91 +929,208 @@ async function statsByMode(mode){
   return st;
 }
 function syncDashChips(){
-  $$("#scoreModes .chip").forEach(c=>c.setAttribute("aria-pressed",String(c.dataset.dmode===dashScoreMode)));
   $$("#wrModes .chip").forEach(c=>c.setAttribute("aria-pressed",String(c.dataset.dmode===dashWrMode)));
 }
-$("#scoreModes").addEventListener("click",e=>{
-  const b=e.target.closest(".chip");if(!b||b.dataset.dmode===dashScoreMode)return;
-  dashScoreMode=b.dataset.dmode;syncDashChips();renderTopScores();
-});
 $("#wrModes").addEventListener("click",e=>{
   const b=e.target.closest(".chip");if(!b||b.dataset.dmode===dashWrMode)return;
   dashWrMode=b.dataset.dmode;syncDashChips();renderTopPlayers();
 });
 
+/* 내전 점수 — 점수는 협곡 내전만 반영되므로(src/lib/stats.js) 옆에 붙는 전적도 협곡 기준으로 맞춘다.
+   모드 구분 없이 한 목록으로 보여주고, 처음엔 5명만 → '더 보기'로 늘린다.
+   단원이 자기 점수를 찾을 수 있어야 해서 기록이 없는 사람도 포함한다. */
+const SCORE_STEP=10;
+let scoreShown=5, scoreList=[];
 async function renderTopScores(){
-  const mode=dashScoreMode;
-  const src=await statsByMode(mode);
-  if(mode!==dashScoreMode)return; // 그 사이 모드가 바뀌면 무시
-  const top=Object.values(src)
-    .filter(s=>S.byId.has(s.id)&&(mode==="전체"||s.g>0))
-    .sort((a,b)=>b.score-a.score).slice(0,5);
-  $("#topScores").innerHTML=top.map((s,i)=>{
+  const src=await statsByMode('협곡');
+  scoreList=Object.values(src)
+    .filter(s=>S.byId.has(s.id))
+    .sort((a,b)=>b.score-a.score||a.id-b.id);
+  paintTopScores();
+}
+function paintTopScores(){
+  const list=scoreList;
+  const shown=Math.min(scoreShown,list.length);
+  const title=$("#topScores").closest(".panel").querySelector(".htitle");
+  if(title)title.textContent=(shown>=list.length&&list.length>5)
+    ? `내전 점수 전체 순위 ${list.length}명`
+    : `내전 점수 TOP ${shown||5}`;
+
+  $("#topScores").innerHTML=list.slice(0,shown).map((s,i)=>{
     const m=memberById(s.id);
+    // 승패 옆에 승률도 — 점수와 같은 협곡 기준
+    const wrCol=s.wr>=.55?'var(--good)':s.wr>=.45?'var(--ink-2)':'var(--red)';
+    const rec=s.g
+      ? `${s.w}승 ${s.l}패 · <span style="color:${wrCol}">${Math.round(s.wr*100)}%</span>`
+      : '협곡 기록 없음';
     return `<div class="r">
       <span class="pos num">${i+1}</span>
-      <span class="nm"><b>${m.name}</b><small>${tierBadgeTxt(m.tier)}</small></span>
-      <span class="wr"><b style="color:var(--gold-bright)">${s.score}점</b><small class="num">${s.g}전 ${s.w}승</small></span>
+      <span class="nm"><span class="nmline"><b>${m.name}</b>${badgeIcons(s.id,'rbadges',true)}</span><small>${tierBadgeTxt(m.tier)}</small></span>
+      <span class="wr"><b style="color:var(--gold-bright)">${s.score}점</b><small class="num">${rec}</small></span>
     </div>`;
   }).join("")||`<div class="empty">아직 데이터가 없습니다.</div>`;
+
+  const btn=$("#scoreMoreBtn");
+  if(!list.length){btn.hidden=true;return}
+  btn.hidden=false;
+  if(shown<list.length){
+    const next=Math.min(SCORE_STEP,list.length-shown);
+    btn.textContent=`＋ ${next}명 더 보기 (${shown}/${list.length})`;
+    btn.dataset.act="more";
+  }else{
+    btn.textContent=`▲ 접기 (전체 ${list.length}명)`;
+    btn.dataset.act="less";
+  }
 }
+$("#scoreMoreBtn").addEventListener("click",()=>{
+  scoreShown=$("#scoreMoreBtn").dataset.act==="less"?5:Math.min(scoreShown+SCORE_STEP,scoreList.length);
+  paintTopScores();
+});
+/* 1~2경기 100% 가 순위를 차지하지 않도록 최소 경기 수를 둔다 */
+const MIN_WR_GAMES=3;
 async function renderTopPlayers(){
   const mode=dashWrMode;
   const src=await statsByMode(mode);
   if(mode!==dashWrMode)return; // 그 사이 모드가 바뀌면 무시
-  const top=Object.values(src).filter(s=>s.g>=3).sort((a,b)=>b.wr-a.wr||b.g-a.g).slice(0,5);
+  const top=Object.values(src).filter(s=>s.g>=MIN_WR_GAMES).sort((a,b)=>b.wr-a.wr||b.g-a.g).slice(0,5);
   $("#topPlayers").innerHTML=top.map((s,i)=>{
     const m=memberById(s.id);
     return `<div class="r">
       <span class="pos num">${i+1}</span>
-      <span class="nm"><b>${m.name}</b><small>${tierBadgeTxt(m.tier)} · ${m.lines.slice(0,2).join("/")||"—"}</small></span>
+      <span class="nm"><span class="nmline"><b>${m.name}</b>${badgeIcons(s.id,'rbadges',true)}</span><small>${tierBadgeTxt(m.tier)} · ${m.lines.slice(0,2).join("/")||"—"}</small></span>
       <span class="wr"><b style="color:${s.wr>=.5?'var(--good)':'var(--ink)'}">${Math.round(s.wr*100)}%</b><small class="num">${s.w}승 ${s.l}패</small></span>
     </div>`;
-  }).join("")||`<div class="empty">아직 순위에 오른 단원이 없습니다.</div>`;
+  }).join("")||`<div class="empty">${MIN_WR_GAMES}경기 이상 뛴 단원이 아직 없습니다.</div>`;
+  const note=$("#wrNote");
+  if(note)note.textContent=`${MIN_WR_GAMES}경기 이상`;
 }
 
 /* ========== MATCH RENDER ========== */
-function matchNode(mt){
-  const node=el("div","match");
-  const teamNames=arr=>arr.map(p=>p.name).join(" · ");
-  const modeLabel=mt.mode==='칼바람'?' · 칼바람':'';
+const escHtml=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* 기록배지 아이콘 묶음 — 이름을 밀어내지 않게 3개까지, 나머지는 +N.
+   withTip: 상세 카드가 없는 곳(대시보드 순위)에서는 툴팁으로 전체 목록을 보여준다. */
+function badgeIcons(id,cls,withTip){
+  const badges=S.matchBadges.get(id)||[];
+  if(!badges.length)return '';
+  const shown=badges.slice(0,3);
+  const tip=withTip?` title="${escHtml(badges.map(b=>`${b.label} · ${b.valueText}`).join(' / '))}"`:'';
+  return `<span class="${cls}"${tip}>${shown.map(b=>`<span>${b.icon}</span>`).join("")}${
+    badges.length>shown.length?`<span class="more">+${badges.length-shown.length}</span>`:''}</span>`;
+}
+// 검색어와 일치하는 부분만 <mark> 로 감싼다 (q 는 소문자, 없으면 그냥 이스케이프)
+function hlName(name,q){
+  const t=String(name==null?'':name);
+  if(!q)return escHtml(t);
+  const low=t.toLowerCase();
+  let out='',i=0;
+  for(;;){
+    const at=low.indexOf(q,i);
+    if(at<0){out+=escHtml(t.slice(i));break}
+    out+=escHtml(t.slice(i,at))+'<mark class="hl">'+escHtml(t.slice(at,at+q.length))+'</mark>';
+    i=at+q.length;
+  }
+  return out;
+}
+
+function matchNode(mt,q){
+  const node=el("div","match "+(mt.blueWin?"blue-win":"red-win"));
+  const chips=(arr,side)=>`<div class="m-ps ${side}">${arr.map(p=>playerChip(p,q)).join("")}</div>`;
   node.innerHTML=`
-    <div class="match-head" tabindex="0" role="button" aria-expanded="false">
-      <div class="side blue ${mt.blueWin?'won':''}">
-        <span class="badge">Blue${mt.blueWin?' ▸승':''}</span>
-        <span class="team">${teamNames(mt.blue)}</span>
+    <div class="m-row">
+      <span class="m-tag blue">Blue</span>
+      ${chips(mt.blue,"blue")}
+      <div class="m-mid">
+        <span class="res">${mt.blueWin?'블루 승':'레드 승'}</span>
+        <span class="sub">${fmtDate(mt.date)} · ${mt.mode==='칼바람'?'칼바람':'협곡'}</span>
       </div>
-      <div class="vs">
-        <div class="score num"><span class="${mt.blueWin?'b':'r'}">${mt.blueWin?'블루':'레드'} 승</span></div>
-        <div class="meta">${fmtDate(mt.date)}${modeLabel} <span class="caret">▾</span></div>
-      </div>
-      <div class="side red ${!mt.blueWin?'won':''}">
-        <span class="team">${teamNames(mt.red)}</span>
-        <span class="badge">${!mt.blueWin?'승◂ ':''}Red</span>
-      </div>
-    </div>
-    <div class="match-body">
-      <div class="teamgrid">
-        ${teamCol("blue","블루팀"+(mt.blueWin?" · 승리":""),mt.blue)}
-        ${teamCol("red","레드팀"+(!mt.blueWin?" · 승리":""),mt.red)}
-      </div>
+      ${chips(mt.red,"red")}
+      <span class="m-tag red">Red</span>
     </div>`;
-  const head=$(".match-head",node);
-  const toggle=()=>{const o=node.classList.toggle("open");head.setAttribute("aria-expanded",o)};
-  head.addEventListener("click",toggle);
-  head.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle()}});
   return node;
 }
-function teamCol(side,title,players){
-  const rows=players.map(p=>{
-    const mercTag=p.mercenary?` <span class="merc-badge" style="font-size:9px;padding:1px 5px">용병</span>`:'';
-    return `<div class="prow bp">
-      <span class="pn">${p.name}${mercTag}</span>
-      <span class="tinytier" style="color:${TIER_COLOR[p.tier]}">${p.tier}</span>
-    </div>`;
-  }).join("");
-  return `<div class="teamcol ${side}"><h4>${title}</h4>${rows}</div>`;
+/* 선수 칩 — 1줄: 이름+기록배지 / 2줄: 닉네임+티어 */
+function playerChip(p,q){
+  // 용병은 단원이 아니라 닉네임·배지가 없다
+  const m=p.mercenary?null:memberById(p.id);
+  const nick=m&&m.nick?m.nick:(p.mercenary?'용병':'');
+  // 칩에는 툴팁을 달지 않는다 — 마우스를 올리면 상세 카드가 뜨므로 겹친다
+  const badgeTags=p.mercenary?'':badgeIcons(p.id,'bs',false);
+  const key=p.mercenary?`data-merc="${escHtml(p.name)}" data-tier="${escHtml(p.tier)}"`:`data-pid="${p.id}"`;
+  return `<div class="m-p" ${key}>
+    <div class="n"><span class="mp-name">${hlName(p.name,q)}</span>${badgeTags}</div>
+    <div class="s"><span class="k">${nick?hlName(nick,q):''}</span><span class="t" style="color:${TIER_COLOR[p.tier]}">${p.tier}</span></div>
+  </div>`;
 }
+/* ── 선수 상세 카드 (마우스 오버) ── */
+let plCardEl=null, plCardFor=null;
+function plCard(){
+  if(!plCardEl){plCardEl=el("div","plcard");document.body.appendChild(plCardEl);}
+  return plCardEl;
+}
+function hidePlCard(){ if(plCardEl){plCardEl.classList.remove("on");plCardFor=null;} }
+
+function plCardHtml(chip){
+  const tierBadgeOf=t=>`<span class="tr" style="color:${TIER_COLOR[t]}">${t||'언랭'}</span>`;
+  // 용병은 이 경기 한정이라 누적 기록이 없다
+  if(chip.dataset.merc!==undefined){
+    return `<div class="h"><b>${escHtml(chip.dataset.merc||'용병')}</b>${tierBadgeOf(chip.dataset.tier)}</div>
+      <div class="sub">용병 · 이 경기 한정</div>
+      <hr><div class="none">일회성 참여라 전적·배지가 쌓이지 않습니다.</div>`;
+  }
+  const id=+chip.dataset.pid, m=memberById(id);
+  if(!m)return `<div class="h"><b>#${id}</b></div><div class="sub">명단에 없는 단원</div>`;
+  const st=S.stats[id]||{g:0,w:0,l:0,wr:0,mvp:0,streak:0,score:200};
+  const badges=S.matchBadges.get(id)||[];
+  const main=(m.main&&m.main.length)?m.main.join(', '):'—';
+  const sub=(m.sub&&m.sub.length)?m.sub.join(', '):'—';
+  const wrPct=st.g?Math.round(st.wr*100):0;
+  const wrCol=st.g?(st.wr>=.55?'var(--good)':st.wr>=.45?'var(--ink)':'var(--red)'):'var(--ink-3)';
+  const streak=st.streak>0?`${st.streak}연승`:st.streak<0?`${-st.streak}연패`:'—';
+  return `
+    <div class="h"><b>${escHtml(m.name)}</b>${tierBadgeOf(m.tier)}</div>
+    <div class="sub">${ROLE_LABEL[m.role]||m.role}${m.nick?' · '+escHtml(m.nick):''}</div>
+    <hr>
+    <div class="kv"><span>주라인</span><b>${escHtml(main)}</b></div>
+    <div class="kv"><span>부라인</span><b>${escHtml(sub)}</b></div>
+    ${m.joined?`<div class="kv"><span>가입</span><b>${escHtml(m.joined)}</b></div>`:''}
+    <hr>
+    ${st.g
+      ? `<div class="kv"><span>이번 시즌</span><b>${st.g}전 ${st.w}승 ${st.l}패</b></div>
+         <div class="kv"><span>승률</span><b style="color:${wrCol}">${wrPct}%</b></div>
+         <div class="kv"><span>점수 · MVP</span><b>${st.score}점 · ${st.mvp}회</b></div>
+         <div class="kv"><span>연속</span><b>${streak}</b></div>`
+      : `<div class="none">이번 시즌 기록이 없습니다.</div>`}
+    ${badges.length?`<hr>${badges.map(b=>
+      `<div class="bl"><i>${b.icon}</i><span>${escHtml(b.label)} · <b>${escHtml(b.valueText)}</b></span></div>`).join("")}`:''}`;
+}
+
+function showPlCard(chip){
+  if(plCardFor===chip)return;
+  plCardFor=chip;
+  const c=plCard();
+  c.innerHTML=plCardHtml(chip);
+  c.classList.add("on");
+  // 위치 — 칩 아래에 붙이되 화면 밖으로 나가면 위/안쪽으로 접는다
+  const r=chip.getBoundingClientRect(), cw=c.offsetWidth, ch=c.offsetHeight, pad=8;
+  let left=r.left+r.width/2-cw/2;
+  left=Math.max(pad,Math.min(left,innerWidth-cw-pad));
+  let top=r.bottom+8;
+  if(top+ch>innerHeight-pad) top=Math.max(pad,r.top-ch-8);
+  c.style.left=left+"px";
+  c.style.top=top+"px";
+}
+
+document.addEventListener("mouseover",e=>{
+  const chip=e.target.closest&&e.target.closest(".m-p");
+  if(chip)showPlCard(chip);
+});
+document.addEventListener("mouseout",e=>{
+  const chip=e.target.closest&&e.target.closest(".m-p");
+  if(chip&&!chip.contains(e.relatedTarget))hidePlCard();
+});
+addEventListener("scroll",hidePlCard,{passive:true});
+addEventListener("resize",hidePlCard);
+
 let matchModeFilter="전체", matchSearchQ="";
 $$(".match-mode-chip").forEach(btn=>btn.addEventListener("click",()=>{
   matchModeFilter=btn.dataset.mmode;
@@ -959,7 +1144,10 @@ $("#matchSeasonSel").addEventListener("change",e=>{
 });
 async function loadMatchesBySeason(){
   const sid=matchSeasonFilter||((S.currentSeason&&S.currentSeason.id)||'');
-  const mRes=await jget('/api/matches?season='+encodeURIComponent(sid));
+  const [mRes]=await Promise.all([
+    jget('/api/matches?season='+encodeURIComponent(sid)),
+    loadMatchBadges(sid)
+  ]);
   S.matches=mRes.matches.map(m=>({...m,date:new Date(m.date)}));
   $("#cMatch").textContent=mRes.count;
   renderMatchList();
@@ -969,11 +1157,15 @@ function renderMatchList(){
   let list=S.matches;
   if(matchModeFilter!=="전체") list=list.filter(mt=>(mt.mode||'협곡')===matchModeFilter);
   if(matchSearchQ) list=list.filter(mt=>{
-    const names=[...mt.blue,...mt.red].map(p=>p.name.toLowerCase());
-    return names.some(n=>n.includes(matchSearchQ));
+    // 화면에 닉네임이 보이므로 닉네임으로도 찾을 수 있게 한다
+    return [...mt.blue,...mt.red].some(p=>{
+      if(p.name.toLowerCase().includes(matchSearchQ))return true;
+      const m=p.mercenary?null:memberById(p.id);
+      return !!(m&&m.nick&&m.nick.toLowerCase().includes(matchSearchQ));
+    });
   });
   if(!list.length){all.innerHTML=`<div class="empty">조건에 맞는 내전 기록이 없습니다.</div>`;return}
-  list.forEach(mt=>all.appendChild(matchNode(mt)));
+  list.forEach(mt=>all.appendChild(matchNode(mt,matchSearchQ)));
 }
 function renderMatches(){
   renderMatchList();
@@ -1077,14 +1269,17 @@ async function renderBadges(){
   try{
     const res=await jget(url);
     if(mode!==badgeMode)return;
-    box.innerHTML=(res.badges||[]).map(b=>`<div class="badge-card">
+    box.innerHTML=(res.badges||[]).map(b=>{
+      const names=b.winners.map(w=>w.name).join(', ');
+      return `<div class="badge-card" title="${escHtml(b.label)} — ${escHtml(b.desc||'')}">
       <span class="bi">${b.icon}</span>
       <span class="bt">
-        <span class="bl">${b.label}</span>
-        <div class="bw" title="${b.winners.map(w=>w.name).join(', ')}">${b.winners.map(w=>w.name).join(', ')}</div>
-        <span class="bv">${b.valueText}</span>
+        <span class="bl">${escHtml(b.label)}</span>
+        <div class="bw" title="${escHtml(names)}">${escHtml(names)}</div>
+        <span class="bv">${escHtml(b.valueText)}</span>
+        ${b.desc?`<span class="bd">${escHtml(b.desc)}</span>`:''}
       </span>
-    </div>`).join("")||`<div class="empty" style="grid-column:1/-1;padding:24px">아직 배지를 받은 단원이 없습니다.</div>`;
+    </div>`;}).join("")||`<div class="empty" style="grid-column:1/-1;padding:24px">아직 배지를 받은 단원이 없습니다.</div>`;
   }catch(ex){
     box.innerHTML=`<div class="empty" style="grid-column:1/-1;padding:24px;color:var(--red)">배지를 불러오지 못했습니다.</div>`;
   }
@@ -1237,11 +1432,53 @@ $("#tierModal").addEventListener("click",e=>{if(e.target.id==="tierModal")$("#ti
 let addMode='협곡', addPicked=new Set(), addSortBy='tier', addSearchQ='';
 let mercenaries=[]; // [{name, tier, lane}]
 const LINE_VALUES_ADD=['탑','정글','미드','원딜','서폿'];
+
+/* ── PENDING 저장 ──
+   선택이 바뀔 때마다 pending 행(1개)을 통째로 덮어쓴다. 새로고침하면 loadPending() 이 그대로 복원.
+   PUT 은 큐로 직렬화해서 늦게 도착한 응답이 최신 선택을 덮어쓰지 않게 한다. */
+let pendingQ=Promise.resolve(), pendingT=null;
+function savePending(){
+  if(!matchRegEnabled)return;
+  clearTimeout(pendingT);
+  pendingT=setTimeout(()=>{
+    const body={mode:addMode,playerIds:[...addPicked],
+      mercenaries:mercenaries.map(m=>({name:m.name,tier:m.tier,lane:m.lane}))};
+    pendingQ=pendingQ.then(()=>jsend('PUT','/api/pending',body)).catch(pendingFail);
+  },250);
+}
+function clearPendingNow(){
+  if(!matchRegEnabled)return;
+  clearTimeout(pendingT);                      // 예약된 저장이 삭제 뒤에 되살아나지 않도록
+  pendingQ=pendingQ.then(()=>jsend('DELETE','/api/pending')).catch(pendingFail);
+}
+function pendingFail(ex){
+  console.error('pending 저장 실패',ex);
+  toast('선택 저장에 실패했습니다. 목록을 다시 불러옵니다.');
+  return loadPending();
+}
+async function loadPending(){
+  if(!matchRegEnabled)return;
+  let d;
+  try{d=await jget('/api/pending')}catch(ex){console.error('pending 로드 실패',ex);return}
+  addMode=d.mode||'협곡';
+  $$(".mode-tab").forEach(b=>b.classList.toggle("active",b.dataset.mode===addMode));
+  addPicked.clear();
+  (d.playerIds||[]).forEach(id=>{if(memberById(id))addPicked.add(id)});
+  mercenaries=(d.mercenaries||[]).map(m=>({name:m.name||'',tier:m.tier||'언랭',lane:m.lane||'없음'}));
+  renderAddPicker();
+}
+function resetPickedLocal(){
+  addPicked.clear();mercenaries=[];
+  addSearchQ='';$("#addSearch").value='';
+  $$('input[name="addWinner"]').forEach(r=>r.checked=false);
+}
+
 $$(".mode-tab").forEach(btn=>btn.addEventListener("click",()=>{
   $$(".mode-tab").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
   addMode=btn.dataset.mode;
   renderTeamAssign();
+  savePending();
 }));
 $("#addSearch").addEventListener("input",e=>{
   addSearchQ=e.target.value.trim();
@@ -1297,25 +1534,32 @@ $("#addMercBtn").addEventListener("click",()=>{
   if(totalPicked()>=10){toast("최대 10명까지 선택할 수 있습니다.");return}
   mercenaries.push({name:'',tier:'언랭',lane:'없음'});
   renderAddPicker();
+  savePending();
 });
 $("#mercList").addEventListener("click",e=>{
   const btn=e.target.closest(".merc-remove");
   if(!btn)return;
   mercenaries.splice(+btn.dataset.idx,1);
   renderAddPicker();
+  savePending();
 });
 $("#mercList").addEventListener("change",e=>{
   const item=e.target.closest(".merc-item");if(!item)return;
   const idx=+item.dataset.idx;
   const f=e.target.dataset.f;
-  if(f==='name')mercenaries[idx].name=e.target.value;
-  else if(f==='tier')mercenaries[idx].tier=e.target.value;
-  else if(f==='lane')mercenaries[idx].lane=e.target.value;
+  if(f==='name'){mercenaries[idx].name=e.target.value;syncMercName(idx);}
+  else if(f==='tier'){mercenaries[idx].tier=e.target.value;renderAddPicker();}
+  else if(f==='lane'){mercenaries[idx].lane=e.target.value;renderAddPicker();}
+  else return;
+  savePending();
 });
 $("#mercList").addEventListener("input",e=>{
   const item=e.target.closest(".merc-item");if(!item)return;
   const idx=+item.dataset.idx;
-  if(e.target.dataset.f==='name')mercenaries[idx].name=e.target.value;
+  if(e.target.dataset.f!=='name')return;
+  mercenaries[idx].name=e.target.value;
+  syncMercName(idx);
+  savePending();
 });
 $("#addPickGrid").addEventListener("click",e=>{
   const b=e.target.closest(".ppchip");if(!b||b.disabled)return;
@@ -1327,12 +1571,12 @@ $("#addPickGrid").addEventListener("click",e=>{
     if(addSearchQ){addSearchQ='';$("#addSearch").value='';}
   }
   renderAddPicker();
+  savePending();
 });
 $("#addClearBtn").addEventListener("click",()=>{
-  addPicked.clear();mercenaries=[];
-  addSearchQ='';$("#addSearch").value='';
-  $$('input[name="addWinner"]').forEach(r=>r.checked=false);
+  resetPickedLocal();
   renderAddPicker();
+  clearPendingNow();
 });
 
 /* ── 팀 배정 영역 ── */
@@ -1355,6 +1599,20 @@ function seasonWrTag(p){
   const col=st.wr>=.55?'var(--good)':st.wr>=.45?'var(--ink-2)':'var(--red)';
   return `<span class="pp-wr" style="color:${col}">${pct}%<small>${st.w}승 ${st.l}패</small></span>`;
 }
+// 팀 배정 카드 이름표 — 용병은 "이름 [용병]" (이름을 아직 안 적었으면 배지만)
+function ppNameHtml(p){
+  if(!p.mercenary)return p.name;
+  const badge='<span class="merc-badge" style="margin-left:4px">용병</span>';
+  return p.name?p.name+' '+badge:badge;
+}
+// 이름 타이핑 중에는 전체를 다시 그리면 입력 포커스가 날아가므로 이름표만 갈아끼운다
+function syncMercName(idx){
+  const item=$(`.pp-item[data-merc-idx="${idx}"]`,$("#teamAssignGrid"));
+  const label=item&&$(".pp-name",item);
+  if(!label)return;
+  const m=mercenaries[idx];
+  label.innerHTML=ppNameHtml({name:(m.name||'').trim(),mercenary:true});
+}
 function renderTeamAssign(){
   const area=$("#teamAssignArea");
   const total=totalPicked();
@@ -1372,7 +1630,7 @@ function renderTeamAssign(){
     if(m) players.push({id:m.id,name:m.name,tier:m.tier,lanes:m.lines?m.lines.slice(0,2).join("/"):"",mercenary:false,stat:modeStats?modeStats[m.id]||null:null,statLoading:!modeStats});
   });
   mercenaries.forEach((m,i)=>{
-    players.push({id:'merc_'+i,name:m.name||'용병',tier:m.tier,lanes:m.lane&&m.lane!=='없음'?m.lane:'',mercenary:true,mercIdx:i});
+    players.push({id:'merc_'+i,name:(m.name||'').trim(),tier:m.tier,lanes:m.lane&&m.lane!=='없음'?m.lane:'',mercenary:true,mercIdx:i});
   });
   // 기존 배정 상태 보존
   const oldStates={};
@@ -1385,7 +1643,7 @@ function renderTeamAssign(){
     const cls=oldStates[String(p.id)]?(' '+(oldStates[String(p.id)]==='blue'?'blue-sel':'red-sel')):'';
     return `<div class="pp-item${cls}" data-id="${p.id}" ${p.mercenary?'data-mercenary="true" data-merc-idx="'+p.mercIdx+'"':''} style="flex-direction:column;align-items:stretch;gap:4px">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
-        <span class="pp-name">${p.name}${p.mercenary?' <span class="merc-badge" style="margin-left:4px">용병</span>':''}</span>
+        <span class="pp-name">${ppNameHtml(p)}</span>
         ${tierBadge(p.tier)}
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
@@ -1462,9 +1720,9 @@ $("#addSubmitBtn").addEventListener("click",async()=>{
       blue:blueItems.map(itemToPlayer),
       red:redItems.map(itemToPlayer),
     });
-    addPicked.clear();mercenaries=[];
-    addSearchQ='';$("#addSearch").value='';
-    $$('input[name="addWinner"]').forEach(r=>r.checked=false);
+    // 서버가 기록 저장과 함께 pending 을 비웠으므로 예약된 저장만 취소하고 로컬 정리
+    clearTimeout(pendingT);
+    resetPickedLocal();
     renderAddPicker();
     await Promise.all([refreshData(),loadMembers()]);
     renderAll();
@@ -1490,6 +1748,7 @@ function toast(msg){
     await refreshData();
     await loadDashConfig();
     renderChips();renderAddPicker();renderAll();
+    await loadPending();
   }catch(ex){
     document.querySelector("main").insertAdjacentHTML("afterbegin",
       `<div class="empty" style="color:var(--red)">API 로딩 실패: ${ex.message}<br>서버가 실행 중인지 확인하세요 (npm start).</div>`);

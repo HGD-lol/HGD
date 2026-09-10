@@ -44,9 +44,9 @@ app.get('/api', (_req, res) => {
       'GET /api/members': '단원 명단',
       'GET /api/matches': '내전 기록',
       'POST /api/matches': '내전 등록',
-      'GET /api/pending': '대기 내전 목록',
-      'POST /api/pending': '내전 선수 등록',
-      'POST /api/pending/:id/complete': '대기 내전 → 기록 저장',
+      'GET /api/pending': '선택 중인 선수 (새로고침 복원)',
+      'PUT /api/pending': '선택 상태 저장 (선택할 때마다)',
+      'DELETE /api/pending': '선택 초기화',
       'GET /api/stats': '전적 순위',
       'GET /api/scores': '내전 점수 순위',
       'GET /api/synergy': '듀오/맞대결 조합 통계',
@@ -92,67 +92,94 @@ app.get('/api/meta', (_req, res) => {
   });
 });
 
-/* ── Pending (대기 내전) ── */
-app.get('/api/pending', (_req, res) => {
-  const list = store.getPending().map((p) => {
-    const regularPlayers = p.playerIds.map((id) => {
-      const m = memberById(id);
-      const s = store.stats()[id] || { score: 200 };
-      return { id, name: m ? m.name : `#${id}`, tier: m ? m.tier : '언랭', score: s.score };
-    });
-    const mercPlayers = (p.mercenaries || []).map(merc => ({
-      id: merc.tempId,
-      name: merc.name,
-      tier: merc.tier || '언랭',
-      score: null,
-      mercenary: true,
-      lanes: merc.lanes || [],
-    }));
-    return { ...p, players: [...regularPlayers, ...mercPlayers] };
-  });
-  res.json({ count: list.length, pending: list });
-});
+/* ── Pending (내전 등록 중인 선택 상태) ──
+   pending 테이블 1행에 선택 전체를 담는다.
+     player_ids  선택된 단원 id 배열 (전원 용병이면 NULL)
+     mercenaries 용병 [{name, tier, lane}] — 단원이 아니라 이름을 직접 적는 자리
+   선수를 고를 때마다 이 행을 덮어쓰므로 새로고침해도 선택이 남아 있고,
+   내전 기록이 저장되면(POST /api/matches) 행이 삭제된다. */
+const MODES = ['협곡', '칼바람'];
+const EMPTY_PENDING = { mode: '협곡', playerIds: [], mercenaries: [] };
 
-app.post('/api/pending', (req, res) => {
-  const { playerIds, mercenaries, mode } = req.body || {};
-  const mercList = Array.isArray(mercenaries) ? mercenaries : [];
+/* 초안 → 화면이 바로 쓸 수 있는 형태 (이름·티어·점수 채워서) */
+function serializePending(d) {
+  const draft = d || EMPTY_PENDING;
+  const stats = store.stats();
+  const players = draft.playerIds.map((id) => {
+    const m = memberById(id);
+    const st = stats[id] || { score: 200 };
+    return { id, name: m ? m.name : `#${id}`, tier: m ? m.tier : '언랭', score: st.score, mercenary: false };
+  });
+  const mercs = draft.mercenaries.map((merc, i) => ({
+    id: `merc_${i}`,
+    name: merc.name || '',
+    tier: merc.tier || '언랭',
+    lane: merc.lane || null,
+    score: null,
+    mercenary: true,
+  }));
+  return {
+    mode: draft.mode || '협곡',
+    count: players.length + mercs.length,
+    playerIds: draft.playerIds,
+    mercenaries: draft.mercenaries,
+    players: [...players, ...mercs],
+  };
+}
+
+/* 선택 상태 검증 — 10명은 '저장 시점'에만 요구하고, 여기서는 고르는 중이라 10명 이하만 본다 */
+function parsePendingBody(body) {
+  const { mode, playerIds, mercenaries } = body || {};
+  const errors = [];
+
+  if (mode && !MODES.includes(mode)) errors.push("모드는 '협곡' 또는 '칼바람' 이어야 합니다.");
+
   const ids = Array.isArray(playerIds) ? playerIds.map(Number) : [];
-  const totalCount = ids.length + mercList.length;
-  if (totalCount !== 10) {
-    return res.status(400).json({ error: 'validation_failed', messages: ['정확히 10명을 선택하세요.'] });
-  }
-  if (mode && mode !== '협곡' && mode !== '칼바람') {
-    return res.status(400).json({ error: 'validation_failed', messages: ["모드는 '협곡' 또는 '칼바람' 이어야 합니다."] });
-  }
-  const bad = ids.filter((id) => !memberById(id));
-  if (bad.length) {
-    return res.status(400).json({ error: 'validation_failed', messages: [`존재하지 않는 단원 id: ${bad.join(', ')}`] });
-  }
+  if (ids.some((id) => !Number.isFinite(id))) errors.push('단원 id 형식이 올바르지 않습니다.');
+  const bad = ids.filter((id) => Number.isFinite(id) && !memberById(id));
+  if (bad.length) errors.push(`존재하지 않는 단원 id: ${bad.join(', ')}`);
   const dup = ids.find((id, i) => ids.indexOf(id) !== i);
   if (dup != null) {
-    return res.status(400).json({ error: 'validation_failed', messages: ['중복된 단원이 있습니다.'] });
+    const m = memberById(dup);
+    errors.push(`${m ? m.name : dup} 단원이 중복 선택되었습니다.`);
   }
-  // 용병 검증
-  for (const merc of mercList) {
-    if (!merc.name || !String(merc.name).trim()) {
-      return res.status(400).json({ error: 'validation_failed', messages: ['용병 이름을 입력하세요.'] });
-    }
-  }
-  const pending = {
-    id: 'p' + Date.now(),
-    date: new Date().toISOString(),
-    mode: mode || '협곡',
-    playerIds: ids,
-    mercenaries: mercList.map(m => ({ tempId: 'merc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6), name: String(m.name).trim(), tier: m.tier || '언랭', lanes: m.lanes || [] })),
-  };
-  store.addPending(pending);
-  res.status(201).json(pending);
+
+  const rawMercs = Array.isArray(mercenaries) ? mercenaries : [];
+  // 이름은 아직 타이핑 중일 수 있으므로 비어 있어도 저장한다 (기록 저장 때 검증됨)
+  const mercs = rawMercs.map((m) => ({
+    name: m && m.name != null ? String(m.name).trim() : '',
+    tier: (m && m.tier) || '언랭',
+    lane: (m && m.lane && m.lane !== '없음') ? m.lane : null,
+  }));
+
+  if (ids.length + mercs.length > 10) errors.push('최대 10명까지 선택할 수 있습니다.');
+
+  if (errors.length) return { errors };
+  return { errors: [], value: { mode: mode || '협곡', playerIds: ids, mercenaries: mercs } };
+}
+
+/* GET /api/pending — 선택 상태 (새로고침 복원용) */
+app.get('/api/pending', (_req, res) => {
+  res.json(serializePending(store.getPending()));
 });
 
-app.delete('/api/pending/:id', (req, res) => {
-  const ok = store.deletePending(req.params.id);
-  if (!ok) return res.status(404).json({ error: 'pending_not_found' });
-  res.json({ deleted: true });
+/* PUT /api/pending — 선택이 바뀔 때마다 전체 저장 */
+app.put('/api/pending', (req, res) => {
+  const { errors, value } = parsePendingBody(req.body);
+  if (errors.length) return res.status(400).json({ error: 'validation_failed', messages: errors });
+
+  // 아무도 안 남았으면 행을 남겨둘 이유가 없다
+  if (value.playerIds.length === 0 && value.mercenaries.length === 0) {
+    store.clearPending();
+    return res.json(serializePending(null));
+  }
+  res.json(serializePending(store.savePending(value)));
+});
+
+/* DELETE /api/pending — 선택 초기화 */
+app.delete('/api/pending', (_req, res) => {
+  const cleared = store.clearPending();
+  res.json({ deleted: true, cleared });
 });
 
 app.use('/api/members', membersRoute);

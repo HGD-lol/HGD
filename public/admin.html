@@ -17,7 +17,7 @@
     background-image:radial-gradient(1000px 500px at 20% -10%,rgba(30,157,227,.10),transparent 60%),radial-gradient(1000px 500px at 80% -10%,rgba(232,64,87,.09),transparent 60%);}
   .num{font-variant-numeric:tabular-nums}
   a{color:var(--gold-bright)}
-  .wrap{max-width:1100px;margin:0 auto;padding:0 20px}
+  .wrap{max-width:1400px;margin:0 auto;padding:0 20px}
   header{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--rift) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
   .bar{display:flex;align-items:center;gap:14px;height:60px}
   .bar b{font-size:17px;font-weight:800}
@@ -47,8 +47,15 @@
   th{text-align:left;color:var(--ink-3);font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;padding:8px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
   td{padding:6px 8px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
   tr.hidden-row{opacity:.45}
-  td input,td select{padding:6px 7px;font-size:12px;width:100%}
-  .tw{overflow-x:auto}
+  td input,td select{padding:6px 7px;font-size:12px;width:100%;min-width:0}
+  /* 표는 내용 크기대로 두고(칸이 눌려 글자가 잘리지 않게), 좁으면 감싼 쪽이 가로 스크롤 */
+  .tw{overflow-x:auto;overscroll-behavior-x:contain}
+  .tw table{width:auto;min-width:100%}
+  .tw::-webkit-scrollbar{height:10px}
+  .tw::-webkit-scrollbar-track{background:transparent}
+  .tw::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}
+  .tw::-webkit-scrollbar-thumb:hover{background:var(--gold-deep)}
+  .tw{scrollbar-color:var(--line) transparent;scrollbar-width:thin}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--surface-2);border:1px solid var(--gold-deep);color:var(--gold-bright);padding:11px 18px;border-radius:11px;font-size:13px;font-weight:700;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.3s;z-index:50}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .login{max-width:360px;margin:12vh auto 0;text-align:center}
@@ -136,6 +143,7 @@
         <div class="row">
           <label class="fld">이름<input id="a_name" style="width:120px"></label>
           <label class="fld">출생연도<input id="a_birth" type="number" value="2000" style="width:90px"></label>
+          <label class="fld">가입날짜<input id="a_joined" type="date" style="width:140px"></label>
           <label class="fld">닉네임<input id="a_nick" style="width:150px"></label>
           <label class="fld">티어<select id="a_tier"></select></label>
           <label class="fld">주라인<select id="a_main" style="width:110px"></select></label>
@@ -286,20 +294,21 @@ async function loadMembers(){
   const roleOpts=r=>ROLES.map(x=>`<option ${x===r?'selected':''}>${x}</option>`).join('');
   const lineSel=(cur)=>['없음',...LINE_VALUES].map(l=>`<option value="${l}" ${l===cur?'selected':''}>${l}</option>`).join('');
   $("#memTable").innerHTML=`<thead><tr>
-    <th>이름</th><th>출생</th><th>닉네임</th><th>티어</th><th>주라인</th><th>부라인1</th><th>부라인2</th><th>직책</th><th>점수</th><th></th></tr></thead>
+    <th>이름</th><th>출생</th><th>가입날짜</th><th>닉네임</th><th>티어</th><th>주라인</th><th>부라인1</th><th>부라인2</th><th>직책</th><th>점수</th><th></th></tr></thead>
     <tbody>${members.map(m=>{
       const mainVal=(m.main&&m.main[0])||'없음';
       const sub1Val=(m.sub&&m.sub[0])||'없음';
       const sub2Val=(m.sub&&m.sub[1])||'없음';
       return `<tr data-id="${m.id}" class="${m.hidden?'hidden-row':''}">
-      <td><input data-f="name" value="${esc(m.name)}" style="width:90px"></td>
+      <td><input data-f="name" value="${esc(m.name)}" style="width:104px"></td>
       <td><input data-f="birth" type="number" value="${m.birth}" style="width:70px"></td>
+      <td><input data-f="joined" type="date" value="${esc(m.joined||'')}" style="width:140px"></td>
       <td><input data-f="nick" value="${esc(m.nick)}" style="width:130px"></td>
-      <td><select data-f="tier">${tierOpts(m.tier)}</select></td>
-      <td><select data-f="main">${lineSel(mainVal)}</select></td>
-      <td><select data-f="sub1">${lineSel(sub1Val)}</select></td>
-      <td><select data-f="sub2">${lineSel(sub2Val)}</select></td>
-      <td><select data-f="role">${roleOpts(m.role)}</select></td>
+      <td><select data-f="tier" style="width:118px">${tierOpts(m.tier)}</select></td>
+      <td><select data-f="main" style="width:96px">${lineSel(mainVal)}</select></td>
+      <td><select data-f="sub1" style="width:96px">${lineSel(sub1Val)}</select></td>
+      <td><select data-f="sub2" style="width:96px">${lineSel(sub2Val)}</select></td>
+      <td><select data-f="role" style="width:92px">${roleOpts(m.role)}</select></td>
       <td class="num"><span class="tag">${m.score}</span></td>
       <td style="white-space:nowrap">
         <button class="btn sm save">저장</button>
@@ -307,6 +316,12 @@ async function loadMembers(){
       </td></tr>`;}).join('')}</tbody>`;
 }
 function esc(s){return String(s==null?'':s).replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+// <input type="date"> 는 로컬 날짜를 쓰므로 toISOString(UTC) 이 아니라 로컬로 만든다
+function todayLocal(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function resetJoinedInput(){ $("#a_joined").value=todayLocal(); }
 $("#memTable").addEventListener("click",async e=>{
   const tr=e.target.closest("tr"); if(!tr)return; const id=tr.dataset.id;
   if(e.target.classList.contains("save")){
@@ -346,6 +361,7 @@ $("#addMemberBtn").addEventListener("click",async()=>{
   const err=$("#addErr");err.textContent='';
   const body={
     name:$("#a_name").value.trim(), birth:Number($("#a_birth").value),
+    joined:$("#a_joined").value||todayLocal(),
     nick:$("#a_nick").value.trim(), tier:$("#a_tier").value,
     main:$("#a_main").value&&$("#a_main").value!=='없음'?[$("#a_main").value]:[],
     sub:[$("#a_sub1").value,$("#a_sub2").value].filter(Boolean).filter(v=>v!=='없음'),
@@ -353,6 +369,7 @@ $("#addMemberBtn").addEventListener("click",async()=>{
   };
   try{ await jsend('POST','/api/admin/members',body); toast('단원을 추가했습니다');
     $("#a_name").value='';$("#a_nick").value='';$("#a_main").value='없음';$("#a_sub1").value='없음';$("#a_sub2").value='없음';
+    resetJoinedInput();
     await refreshAll();
   }catch(ex){ err.textContent=(ex.payload&&ex.payload.messages&&ex.payload.messages[0])||('추가 실패: '+ex.message); }
 });
@@ -456,6 +473,7 @@ async function loadAll(){
   fillSelect($("#a_main"),['없음',...LINE_VALUES]); $("#a_main").value='없음';
   fillSelect($("#a_sub1"),['없음',...LINE_VALUES]); $("#a_sub1").value='없음';
   fillSelect($("#a_sub2"),['없음',...LINE_VALUES]); $("#a_sub2").value='없음';
+  resetJoinedInput();                      // 신규 단원 가입날짜 기본값 = 오늘
   await loadDashConfig();
   await loadSeasons();
   // 시즌 목록 가져오기

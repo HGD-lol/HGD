@@ -95,6 +95,9 @@ router.post('/', (req, res) => {
   const match = buildMatch({ id: 'u' + Date.now(), ...params });
   store.addUserMatch(match);
 
+  // 기록으로 확정됐으니 선택 중이던 pending 행은 지운다
+  store.clearPending();
+
   // 예비 단원이 내전에 참여하면 자동으로 '단원'으로 변경 (용병 제외)
   const allPlayerIds = [...params.blue, ...params.red].filter(p => !p.mercenary).map(p => p.id);
   allPlayerIds.forEach(id => {

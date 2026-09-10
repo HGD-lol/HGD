@@ -93,6 +93,11 @@ router.get('/backup', requireAdmin, async (req, res) => {
   }
 });
 
+/* 오늘(KST) — 'YYYY-MM-DD'. UTC 로 자르면 한국 밤 시간에 하루 밀린다 */
+function todayKST() {
+  return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+}
+
 /* ── 단원 입력 검증 ── */
 function validateMember(body, { partial } = {}) {
   const errors = [];
@@ -109,6 +114,13 @@ function validateMember(body, { partial } = {}) {
     else out.birth = b;
   }
   if (has('nick')) out.nick = String(body.nick || '').trim();
+  if (has('joined')) {
+    const v = String(body.joined || '').trim();
+    if (!v) out.joined = null;                                   // 비우면 '모름'
+    else if (!/^\d{4}-\d{2}-\d{2}$/.test(v) || Number.isNaN(new Date(v).getTime())) {
+      errors.push('가입날짜 형식이 올바르지 않습니다. (YYYY-MM-DD)');
+    } else out.joined = v;
+  }
   if (has('tier')) {
     if (!TIER_ORDER.includes(body.tier)) errors.push(`티어는 ${TIER_ORDER.join('/')} 중 하나여야 합니다.`);
     else out.tier = body.tier;
@@ -142,6 +154,7 @@ router.post('/members', requireAdmin, (req, res) => {
     main: value.main || [],
     sub: value.sub || [],
     role: value.role || '예비',
+    joined: value.joined || todayKST(),   // 신규 단원은 오늘 가입으로 본다
   });
   res.status(201).json(memberById(id));
 });

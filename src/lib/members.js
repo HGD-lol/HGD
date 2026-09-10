@@ -25,6 +25,7 @@ function buildFromObj(m) {
     main: mainArr,
     sub: subArr,
     role: m.role || '단원',
+    joined: m.joined || null,       // 가입날짜 'YYYY-MM-DD' (모르면 null)
     lines: [...new Set([...mainArr, ...subArr].filter(x => x && x !== '올라이너'))],
     allLaner: subArr.includes('올라이너') || (typeof m.sub === 'string' && m.sub.trim() === '올라이너'),
     hidden: !!m.hidden,
@@ -57,6 +58,7 @@ function toStoredMember(m) {
     main: m.main,
     sub: m.sub,
     role: m.role,
+    joined: m.joined || null,
     hidden: m.hidden,
   };
 }

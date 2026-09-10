@@ -6,7 +6,7 @@ const { computeStats } = require('./lib/stats');
 const { loadMembers, toStoredMember, memberById, members, nextId } = require('./lib/members');
 
 let userMatches = [];
-let pendingMatches = [];
+let pendingDraft = null;   // 내전 등록 화면에서 선택 중인 초안 (pending 테이블 1행)
 let seasons = [];
 let dashConfig = { title: '협곡단 내전 기록실', description: '단원 명단과 티어, 내전 전적을 한곳에서.', season: '2026 Split 2', matchRegistrationEnabled: true };
 let rosterInfo = { source: 'uninitialized', count: 0 };
@@ -44,10 +44,23 @@ function fromDbMatch(row) {
   return { id: row.id, date: new Date(row.date), dur: row.dur, mode: row.mode, blueWin: row.blue_win, mvpId: row.mvp_id, blue: row.blue, red: row.red, seasonId: row.season_id || null };
 }
 function toDbPending(p) {
-  return { id: p.id, date: p.date, mode: p.mode || '협곡', player_ids: p.playerIds, mercenaries: p.mercenaries || [] };
+  return {
+    id: p.id,
+    date: p.date,
+    mode: p.mode || '협곡',
+    // 선택된 단원이 없으면(전원 용병) NULL — 이름은 mercenaries 에 따로 들어간다
+    player_ids: p.playerIds && p.playerIds.length ? p.playerIds : null,
+    mercenaries: p.mercenaries || [],
+  };
 }
 function fromDbPending(row) {
-  return { id: row.id, date: row.date, mode: row.mode, playerIds: row.player_ids, mercenaries: row.mercenaries || [] };
+  return {
+    id: row.id,
+    date: row.date,
+    mode: row.mode || '협곡',
+    playerIds: row.player_ids || [],
+    mercenaries: row.mercenaries || [],
+  };
 }
 function toDbSeason(s) {
   return { id: s.id, name: s.name, is_current: !!s.isCurrent, created_at: s.createdAt };
@@ -60,11 +73,14 @@ function fromDbSeason(row) {
 async function importFromSheet() {
   const { loadRosterRows } = require('./lib/roster-source');
   const r = await loadRosterRows();
+  // 시트에는 가입날짜 열이 없다 — 이미 저장된 값을 덮어쓰지 않게 들고 온다.
+  // id 는 시트 행 순서로 다시 매겨지므로 이름을 키로 잇는다.
+  const prevJoined = new Map(members.map(m => [m.name, m.joined || null]));
   const memberList = r.rows.map((row, i) => ({
     id: i, name: row[0], birth: row[1], nick: row[2] || '', tier: row[3] || '언랭',
     main: row[4] ? String(row[4]).split(',').map(s => s.trim()).filter(Boolean) : [],
     sub: row[5] ? String(row[5]).split(',').map(s => s.trim()).filter(Boolean) : [],
-    role: row[6] || '단원', hidden: false,
+    role: row[6] || '단원', joined: prevJoined.get(row[0]) || null, hidden: false,
   }));
   loadMembers(memberList);
   await dbWrite(() => sb.upsert('members', memberList));
@@ -99,9 +115,9 @@ async function init() {
     userMatches = sbMatches.map(row => buildMatch(fromDbMatch(row)));
   }
 
-  // 대기 내전
+  // 대기 내전 — 선택 중인 초안 1건 (예전 데이터가 여러 건이면 최신 것만 쓴다)
   if (sbPending && sbPending.length > 0) {
-    pendingMatches = sbPending.map(fromDbPending);
+    pendingDraft = fromDbPending(sbPending[0]);
   }
 
   // 대시보드 설정
@@ -198,19 +214,29 @@ function deleteUserMatch(id) {
   return true;
 }
 
-/* ── 대기 매치 ── */
-function addPending(p) {
-  pendingMatches.unshift(p);
-  dbWrite(() => sb.insert('pending', toDbPending(p)));
-  return p;
+/* ── 대기 내전 (내전 등록 화면에서 선택 중인 초안) ──
+   pending 테이블에는 항상 최대 1행만 둔다. 선택이 바뀔 때마다 그 행을 통째로 덮어쓰고,
+   내전 기록이 저장되면(POST /api/matches) 행을 지운다. */
+const ALL_PENDING = 'id=not.is.null';   // PostgREST 는 전체 대상 삭제에도 필터가 필요
+
+function getPending() { return pendingDraft; }
+
+function savePending({ mode, playerIds, mercenaries }) {
+  pendingDraft = {
+    id: (pendingDraft && pendingDraft.id) || 'draft',
+    date: new Date().toISOString(),
+    mode: mode || '협곡',
+    playerIds: playerIds || [],
+    mercenaries: mercenaries || [],
+  };
+  dbWrite(() => sb.upsert('pending', toDbPending(pendingDraft)));
+  return pendingDraft;
 }
-function getPending() { return pendingMatches; }
-function findPending(id) { return pendingMatches.find(p => String(p.id) === String(id)) || null; }
-function deletePending(id) {
-  const before = pendingMatches.length;
-  pendingMatches = pendingMatches.filter(p => String(p.id) !== String(id));
-  if (pendingMatches.length === before) return false;
-  dbWrite(() => sb.del('pending', `id=eq.${id}`));
+
+function clearPending() {
+  if (!pendingDraft) return false;
+  pendingDraft = null;
+  dbWrite(() => sb.del('pending', ALL_PENDING));
   return true;
 }
 
@@ -274,14 +300,14 @@ function restoreMember(id) {
   return true;
 }
 
-function counts() { return { matches: allMatches().length, userMatches: userMatches.length, pending: pendingMatches.length }; }
+function counts() { return { matches: allMatches().length, userMatches: userMatches.length, pending: pendingDraft ? 1 : 0 }; }
 function roster() { return rosterInfo; }
 
 module.exports = {
   init, importFromSheet,
   allMatches, stats, findMatch,
   addUserMatch, replaceUserMatch, deleteUserMatch,
-  addPending, getPending, findPending, deletePending,
+  getPending, savePending, clearPending,
   getDashConfig, setDashConfig,
   editMember, addMember, removeMember, permanentDeleteMember, restoreMember,
   getSeasons, getCurrentSeason, createSeason,
