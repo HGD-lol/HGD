@@ -3,7 +3,7 @@
 const sb = require('./lib/supabase');
 const { buildMatch, toStored } = require('./lib/match');
 const { computeStats } = require('./lib/stats');
-const { loadMembers, toStoredMember, memberById, members, nextId, deletedMembers, DELETED_ROLE } = require('./lib/members');
+const { loadMembers, buildFromObj, toStoredMember, memberById, members, nextId, deletedMembers, parseAccounts, normNick, DELETED_ROLE } = require('./lib/members');
 
 let userMatches = [];
 let pendingDraft = null;   // 내전 등록 화면에서 선택 중인 초안 (pending 테이블 1행)
@@ -77,16 +77,25 @@ async function importFromSheet() {
   // 시트에는 가입날짜 열이 없다 — 이미 저장된 값을 덮어쓰지 않게 들고 온다.
   // id 는 시트 행 순서로 다시 매겨지므로 이름을 키로 잇는다.
   const prevJoined = new Map(members.map(m => [m.name, m.joined || null]));
-  const memberList = r.rows.map((row, i) => ({
-    id: i, name: row[0], birth: row[1], nick: row[2] || '', tier: row[3] || '언랭',
-    main: row[4] ? String(row[4]).split(',').map(s => s.trim()).filter(Boolean) : [],
-    sub: row[5] ? String(row[5]).split(',').map(s => s.trim()).filter(Boolean) : [],
-    role: row[6] || '단원', joined: prevJoined.get(row[0]) || null, hidden: false,
-  }));
+  // 시트 닉네임 칸은 하나뿐이라 부계정은 관리자 화면에서만 늘어난다 — 기존 닉을 들고 와 시트 닉 뒤에 합친다.
+  // (시트 칸에 쉼표로 여러 개 적어도 그대로 부계정으로 들어온다)
+  const prevAccounts = new Map(members.map(m => [m.name, m.accounts]));
+  const memberList = r.rows.map((row, i) => {
+    const prev = prevAccounts.get(row[0]) || [];
+    // 시트 닉과 같은 계정은 기존 것을 그대로 써서 PUUID·조회 시각을 잃지 않는다
+    const sheet = parseAccounts(row[2]).map(a => prev.find(p => normNick(p.nick) === normNick(a.nick)) || a);
+    const nicks = parseAccounts([...sheet, ...prev]);
+    return {
+      id: i, name: row[0], birth: row[1], nick: nicks.length ? nicks[0].nick : '', nicks, tier: row[3] || '언랭',
+      main: row[4] ? String(row[4]).split(',').map(s => s.trim()).filter(Boolean) : [],
+      sub: row[5] ? String(row[5]).split(',').map(s => s.trim()).filter(Boolean) : [],
+      role: row[6] || '단원', joined: prevJoined.get(row[0]) || null, hidden: false,
+    };
+  });
   // 완전삭제된 단원(묘비)은 시트에 없지만 과거 기록의 이름 해석에 필요하다 — 그대로 들고 간다.
   const tombs = deletedMembers().map(toStoredMember).filter(t => !memberList.some(m => m.id === t.id));
   loadMembers([...memberList, ...tombs]);
-  await dbWrite(() => sb.upsert('members', memberList));
+  await dbWrite(() => sb.upsert('members', memberList.map(dbMember)));
   invalidate();
   rosterInfo = { source: r.source, count: memberList.length, fetchedAt: new Date().toISOString() };
   return rosterInfo;
@@ -107,6 +116,11 @@ async function init() {
 
   // 단원
   if (sbMembers && sbMembers.length > 0) {
+    hasNicksColumn = Object.prototype.hasOwnProperty.call(sbMembers[0], 'nicks');
+    if (!hasNicksColumn) {
+      console.warn('  ⚠ members.nicks 컬럼이 없어 부계정 닉네임이 저장되지 않습니다. Supabase 에서 실행하세요:');
+      console.warn("    alter table public.members add column if not exists nicks jsonb not null default '[]'::jsonb;");
+    }
     loadMembers(sbMembers);
     rosterInfo = { source: 'supabase', count: members.length };
   } else {
@@ -262,23 +276,36 @@ function storedMembers() {
   return [...members.map(toStoredMember), ...deletedMembers().map(toStoredMember)];
 }
 
+/*
+ * members.nicks(부계정 닉네임) 컬럼이 아직 없는 DB 를 위한 안전장치.
+ * 없는 컬럼을 보내면 PostgREST 가 400 을 내고 저장이 통째로 조용히 실패하므로,
+ * 부팅 때 컬럼 유무를 보고 없으면 대표 닉(nick)만 보낸다.
+ */
+let hasNicksColumn = true;
+function nicksPersisted() { return hasNicksColumn; }
+function dbMember(obj) {
+  if (hasNicksColumn) return obj;
+  const { nicks, ...rest } = obj;
+  return rest;
+}
+
 function editMember(id, patch) {
   const idx = members.findIndex(x => x.id === Number(id));
   if (idx < 0) return false;
   const stored = storedMembers();
-  stored[idx] = { ...stored[idx], ...patch };
+  stored[idx] = toStoredMember(buildFromObj({ ...stored[idx], ...patch }));
   loadMembers(stored);
-  dbWrite(() => sb.update('members', `id=eq.${Number(id)}`, stored[idx]));
+  dbWrite(() => sb.update('members', `id=eq.${Number(id)}`, dbMember(stored[idx])));
   invalidate();
   return true;
 }
 function addMember(obj) {
   const id = nextId();
-  const newMember = { id, ...obj, hidden: false };
+  const newMember = toStoredMember(buildFromObj({ id, ...obj, hidden: false }));
   const stored = storedMembers();
   stored.push(newMember);
   loadMembers(stored);
-  dbWrite(() => sb.insert('members', newMember));
+  dbWrite(() => sb.insert('members', dbMember(newMember)));
   invalidate();
   return id;
 }
@@ -303,7 +330,7 @@ function permanentDeleteMember(id) {
   const stored = storedMembers();
   stored[idx] = { ...stored[idx], role: DELETED_ROLE, hidden: true };
   loadMembers(stored);
-  dbWrite(() => sb.update('members', `id=eq.${num}`, stored[idx]));
+  dbWrite(() => sb.update('members', `id=eq.${num}`, dbMember(stored[idx])));
   invalidate();
   return true;
 }
@@ -316,7 +343,7 @@ function restoreMember(id) {
   stored[idx] = { ...stored[idx], hidden: false };
   if (stored[idx].role === DELETED_ROLE) stored[idx].role = '예비';
   loadMembers(stored);
-  dbWrite(() => sb.update('members', `id=eq.${num}`, stored[idx]));
+  dbWrite(() => sb.update('members', `id=eq.${num}`, dbMember(stored[idx])));
   invalidate();
   return true;
 }
@@ -341,7 +368,7 @@ module.exports = {
   addUserMatch, replaceUserMatch, deleteUserMatch,
   getPending, savePending, clearPending,
   getDashConfig, setDashConfig,
-  editMember, addMember, removeMember, permanentDeleteMember, restoreMember,
+  editMember, addMember, removeMember, permanentDeleteMember, restoreMember, nicksPersisted,
   touchVisit,
   getSeasons, getCurrentSeason, createSeason,
   counts, roster,

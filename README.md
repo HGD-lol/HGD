@@ -53,12 +53,53 @@ $env:ADMIN_PASSWORD="비밀번호"; $env:SESSION_SECRET="랜덤문자열"; npm s
 - 시트를 수정한 뒤 재시작 없이 반영하려면 `POST /api/roster/refresh`
 - 다른 시트를 쓰려면 환경변수 `ROSTER_SHEET_ID`, `ROSTER_SHEET_GID` 설정
 
+## 라이엇 API 연동
+
+`src/lib/riot.js` — 관리자 화면의 `⟳ 티어` 버튼(`POST /api/admin/members/:id/riot-refresh`)이 단원 한 명의 계정을 갱신한다.
+
+- PUUID 가 없는 계정: `GET {region}/riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}` 로 받아서 저장
+- 티어: `GET {platform}/lol/league/v4/entries/by-puuid/{puuid}` → `RANKED_SOLO_5x5` 만 사용(자유랭크는 버린다). 언랭이면 `tier: '언랭'`
+- 라이엇 티어(`DIAMOND`)는 앱 표기(`다이아`)로 변환해서 저장하고, 마스터 이상은 세부 등급을 버린다
+- 레이트 리밋 — 응답 헤더로 확인한 실제 값
+  - `x-method-rate-limit`: account-v1 `1000:60`, league-v4 `20000:10,1200000:600` (넉넉함)
+  - `x-app-rate-limit`: `100:120,20:1` — **모든 호출에 함께 걸리는 앱 한도라 이쪽이 실질 상한**
+  - `riot.js` 의 limiter 가 호출 전에 버킷(1초/2분)을 확인해 필요한 만큼 기다린다. 한도 스펙은 응답 헤더에서 읽어 자동으로 맞추므로 키가 바뀌면 따라간다
+  - 20초 넘게 기다려야 하면 매달리지 않고 `…초 뒤에 다시 시도해 주세요` 로 실패시킨다
+  - **단원별 갱신은 공개**: `POST /api/members/:id/riot-refresh` — 로그인 없이 명단 카드의 `⟳` 로 누구나 누를 수 있다. 대신 **5분 쿨다운**이 있어 최근 갱신된 단원은 라이엇을 부르지 않고 `skipped:true` 와 `retryAfterSec` 만 돌려준다(관리자는 `?force=1` 로 무시)
+  - **전체 일괄 갱신은 관리자 전용**: 관리자 페이지 툴바와 메인 명단의 `⟳ 전체 티어 갱신`(관리자로 로그인했을 때만 보임). 단원별 관리자 엔드포인트 `POST /api/admin/members/:id/riot-refresh` 를 한 명씩 호출하며 진행률을 표시하고, 한도에 걸리면 그 지점에서 멈춘다(그때까지는 저장됨)
+  - 실패한 계정은 화면에 목록으로 뜬다 — `단원명 — '닉네임#태그' 사유`
+
+**티어** — `tier` 는 파생값이다
+- `tier` = 계정 중 가장 높은 솔로랭크(`soloTier`)가 있으면 그 값, 없으면 `baseTier`
+- `baseTier` = 시트/관리자가 직접 넣은 티어. DB `members.tier` 에 저장되는 것은 항상 이쪽이라 조회 결과가 수동 값을 덮어쓰지 않는다
+- 명단·상세카드·경매·밸런서·대시보드 티어 분포가 모두 `m.tier` 를 보므로 전 화면이 같은 값을 쓴다
+- 관리자 편집 패널의 `티어(수동)` 가 `baseTier` 다
+
+**표기 티어 상세** — `soloTier`/`soloRank`/`soloLp`/`soloNick` (파생값, 저장하지 않음)
+- 대표 계정은 `accounts[0]` 그대로 두고, **표시용 티어는 계정 중 가장 높은 솔로랭크**를 쓴다 (티어 → 세부 등급 → LP 순 비교)
+- 부계정이 더 높으면 관리자 표의 티어 배지와 명단 카드의 `↑ 부계정` 표시가 초록색으로 바뀌고 어느 계정인지 툴팁에 나온다
+- 메인 명단 카드는 닉네임 아래에 이 티어를 적고, 카드에 마우스를 올리면 계정별 티어와 마지막 조회 시각이 상세 카드에 나온다
+- 조회했는데 전 계정이 언랭이면 `언랭`, 아직 조회 전이면 `null`
+- 계정 하나가 실패해도 나머지는 계속 갱신하고 실패 사유만 모아서 돌려준다
+- 환경변수: `RIOT_API_KEY`(개발용 키는 24시간마다 만료 — 403 이면 키부터 새로 발급), `RIOT_PLATFORM`(기본 `kr`), `RIOT_REGION`(기본 `asia`)
+
 ## 데이터 모델
 
-**단원(member)** — 라이브 시트(또는 폴백 스냅샷)에서 로드
+**단원(member)** — Supabase `members`(최초 1회는 라이브 시트)에서 로드
 ```
-{ id, name, birth, age, nick, tier, main[], sub[], role, lines[], allLaner }
+{ id, name, birth, age, nick, nicks[], accounts[], tier, baseTier, solo*, main[], sub[], role, lines[], allLaner }
 ```
+- 한 단원이 부계정을 여러 개 가질 수 있다. 원본은 `accounts`:
+  ```
+  accounts: [{ nick: "닉네임#KR1", puuid: "…" | null,
+               tier: "다이아" | null, rank: "IV" | null, lp: 1 | null,
+               fetchedAt: ISO문자열 | null }]
+  ```
+  - `accounts[0]` = 대표 계정, `nick` = 대표 닉네임, `nicks` = 닉네임 문자열 목록(검색·표시용 파생값)
+  - `puuid` = 라이엇 계정 식별자, `tier`/`rank`/`lp` = **솔로랭크** 티어·세부등급·LP, `fetchedAt` = 마지막 조회 시각
+  - DB 에는 `members.nicks`(jsonb) 한 칸에 `accounts` 배열을 통째로 저장한다. 예전 형식(문자열 배열/단일 문자열)은 읽을 때 자동으로 계정 객체로 올라간다.
+  - 관리자 화면의 단원 목록 → `+ 계정` 버튼에서 추가·삭제·대표 지정, `⟳ 티어` 버튼에서 라이엇 조회
+  - **PUUID 만 공개 API 에서 뺀다** — `GET /api/members` 는 계정별 `nick`/`tier`/`rank`/`lp`/`fetchedAt` 까지 주고(명단 카드 hover 에서 쓴다), `puuid` 가 붙은 원본은 관리자 전용 `GET /api/admin/members` 에서만 준다
 
 **매치(match)**
 ```

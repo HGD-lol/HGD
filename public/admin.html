@@ -77,6 +77,64 @@
   .edit-panel .edit-actions input,
   .edit-panel .edit-actions select{width:auto;padding:5px 8px;font-size:12px}
   .edit-panel .edit-actions .edit-date{width:140px}
+  /* 계정(닉네임) 칩 — 표 안에서 한눈에, 편집은 모달에서 */
+  .nick-cell{display:flex;gap:5px;flex-wrap:wrap;align-items:center;min-width:210px;max-width:330px}
+  .nick-chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:3px 8px;
+    border-radius:7px;background:var(--surface-2);border:1px solid var(--line-soft);color:var(--ink-2);white-space:nowrap}
+  .nick-chip.main{border-color:var(--gold-deep);color:var(--gold-bright)}
+  .nick-chip .star{font-size:10px;color:var(--gold)}
+  .nick-none{font-size:12px;color:var(--ink-3)}
+  .nick-chip .ct{font-size:10.5px;font-weight:800;color:var(--gold-deep);margin-left:1px}
+  .nick-chip .dot{width:6px;height:6px;border-radius:50%;background:var(--line);display:inline-block}
+  .nick-chip .dot.on{background:var(--good)}
+  .nick-cell .acc-btn{padding:3px 9px;font-size:11.5px;border-radius:7px;border-style:dashed}
+  /* 모달 */
+  .modal-bg{position:fixed;inset:0;background:rgba(4,8,18,.72);display:none;place-items:center;z-index:60;padding:20px}
+  .modal-bg.on{display:grid}
+  .modal{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;max-width:470px;width:100%;box-shadow:var(--shadow)}
+  .modal h3{margin-bottom:6px}
+  .acc-list{display:flex;flex-direction:column;gap:8px;margin:14px 0}
+  .acc{display:flex;flex-direction:column;gap:6px;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:9px;padding:8px 9px}
+  .acc-top{display:flex;align-items:center;gap:8px}
+  .acc-meta{display:flex;align-items:center;gap:8px;padding-left:26px}
+  .acc-rank{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-left:26px}
+  .acc .rank-txt{font-size:11.5px;font-weight:800;color:var(--ink-2)}
+  .acc.main{border-color:var(--gold-deep)}
+  .acc .star{appearance:none;background:none;border:0;cursor:pointer;font-size:15px;line-height:1;color:var(--ink-3);padding:2px}
+  .acc .star:hover{color:var(--gold-bright)}
+  .acc.main .star{color:var(--gold)}
+  .acc input.nick{flex:1;min-width:0;background:transparent;border:0;padding:4px 2px;font-size:13px;font-weight:700}
+  .acc input.puuid{flex:1;min-width:0;background:var(--rift);border:1px solid var(--line-soft);border-radius:6px;padding:4px 7px;
+    font-size:11px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink-3)}
+  .acc .fetched{font-size:11px;color:var(--ink-3);white-space:nowrap}
+  .acc .badge-main{font-size:10px;font-weight:800;color:var(--gold);letter-spacing:.04em;white-space:nowrap}
+  .riot-errs{border:1px solid var(--red);border-radius:10px;background:rgba(232,64,87,.08);padding:10px 12px;margin-bottom:12px}
+  .riot-errs h4{margin:0 0 6px;font-size:12px;color:var(--red);display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .riot-errs ul{margin:0;padding-left:16px;font-size:12px;color:var(--ink-2);line-height:1.75}
+  .riot-errs .x{cursor:pointer;background:none;border:0;color:var(--ink-3);font-size:12px;font-weight:700;padding:0}
+  .memtools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .memtools .chk{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-3);font-weight:700;cursor:pointer}
+  .memtools input[type=checkbox]{width:auto;accent-color:var(--gold)}
+  .m-name{display:flex;align-items:baseline;gap:5px;white-space:nowrap}
+  .m-name b{font-size:13.5px;font-weight:800}
+  .m-name small{font-size:11px;color:var(--ink-3)}
+  .dim{color:var(--ink-3)}
+  .tier-badge-sm{font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;white-space:nowrap;border:1px solid}
+  .lanes{display:flex;gap:4px;flex-wrap:wrap}
+  .lane-chip{font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;white-space:nowrap}
+  .lane-chip.sub{opacity:.62;font-weight:600}
+  .role-txt{font-size:12px;font-weight:700;color:var(--ink-2);white-space:nowrap}
+  td.actions{white-space:nowrap;text-align:right}
+  tr.row-open>td{background:var(--surface-2);border-bottom-color:transparent}
+  .mem-edit>td{padding:0;background:var(--surface-2)}
+  .mem-edit .edit-panel{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .mem-edit .edit-panel .grow{flex:1 1 auto}
+  .peak{font-size:11px;font-weight:800;color:var(--gold-bright);background:var(--surface-2);
+    border:1px solid var(--gold-deep);border-radius:6px;padding:2px 7px;white-space:nowrap}
+  .peak.alt{color:var(--good);border-color:var(--good)}
+  .nick-more{font-size:11px;font-weight:800;color:var(--ink-3);background:var(--surface-2);
+    border:1px solid var(--line-soft);border-radius:6px;padding:2px 6px}
+  .acc-empty{font-size:12.5px;color:var(--ink-3);text-align:center;padding:16px;border:1px dashed var(--line);border-radius:9px}
 </style>
 </head>
 <body>
@@ -144,13 +202,24 @@
     </div>
 
     <div class="view" id="v-members">
+      <div class="card" id="nicksWarn" style="display:none;margin-bottom:18px;border-color:var(--red)">
+        <h3 style="color:var(--red)">⚠ 계정(닉네임)이 저장되지 않는 상태입니다</h3>
+        <p style="color:var(--ink-2);font-size:12.5px;margin:0 0 10px">Supabase <b>members</b> 테이블에 <b>nicks</b> 컬럼이 없어, 계정 추가·삭제·대표 변경이 화면에만 반영되고 DB 에는 남지 않습니다. SQL Editor 에서 아래를 실행하세요.</p>
+        <code style="display:block;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:12px;color:var(--gold-bright);white-space:pre-wrap">alter table public.members add column if not exists nicks jsonb not null default '[]'::jsonb;
+update public.members set nicks = to_jsonb(array[nick])
+ where coalesce(nicks, '[]'::jsonb) = '[]'::jsonb and coalesce(nick, '') &lt;&gt; '';</code>
+      </div>
       <div class="card" style="margin-bottom:18px">
-        <h3>➕ 단원 추가</h3>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="btn sm" id="toggleAddMember" aria-expanded="false">➕ 단원 추가</button>
+          <span style="font-size:12px;color:var(--ink-3)">새 단원을 명단에 올립니다</span>
+        </div>
+        <div id="addMemberBox" style="display:none;margin-top:14px">
         <div class="row">
           <label class="fld">이름<input id="a_name" style="width:120px"></label>
           <label class="fld">출생연도<input id="a_birth" type="number" value="2000" style="width:90px"></label>
           <label class="fld">가입날짜<input id="a_joined" type="date" style="width:140px"></label>
-          <label class="fld">닉네임<input id="a_nick" style="width:150px"></label>
+          <label class="fld">대표 계정<input id="a_nick" style="width:180px" placeholder="닉네임#KR1"></label>
           <label class="fld">티어<select id="a_tier"></select></label>
           <label class="fld">주라인<select id="a_main" style="width:110px"></select></label>
           <label class="fld">부라인1<select id="a_sub1" style="width:110px"></select></label>
@@ -159,12 +228,26 @@
           <button class="btn primary" id="addMemberBtn">추가</button>
         </div>
         <div class="err" id="addErr"></div>
-        <p style="color:var(--ink-3);font-size:12px;margin:6px 0 0">주라인 1개, 부라인 최대 2개를 선택하세요.</p>
+        <p style="color:var(--ink-3);font-size:12px;margin:6px 0 0">주라인 1개, 부라인 최대 2개를 선택하세요. 부계정은 추가한 뒤 아래 목록의 [관리] 버튼에서 등록합니다.</p>
+        </div>
       </div>
       <div class="card">
-        <h3>단원 목록 <span id="memCount" class="tag"></span>
-          <button class="btn sm" id="sortNameBtn" style="margin-left:12px;font-size:11px">이름 ▲</button>
-        </h3>
+        <h3>단원 목록 <span id="memCount" class="tag"></span></h3>
+        <div class="memtools">
+          <input id="memSearch" placeholder="이름 · 계정 검색" style="width:200px">
+          <select id="memRole" style="width:120px"></select>
+          <select id="memSort" style="width:110px">
+            <option value="name">이름순</option>
+            <option value="tier">티어순</option>
+            <option value="score">점수순</option>
+            <option value="joined">가입순</option>
+          </select>
+          <button class="btn sm" id="memDir" title="정렬 방향" style="width:34px">▲</button>
+          <label class="chk"><input type="checkbox" id="memHidden"> 숨김 단원 포함</label>
+          <div style="flex:1"></div>
+          <button class="btn sm" id="riotAllBtn" title="보이는 단원 전체의 솔로랭크를 라이엇에서 가져옵니다">⟳ 전체 티어 갱신</button>
+        </div>
+        <div id="riotErrs" class="riot-errs" style="display:none"></div>
         <div class="tw"><table id="memTable"></table></div>
       </div>
     </div>
@@ -185,6 +268,24 @@
   </section>
 </main>
 
+<!-- 계정(닉네임) 관리 모달 -->
+<div class="modal-bg" id="accModal">
+  <div class="modal">
+    <h3 id="accTitle">계정 관리</h3>
+    <p style="color:var(--ink-3);font-size:12px;margin:0">★ 가 대표 계정입니다. 명단·내전 화면에는 대표 계정이 표시되고, 검색은 모든 계정으로 됩니다. 티어·LP·PUUID 는 단원 목록의 [⟳ 티어] 버튼이 라이엇에서 가져와 채웁니다. 닉이나 PUUID 를 고치면 그 값들은 초기화됩니다.</p>
+    <div class="acc-list" id="accList"></div>
+    <div style="display:flex;gap:8px">
+      <input id="accNew" placeholder="라이엇 ID (예: 닉네임#KR1)" style="flex:1;min-width:0">
+      <button class="btn" id="accAdd">추가</button>
+    </div>
+    <div class="err" id="accErr"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+      <button class="btn" id="accCancel">취소</button>
+      <button class="btn primary" id="accSave">저장</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const $=(s,el=document)=>el.querySelector(s);
 const $$=(s,el=document)=>[...el.querySelectorAll(s)];
@@ -195,11 +296,11 @@ function toast(msg){let t=$("#toast");if(!t){t=document.createElement('div');t.c
 let META={}, MEMBERS=[], LINE_ORDER=[], TIER_ORDER=[];
 const ROLES=['단장','부단장','단원','예비'];
 const LINE_VALUES=['탑','정글','미드','원딜','서폿','올라이너'];
-let memSortDir=1; // 1=오름차순, -1=내림차순
 
 /* ── 인증 ── */
 async function checkAuth(){
   const me=await jget('/api/admin/me');
+  if(me.nicksColumn===false) $("#nicksWarn").style.display='block';
   if(me.authed){ showAdmin(); } else { $("#loginView").style.display='block'; $("#pw").focus(); }
 }
 function showAdmin(){
@@ -212,7 +313,7 @@ $("#loginBtn").addEventListener("click",login);
 $("#pw").addEventListener("keydown",e=>{if(e.key==='Enter')login()});
 async function login(){
   const err=$("#loginErr");err.textContent='';
-  try{ await jsend('POST','/api/admin/login',{password:$("#pw").value}); showAdmin(); }
+  try{ await jsend('POST','/api/admin/login',{password:$("#pw").value}); await checkAuth(); }
   catch(ex){ err.textContent = ex.status===401 ? '비밀번호가 올바르지 않습니다.' : ('오류: '+ex.message); }
 }
 $("#logoutBtn").addEventListener("click",async()=>{ await jsend('POST','/api/admin/logout'); location.reload(); });
@@ -290,37 +391,127 @@ $("#saveDashConfig").addEventListener("click",async()=>{
   }catch(ex){err.textContent='저장 실패: '+ex.message;}
 });
 
-/* ── 단원 관리 ── */
+/* ── 단원 관리 ──
+   표는 '읽기 전용 한 줄'만 보여주고(이름·티어·라인·계정·점수·직책),
+   편집은 행 아래로 펼쳐지는 패널에서 한다. 한 번에 한 행만 열린다. */
+let memFilter={q:'',role:'',hidden:false,sort:'name',dir:1};
+let memOpenId=null;
+
+$("#memRole").innerHTML='<option value="">직책 전체</option>'+ROLES.map(r=>`<option>${r}</option>`).join('');
+
 async function loadMembers(){
-  const {members}=await jget('/api/members?includeHidden=1');
+  const {members}=await jget('/api/admin/members');   // PUUID·티어 포함 (공개 API 는 닉네임까지만)
   MEMBERS=members;
-  members.sort((a,b)=>a.name.localeCompare(b.name,'ko')*memSortDir);
-  $("#memCount").textContent=members.length+'명';
-  const tierOpts=t=>TIER_ORDER.map(x=>`<option ${x===t?'selected':''}>${x}</option>`).join('');
-  const roleOpts=r=>ROLES.map(x=>`<option ${x===r?'selected':''}>${x}</option>`).join('');
-  const lineSel=(cur)=>['없음',...LINE_VALUES].map(l=>`<option value="${l}" ${l===cur?'selected':''}>${l}</option>`).join('');
-  $("#memTable").innerHTML=`<thead><tr>
-    <th>이름</th><th>출생</th><th>가입날짜</th><th>닉네임</th><th>티어</th><th>주라인</th><th>부라인1</th><th>부라인2</th><th>직책</th><th>점수</th><th></th></tr></thead>
-    <tbody>${members.map(m=>{
-      const mainVal=(m.main&&m.main[0])||'없음';
-      const sub1Val=(m.sub&&m.sub[0])||'없음';
-      const sub2Val=(m.sub&&m.sub[1])||'없음';
-      return `<tr data-id="${m.id}" class="${m.hidden?'hidden-row':''}">
-      <td><input data-f="name" value="${esc(m.name)}" style="width:104px"></td>
-      <td><input data-f="birth" type="number" value="${m.birth}" style="width:70px"></td>
-      <td><input data-f="joined" type="date" value="${esc(m.joined||'')}" style="width:140px"></td>
-      <td><input data-f="nick" value="${esc(m.nick)}" style="width:130px"></td>
-      <td><select data-f="tier" style="width:118px">${tierOpts(m.tier)}</select></td>
-      <td><select data-f="main" style="width:96px">${lineSel(mainVal)}</select></td>
-      <td><select data-f="sub1" style="width:96px">${lineSel(sub1Val)}</select></td>
-      <td><select data-f="sub2" style="width:96px">${lineSel(sub2Val)}</select></td>
-      <td><select data-f="role" style="width:92px">${roleOpts(m.role)}</select></td>
-      <td class="num"><span class="tag">${m.score}</span></td>
-      <td style="white-space:nowrap">
-        <button class="btn sm save">저장</button>
-        ${m.hidden?'<button class="btn sm restore">복원</button> <button class="btn sm danger perm-del">완전삭제</button>':'<button class="btn sm danger del">삭제</button>'}
-      </td></tr>`;}).join('')}</tbody>`;
+  renderMembers();
 }
+
+/* 화면에 보일 단원만 걸러서 정렬 */
+function visibleMembers(){
+  const q=memFilter.q.trim().toLowerCase();
+  let list=MEMBERS.filter(m=>{
+    if(!memFilter.hidden&&m.hidden) return false;
+    if(memFilter.role&&m.role!==memFilter.role) return false;
+    if(q&&!(m.name.toLowerCase().includes(q)||(m.nicks||[]).some(n=>n.toLowerCase().includes(q)))) return false;
+    return true;
+  });
+  const rank=META.tierRank||{};
+  const by={
+    name:(a,b)=>a.name.localeCompare(b.name,'ko'),
+    tier:(a,b)=>(rank[b.tier]||0)-(rank[a.tier]||0)||a.name.localeCompare(b.name,'ko'),
+    score:(a,b)=>b.score-a.score||a.name.localeCompare(b.name,'ko'),
+    joined:(a,b)=>String(b.joined||'').localeCompare(String(a.joined||''))||a.name.localeCompare(b.name,'ko'),
+  }[memFilter.sort]||((a,b)=>a.name.localeCompare(b.name,'ko'));
+  return list.sort((a,b)=>by(a,b)*memFilter.dir);
+}
+
+function tierBadge(t){
+  const c=(META.tierColor||{})[t];
+  const st=c?`color:${c};border-color:${c}33;background:${c}1a`
+           :'color:var(--ink-3);border-color:var(--line);background:var(--surface-2)';
+  return `<span class="tier-badge-sm" style="${st}">${esc(t)}</span>`;
+}
+function laneChip(l,sub){
+  const c=(META.lineColor||{})[l];   // 올라이너처럼 색이 없는 값도 있다
+  const st=c?`color:${c};background:${c}1a`:'color:var(--ink-3);background:var(--surface-2)';
+  return `<span class="lane-chip${sub?' sub':''}" style="${st}">${esc(l)}</span>`;
+}
+/* 계정 칸 — 대표 계정(★)은 대표 그대로 보여주고, 티어 배지는 계정 중 가장 높은 것을 쓴다.
+   최고 티어가 부계정에서 나오면 배지에 ↑ 를 붙여 어디서 온 값인지 알 수 있게 한다. */
+function nickCell(m){
+  const accs=m.accounts||[];
+  const first=accs[0];
+  const title=accs.map(x=>x.nick+(x.tier?` (${rankText(x)})`:' (티어 미조회)')).join(' / ');
+  const chip=first
+    ? `<span class="nick-chip main" title="${esc(title)}"><span class="star">★</span>${esc(first.nick)}<span class="dot ${first.puuid?'on':''}"></span></span>`
+    : '<span class="nick-none">계정 없음</span>';
+  const more=accs.length>1?`<span class="nick-more" title="${esc(title)}">+${accs.length-1}</span>`:'';
+  const fromSub=m.soloNick&&first&&m.soloNick!==first.nick;
+  const peak=m.soloTier
+    ? `<span class="peak${fromSub?' alt':''}" title="${esc(m.soloNick||'')} 계정 기준${fromSub?' (부계정이 더 높음)':''}">`
+      +`${esc(rankText({tier:m.soloTier,rank:m.soloRank,lp:m.soloLp}))}${fromSub?' ↑':''}</span>`
+    : '';
+  return `<td><div class="nick-cell">${chip}${more}${peak}<button class="btn sm acc-btn" title="계정 추가·대표 지정">관리</button></div></td>`;
+}
+function memberRow(m){
+  const lanes=[...(m.main||[]).map(l=>laneChip(l,false)),...(m.sub||[]).map(l=>laneChip(l,true))].join('')
+    ||'<span class="dim">—</span>';
+  return `<tr data-id="${m.id}" class="${m.hidden?'hidden-row':''}${memOpenId===m.id?' row-open':''}">
+    <td><div class="m-name"><b>${esc(m.name)}</b><small>${m.age}세</small>${m.hidden?'<small class="dim">· 숨김</small>':''}</div></td>
+    <td>${tierBadge(m.tier)}</td>
+    <td><div class="lanes">${lanes}</div></td>
+    ${nickCell(m)}
+    <td class="num"><span class="tag">${m.score}</span></td>
+    <td><span class="role-txt">${esc(m.role)}</span></td>
+    <td class="actions">
+      <button class="btn sm edit">${memOpenId===m.id?'닫기':'편집'}</button>
+      <button class="btn sm riot" title="라이엇에서 솔로랭크 티어를 가져옵니다">⟳ 티어</button>
+    </td></tr>`;
+}
+
+/* 편집 패널 — 열려 있는 행 바로 아래에 붙는다 */
+function editRow(m){
+  const opt=(arr,cur)=>arr.map(x=>`<option ${x===cur?'selected':''}>${x}</option>`).join('');
+  const lineSel=(cur)=>['없음',...LINE_VALUES].map(l=>`<option value="${l}" ${l===cur?'selected':''}>${l}</option>`).join('');
+  return `<tr class="mem-edit" data-id="${m.id}"><td colspan="7"><div class="edit-panel">
+    <label class="fld">이름<input data-f="name" value="${esc(m.name)}" style="width:110px"></label>
+    <label class="fld">출생연도<input data-f="birth" type="number" value="${m.birth}" style="width:86px"></label>
+    <label class="fld">가입날짜<input data-f="joined" type="date" value="${esc(m.joined||'')}" style="width:140px"></label>
+    <label class="fld" title="라이엇에서 받은 계정 티어가 있으면 그 값이 우선 표시됩니다. 여기 값은 조회 결과가 없을 때 쓰는 수동 티어입니다.">티어(수동)<select data-f="tier" style="width:112px">${opt(TIER_ORDER,m.baseTier||m.tier)}</select></label>
+    <label class="fld">주라인<select data-f="main" style="width:100px">${lineSel((m.main&&m.main[0])||'없음')}</select></label>
+    <label class="fld">부라인1<select data-f="sub1" style="width:100px">${lineSel((m.sub&&m.sub[0])||'없음')}</select></label>
+    <label class="fld">부라인2<select data-f="sub2" style="width:100px">${lineSel((m.sub&&m.sub[1])||'없음')}</select></label>
+    <label class="fld">직책<select data-f="role" style="width:96px">${opt(ROLES,m.role)}</select></label>
+    <div class="grow"></div>
+    <button class="btn sm primary save">저장</button>
+    ${m.hidden
+      ? '<button class="btn sm restore">복원</button> <button class="btn sm danger perm-del">완전삭제</button>'
+      : '<button class="btn sm danger del">삭제(숨김)</button>'}
+  </div></td></tr>`;
+}
+
+function renderMembers(){
+  const list=visibleMembers();
+  $("#memCount").textContent = list.length===MEMBERS.length ? `${MEMBERS.length}명` : `${list.length} / ${MEMBERS.length}명`;
+  if(!list.length){
+    $("#memTable").innerHTML='<tbody><tr><td style="padding:22px;text-align:center;color:var(--ink-3)">조건에 맞는 단원이 없습니다.</td></tr></tbody>';
+    return;
+  }
+  $("#memTable").innerHTML=`<thead><tr>
+    <th>이름</th><th>티어</th><th>라인</th><th>계정 (★ 대표)</th><th class="num">점수</th><th>직책</th><th></th>
+    </tr></thead><tbody>${list.map(m=>memberRow(m)+(memOpenId===m.id?editRow(m):'')).join('')}</tbody>`;
+}
+
+/* 툴바 */
+$("#memSearch").addEventListener("input",e=>{ memFilter.q=e.target.value; renderMembers(); });
+$("#memRole").addEventListener("change",e=>{ memFilter.role=e.target.value; renderMembers(); });
+$("#memSort").addEventListener("change",e=>{ memFilter.sort=e.target.value; renderMembers(); });
+$("#memHidden").addEventListener("change",e=>{ memFilter.hidden=e.target.checked; renderMembers(); });
+$("#memDir").addEventListener("click",()=>{
+  memFilter.dir*=-1;
+  $("#memDir").textContent=memFilter.dir>0?'▲':'▼';
+  renderMembers();
+});
+
 function esc(s){return String(s==null?'':s).replace(/"/g,'&quot;').replace(/</g,'&lt;')}
 // <input type="date"> 는 로컬 날짜를 쓰므로 toISOString(UTC) 이 아니라 로컬로 만든다
 function todayLocal(){
@@ -328,47 +519,53 @@ function todayLocal(){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 function resetJoinedInput(){ $("#a_joined").value=todayLocal(); }
+
 $("#memTable").addEventListener("click",async e=>{
   const tr=e.target.closest("tr"); if(!tr)return; const id=tr.dataset.id;
-  if(e.target.classList.contains("save")){
+  if(e.target.classList.contains("acc-btn")){
+    openAccModal(id);
+  } else if(e.target.classList.contains("riot")){
+    await riotRefresh(id,e.target);
+  } else if(e.target.classList.contains("edit")){
+    memOpenId = memOpenId===Number(id) ? null : Number(id);   // 한 번에 한 행만 연다
+    renderMembers();
+  } else if(e.target.classList.contains("save")){
+    const panel=tr.closest("tr");
     const patch={};
-    $$("[data-f]",tr).forEach(inp=>{
+    $$("[data-f]",panel).forEach(inp=>{
       const f=inp.dataset.f;
-      if(f==='main'){
-        const v=inp.value;
-        patch.main=v&&v!=='없음'?[v]:[];
-      } else if(f==='sub1'||f==='sub2'){
-        // handled below
-      } else {
-        patch[f]=inp.value;
-      }
+      if(f==='main') patch.main=inp.value&&inp.value!=='없음'?[inp.value]:[];
+      else if(f!=='sub1'&&f!=='sub2') patch[f]=inp.value;
     });
-    const s1=$('[data-f="sub1"]',tr).value;
-    const s2=$('[data-f="sub2"]',tr).value;
-    patch.sub=[s1,s2].filter(v=>v&&v!=='없음');
-    try{ await jsend('PATCH','/api/admin/members/'+id,patch); toast('저장했습니다'); await refreshAll(); }
+    patch.sub=[$('[data-f="sub1"]',panel).value,$('[data-f="sub2"]',panel).value].filter(v=>v&&v!=='없음');
+    try{ await jsend('PATCH','/api/admin/members/'+id,patch); toast('저장했습니다'); memOpenId=null; await refreshAll(); }
     catch(ex){ toast((ex.payload&&ex.payload.messages&&ex.payload.messages[0])||'저장 실패'); }
   } else if(e.target.classList.contains("del")){
     if(!confirm('이 단원을 명단에서 숨기시겠어요? (과거 기록은 유지됩니다)'))return;
-    try{ await jsend('DELETE','/api/admin/members/'+id); toast('삭제(숨김)했습니다'); await refreshAll(); }catch(ex){toast('실패: '+ex.message);}
+    try{ await jsend('DELETE','/api/admin/members/'+id); toast('삭제(숨김)했습니다'); memOpenId=null; await refreshAll(); }catch(ex){toast('실패: '+ex.message);}
   } else if(e.target.classList.contains("perm-del")){
     if(!confirm('이 단원을 명단에서 완전히 삭제합니다. 순위·통계에서 빠지지만 과거 내전 기록에는 이름이 그대로 남습니다. 정말 삭제할까요?'))return;
-    try{ await jsend('DELETE','/api/admin/members/'+id+'/permanent'); toast('완전 삭제했습니다'); await refreshAll(); }catch(ex){toast('실패: '+ex.message);}
+    try{ await jsend('DELETE','/api/admin/members/'+id+'/permanent'); toast('완전 삭제했습니다'); memOpenId=null; await refreshAll(); }catch(ex){toast('실패: '+ex.message);}
   } else if(e.target.classList.contains("restore")){
     try{ await jsend('POST','/api/admin/members/'+id+'/restore'); toast('복원했습니다'); await refreshAll(); }catch(ex){toast('실패: '+ex.message);}
   }
 });
-$("#sortNameBtn").addEventListener("click",()=>{
-  memSortDir*=-1;
-  $("#sortNameBtn").textContent='이름 '+(memSortDir>0?'▲':'▼');
-  loadMembers();
+
+/* 단원 추가 카드는 접어둔다 — 평소에는 목록이 먼저 보이게 */
+$("#toggleAddMember").addEventListener("click",()=>{
+  const box=$("#addMemberBox");
+  const open=box.style.display!=='none';
+  box.style.display=open?'none':'block';
+  $("#toggleAddMember").setAttribute('aria-expanded',String(!open));
+  $("#toggleAddMember").textContent=open?'➕ 단원 추가':'✕ 닫기';
+  if(!open) $("#a_name").focus();
 });
 $("#addMemberBtn").addEventListener("click",async()=>{
   const err=$("#addErr");err.textContent='';
   const body={
     name:$("#a_name").value.trim(), birth:Number($("#a_birth").value),
     joined:$("#a_joined").value||todayLocal(),
-    nick:$("#a_nick").value.trim(), tier:$("#a_tier").value,
+    nicks:$("#a_nick").value, tier:$("#a_tier").value,
     main:$("#a_main").value&&$("#a_main").value!=='없음'?[$("#a_main").value]:[],
     sub:[$("#a_sub1").value,$("#a_sub2").value].filter(Boolean).filter(v=>v!=='없음'),
     role:$("#a_role").value,
@@ -531,6 +728,182 @@ $("#backupBtn").addEventListener("click",async()=>{
     URL.revokeObjectURL(url);
     toast('백업 파일이 다운로드되었습니다');
   }catch(ex){toast('백업 실패: '+ex.message);}
+});
+
+/* ── 계정(닉네임·PUUID·티어) 관리 ──
+   표에는 칩으로 보여주기만 하고, 추가·삭제·대표 지정은 모달에서 한 건씩 한다.
+   계정 = {nick, puuid, tier, rank, lp, fetchedAt}. 배열 맨 앞이 대표 계정이라 ★ 를 누르면 그 항목을 앞으로 옮긴다.
+   티어/LP/조회시각은 행의 [⟳ 티어] 버튼(라이엇 조회)이 채우므로 모달에서는 읽기만 한다.
+   닉이나 PUUID 를 손대면 그 값들은 다른 계정의 것이 되므로 비운다. */
+/* 라이엇 갱신 실패 목록 — 어느 단원의 어느 계정이 왜 실패했는지 그대로 보여준다 */
+function showRiotErrors(list){
+  const box=document.querySelector("#riotErrs");
+  if(!box) return;
+  if(!list||!list.length){ box.style.display="none"; box.innerHTML=""; return; }
+  box.innerHTML=`<h4>⚠ 갱신 실패 ${list.length}건<button class="x" data-close="1">닫기</button></h4>`
+    +`<ul>${list.map(e=>`<li>${esc(e)}</li>`).join("")}</ul>`;
+  box.style.display="block";
+  box.querySelector("[data-close]").onclick=()=>{ box.style.display="none"; };
+}
+function rankText(a){
+  return `${a.tier}${a.rank?' '+a.rank:''}${a.lp!=null?' · '+a.lp+' LP':''}`;
+}
+let accMemberId=null, accRows=[];
+const normNick=s=>String(s==null?'':s).trim().toLowerCase().replace(/\s+/g,'');
+function fmtWhen(iso){
+  const d=new Date(iso);
+  return isNaN(d.getTime())?iso:d.toLocaleString('ko-KR',{dateStyle:'short',timeStyle:'short'});
+}
+/* 다른 단원이 이미 쓰는 계정인지 — 서버도 막지만 여기서 먼저 알려준다 */
+function nickOwner(nick,selfId){
+  const k=normNick(nick);
+  return MEMBERS.find(m=>m.id!==selfId&&(m.nicks||[]).some(n=>normNick(n)===k))||null;
+}
+function openAccModal(id){
+  const m=MEMBERS.find(x=>x.id===Number(id)); if(!m) return;
+  accMemberId=m.id;
+  accRows=(m.accounts||[]).map(a=>({...a,puuid:a.puuid||''}));
+  $("#accTitle").textContent=`${m.name} · 계정 관리`;
+  $("#accErr").textContent=''; $("#accNew").value='';
+  renderAccList();
+  $("#accModal").classList.add('on');
+  setTimeout(()=>$("#accNew").focus(),30);
+}
+function closeAccModal(){ $("#accModal").classList.remove('on'); accMemberId=null; }
+/* 입력창에 손댄 값을 배열에 먼저 반영 — 순서 변경·삭제로 다시 그리기 전에 부른다 */
+function syncAccInputs(){
+  $$("#accList .acc").forEach((row,i)=>{
+    const a=accRows[i]; if(!a) return;
+    const nick=$(".nick",row).value;
+    const puuid=$(".puuid",row).value.trim();
+    // 닉이나 PUUID 가 바뀌면 티어·조회시각은 더 이상 그 계정의 것이 아니다
+    if(normNick(nick)!==normNick(a.nick)||puuid!==(a.puuid||'')){
+      a.tier=null; a.rank=null; a.lp=null; a.fetchedAt=null;
+    }
+    a.nick=nick; a.puuid=puuid;
+  });
+}
+function renderAccList(){
+  const list=$("#accList");
+  if(!accRows.length){ list.innerHTML='<div class="acc-empty">등록된 계정이 없습니다. 아래에서 추가하세요.</div>'; return; }
+  list.innerHTML=accRows.map((a,i)=>`
+    <div class="acc ${i===0?'main':''}">
+      <div class="acc-top">
+        <button class="star" title="${i===0?'대표 계정':'대표로 지정'}">${i===0?'★':'☆'}</button>
+        <input class="nick" value="${esc(a.nick)}" spellcheck="false">
+        ${i===0?'<span class="badge-main">대표</span>':''}
+        <button class="btn sm danger rm">삭제</button>
+      </div>
+      <div class="acc-meta">
+        <input class="puuid" value="${esc(a.puuid||'')}" placeholder="PUUID (티어 새로고침 때 자동 저장)" spellcheck="false">
+      </div>
+      <div class="acc-rank">
+        <span class="rank-txt">${a.tier?esc(rankText(a)):'티어 정보 없음'}</span>
+        <span class="fetched">${a.fetchedAt?'조회 '+esc(fmtWhen(a.fetchedAt)):'미조회'}</span>
+      </div>
+    </div>`).join('');
+}
+$("#accList").addEventListener("click",e=>{
+  const row=e.target.closest(".acc"); if(!row) return;
+  const i=[...$$("#accList .acc")].indexOf(row);
+  if(e.target.classList.contains("star")){
+    syncAccInputs();
+    accRows.unshift(accRows.splice(i,1)[0]);   // 대표로 올리기
+    renderAccList();
+  }else if(e.target.classList.contains("rm")){
+    syncAccInputs();
+    accRows.splice(i,1);
+    renderAccList();
+  }
+});
+function addAccount(){
+  const err=$("#accErr"); err.textContent='';
+  const v=$("#accNew").value.trim();
+  if(!v){ err.textContent='계정(라이엇 ID)을 입력하세요.'; return; }
+  syncAccInputs();
+  if(accRows.some(a=>normNick(a.nick)===normNick(v))){ err.textContent='이미 등록된 계정입니다.'; return; }
+  const owner=nickOwner(v,accMemberId);
+  if(owner){ err.textContent=`'${v}' 는 이미 ${owner.name} 단원의 계정입니다.`; return; }
+  accRows.push({nick:v,puuid:'',tier:null,rank:null,lp:null,fetchedAt:null});
+  renderAccList();
+  $("#accNew").value=''; $("#accNew").focus();
+}
+$("#accAdd").addEventListener("click",addAccount);
+$("#accNew").addEventListener("keydown",e=>{ if(e.key==='Enter'){ e.preventDefault(); addAccount(); } });
+$("#accCancel").addEventListener("click",closeAccModal);
+$("#accModal").addEventListener("click",e=>{ if(e.target.id==='accModal') closeAccModal(); });
+document.addEventListener("keydown",e=>{ if(e.key==='Escape'&&$("#accModal").classList.contains('on')) closeAccModal(); });
+$("#accSave").addEventListener("click",async()=>{
+  const err=$("#accErr"); err.textContent='';
+  syncAccInputs();
+  const accounts=accRows
+    .map(a=>({nick:a.nick.trim(),puuid:a.puuid?a.puuid.trim():null,tier:a.tier||null,rank:a.rank||null,lp:a.lp!=null?a.lp:null,fetchedAt:a.fetchedAt||null}))
+    .filter(a=>a.nick);
+  try{
+    await jsend('PATCH','/api/admin/members/'+accMemberId,{accounts});
+    toast(accounts.length?`계정 ${accounts.length}개를 저장했습니다`:'계정을 모두 비웠습니다');
+    closeAccModal();
+    await refreshAll();
+  }catch(ex){ err.textContent=(ex.payload&&ex.payload.messages&&ex.payload.messages[0])||('저장 실패: '+ex.message); }
+});
+
+/* 단원 한 명의 계정을 라이엇에서 갱신 — PUUID 가 없으면 받아서 채우고, 솔로랭크 티어/LP 를 저장한다.
+   레이트 리밋(1초 20회 / 2분 100회)이 있어 전체 일괄 갱신은 두지 않는다. */
+async function riotRefresh(id,btn){
+  const old=btn.textContent;
+  btn.disabled=true; btn.textContent='조회 중…';
+  try{
+    const r=await jsend('POST','/api/admin/members/'+id+'/riot-refresh');
+    const accs=(r.member&&r.member.accounts)||[];
+    const done=accs.filter(a=>a.tier).map(a=>`${a.nick} ${rankText(a)}`).join(' · ');
+    const name=(r.member&&r.member.name)||('#'+id);
+    if(r.errors&&r.errors.length){
+      showRiotErrors(r.errors.map(e=>`${name} — ${e}`));
+      toast(`${name} · 계정 ${r.errors.length}건 갱신 실패`);
+    }else{
+      showRiotErrors([]);
+      toast(done?('갱신 완료 — '+done):'갱신했습니다');
+    }
+    await refreshAll();
+  }catch(ex){
+    toast('갱신 실패: '+((ex.payload&&ex.payload.messages&&ex.payload.messages[0])||ex.message));
+    btn.disabled=false; btn.textContent=old;
+  }
+}
+
+/* 전체 갱신 — 목록에 보이는 단원을 한 명씩 순서대로 부른다.
+   서버 쪽 limiter 가 앱 한도(1초 20회 · 2분 100회)를 지키며 필요한 만큼 쉬어 주고,
+   한도에 걸려 돌아오면 거기서 멈춘다(그때까지 갱신한 건 이미 저장돼 있다). */
+$("#riotAllBtn").addEventListener("click",async()=>{
+  const targets=visibleMembers().filter(m=>(m.accounts||[]).length);
+  if(!targets.length){ toast('갱신할 계정이 없습니다'); return; }
+  if(!confirm(`${targets.length}명의 계정 티어를 라이엇에서 가져옵니다.\n계정 수만큼 호출하므로 1~2분 걸릴 수 있습니다. 계속할까요?`)) return;
+  const btn=$("#riotAllBtn"), label=btn.textContent;
+  btn.disabled=true;
+  let done=0, failed=0, stopped=''; const errs=[];
+  for(const t of targets){
+    btn.textContent=`갱신 중 ${done+1}/${targets.length}`;
+    try{
+      const r=await jsend('POST','/api/admin/members/'+t.id+'/riot-refresh');
+      const i=MEMBERS.findIndex(x=>x.id===t.id);
+      if(i>=0&&r.member) MEMBERS[i]={...MEMBERS[i],...r.member};   // 점수 등 목록 전용 값은 유지
+      if(r.errors&&r.errors.length){
+        failed++;
+        r.errors.forEach(e=>{ errs.push(`${t.name} — ${e}`); if(/한도/.test(e)) stopped=e; });
+      }
+      renderMembers();
+    }catch(ex){
+      const msg=(ex.payload&&ex.payload.messages&&ex.payload.messages[0])||ex.message;
+      failed++; errs.push(`${t.name} — ${msg}`);
+      if(/한도/.test(msg)) stopped=msg;
+    }
+    done++;
+    if(stopped) break;
+  }
+  btn.disabled=false; btn.textContent=label;
+  toast(stopped?`한도로 중단 — ${done}/${targets.length}명까지 갱신 · ${stopped}`
+              :`${done}명 갱신 완료${failed?` · 실패 ${failed}명`:''}`);
+  showRiotErrors(errs);
 });
 
 checkAuth().catch(ex=>{ $("#loginView").style.display='block'; console.error(ex); });

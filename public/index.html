@@ -255,6 +255,21 @@
   .card .nick{font-size:12.5px;color:var(--ink-2);font-family:var(--font);
     background:var(--surface-2);border:1px solid var(--line-soft);border-radius:7px;
     padding:6px 9px;margin-bottom:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card .solo{display:flex;align-items:center;gap:6px;margin:-6px 0 12px;font-size:12.5px;font-weight:800}
+  .card .solo .tref{margin-left:auto;background:none;border:1px solid var(--line);color:var(--ink-3);
+    border-radius:6px;padding:1px 7px;font-size:11px;line-height:1.5;cursor:pointer;font-family:inherit}
+  .card .solo .tref:hover{color:var(--gold-bright);border-color:var(--gold-deep)}
+  .card .solo .tref:disabled{opacity:.5;cursor:default}
+  .card .solo .from{font-size:10px;font-weight:800;color:var(--good);background:var(--surface-2);
+    border:1px solid var(--line-soft);border-radius:5px;padding:1px 5px}
+  .plcard .accs{display:flex;flex-direction:column;gap:6px}
+  .plcard .acc-l .n{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .plcard .acc-l .n span{font-size:11px;font-weight:700;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .plcard .acc-l .n b{font-size:11px;font-weight:800;white-space:nowrap}
+  .plcard .acc-l .n b.dimb{color:var(--ink-3);font-weight:600}
+  .plcard .acc-l .w{font-size:10px;color:var(--ink-3);margin-top:1px}
+  .card .nick .nick-more{margin-left:6px;font-size:11px;font-weight:700;color:var(--ink-3);
+    background:var(--surface);border:1px solid var(--line-soft);border-radius:5px;padding:1px 5px}
   .lines{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
   .lane{font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;display:inline-flex;gap:5px;align-items:center}
   .lane.sub{opacity:.75;font-weight:600}
@@ -317,7 +332,7 @@
   .m-p .bs .more{font-size:8px;font-weight:800;color:var(--ink-3);margin-left:1px}
 
   /* 선수에 마우스를 올리면 뜨는 상세 카드 */
-  .plcard{position:fixed;z-index:90;width:236px;padding:12px 13px;border-radius:12px;
+  .plcard{position:fixed;z-index:90;width:252px;padding:12px 13px;border-radius:12px;
     border:1px solid var(--line);background:var(--surface-2);box-shadow:var(--shadow);
     pointer-events:none;opacity:0;transition:opacity .12s;font-size:11.5px;line-height:1.45}
   .plcard.on{opacity:1}
@@ -497,6 +512,10 @@
   }
 
   /* tier dist modal */
+  .riot-errs{border:1px solid var(--red);border-radius:10px;background:rgba(232,64,87,.08);padding:10px 12px;margin-bottom:12px}
+  .riot-errs h4{margin:0 0 6px;font-size:12px;color:var(--red);display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .riot-errs ul{margin:0;padding-left:16px;font-size:12px;color:var(--ink-2);line-height:1.75}
+  .riot-errs .x{cursor:pointer;background:none;border:0;color:var(--ink-3);font-size:12px;font-weight:700;padding:0}
   .tier-modal-bg{position:fixed;inset:0;background:rgba(4,8,18,.72);display:none;place-items:center;z-index:60;padding:20px}
   .tier-modal-bg.on{display:grid}
   .tier-modal{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;max-width:480px;width:100%;box-shadow:var(--shadow)}
@@ -609,8 +628,10 @@
   <section class="view" id="view-roster" role="tabpanel">
     <div class="sec-h">
       <span class="eyebrow">Roster</span><h2 style="font-size:22px">단원 명단</h2><div class="rule"></div>
+      <button class="btn ghost" id="riotAllBtn" style="font-size:12px;padding:6px 14px;display:none" title="라이엇에서 모든 단원의 솔로랭크를 다시 가져옵니다 (관리자 전용)">⟳ 전체 티어 갱신</button>
       <button class="btn ghost" id="tierDistBtn" style="font-size:12px;padding:6px 14px">티어 분포</button>
     </div>
+    <div id="riotErrs" class="riot-errs" style="display:none"></div>
     <div class="toolbar">
       <div class="search">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
@@ -1080,6 +1101,39 @@ function playerChip(p,q){
   </div>`;
 }
 /* ── 선수 상세 카드 (마우스 오버) ── */
+/* 라이엇에서 가져온 솔로랭크 — 계정 중 가장 높은 것을 표기한다(부계정이 더 높으면 ↑) */
+function soloLine(m){
+  if(!(m.accounts||[]).length) return '';   // 등록된 계정이 없으면 갱신할 것도 없다
+  const c=TIER_COLOR[m.soloTier]||'var(--ink-3)';
+  const fromSub=m.soloNick&&m.soloNick!==m.nick;
+  // 티어 배지에 이미 티어가 있으니 여기서는 세부 등급·LP 와 출처만 덧붙인다
+  const detail=[m.soloRank,m.soloLp!=null?m.soloLp+' LP':''].filter(Boolean).join(' · ');
+  const txt=detail||m.soloTier||'랭크 미조회';
+  return `<div class="solo"><span class="t" style="color:${m.soloTier?c:'var(--ink-3)'}">${txt}</span>`
+    +(fromSub?`<span class="from" title="${escHtml(m.soloNick)} 계정 기준">↑ 부계정</span>`:'')
+    +`<button class="tref" data-tref="${m.id}" title="이 단원의 티어를 라이엇에서 다시 가져옵니다">⟳</button></div>`;
+}
+/* 조회 시각 — 오늘이면 시:분, 아니면 날짜까지 */
+function fmtFetched(iso){
+  const d=new Date(iso); if(isNaN(d.getTime())) return iso;
+  const now=new Date(), sameDay=d.toDateString()===now.toDateString();
+  const hm=`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  return sameDay?`오늘 ${hm}`:`${d.getMonth()+1}/${d.getDate()} ${hm}`;
+}
+/* 상세 카드의 계정 목록 — 닉네임별 티어와 마지막 조회 시각 */
+function accLines(m){
+  const accs=m.accounts||[];
+  if(!accs.length) return '';
+  return `<hr><div class="kv" style="margin-bottom:5px"><span>계정</span><b>${accs.length}개</b></div>
+    <div class="accs">${accs.map((a,i)=>`
+      <div class="acc-l">
+        <div class="n"><span>${i===0?'★ ':''}${escHtml(a.nick)}</span>${a.tier
+          ? `<b style="color:${TIER_COLOR[a.tier]||'var(--ink-3)'}">${escHtml(a.tier)}${a.rank?' '+a.rank:''}${a.lp!=null?' · '+a.lp+' LP':''}</b>`
+          : '<b class="dimb">미조회</b>'}</div>
+        ${a.fetchedAt?`<div class="w">조회 ${escHtml(fmtFetched(a.fetchedAt))}</div>`:''}
+      </div>`).join('')}</div>`;
+}
+
 let plCardEl=null, plCardFor=null;
 function plCard(){
   if(!plCardEl){plCardEl=el("div","plcard");document.body.appendChild(plCardEl);}
@@ -1114,6 +1168,7 @@ function plCardHtml(chip){
     <div class="kv"><span>주라인</span><b>${escHtml(main)}</b></div>
     <div class="kv"><span>부라인</span><b>${escHtml(sub)}</b></div>
     ${m.joined?`<div class="kv"><span>가입</span><b>${escHtml(m.joined)}</b></div>`:''}
+    ${accLines(m)}
     <hr>
     ${st.g
       ? `<div class="kv"><span>이번 시즌</span><b>${st.g}전 ${st.w}승 ${st.l}패</b></div>
@@ -1142,11 +1197,11 @@ function showPlCard(chip){
 }
 
 document.addEventListener("mouseover",e=>{
-  const chip=e.target.closest&&e.target.closest(".m-p");
+  const chip=e.target.closest&&e.target.closest(".m-p, .card[data-pid]");
   if(chip)showPlCard(chip);
 });
 document.addEventListener("mouseout",e=>{
-  const chip=e.target.closest&&e.target.closest(".m-p");
+  const chip=e.target.closest&&e.target.closest(".m-p, .card[data-pid]");
   if(chip&&!chip.contains(e.relatedTarget))hidePlCard();
 });
 addEventListener("scroll",hidePlCard,{passive:true});
@@ -1182,7 +1237,7 @@ function renderMatchList(){
     return [...mt.blue,...mt.red].some(p=>{
       if(p.name.toLowerCase().includes(matchSearchQ))return true;
       const m=p.mercenary?null:memberById(p.id);
-      return !!(m&&m.nick&&m.nick.toLowerCase().includes(matchSearchQ));
+      return !!(m&&(m.nicks||[]).some(n=>n.toLowerCase().includes(matchSearchQ)));
     });
   });
   if(!list.length){all.innerHTML=`<div class="empty">조건에 맞는 내전 기록이 없습니다.</div>`;return}
@@ -1223,7 +1278,7 @@ function renderRoster(){
     if(filterLine!=="전체" && !(m.lines.includes(filterLine)||(m.allLaner))) return false;
     if(filterTier!=="전체" && m.tier!==filterTier) return false;
     if(searchQ){const q=searchQ.toLowerCase();
-      if(!(m.name.toLowerCase().includes(q)||m.nick.toLowerCase().includes(q))) return false;}
+      if(!(m.name.toLowerCase().includes(q)||(m.nicks||[]).some(n=>n.toLowerCase().includes(q)))) return false;}
     return true;
   });
   if(rosterSortBy==='name') list.sort((a,b)=>a.name.localeCompare(b.name,"ko"));
@@ -1239,13 +1294,14 @@ function renderRoster(){
       : mainL.map(l=>laneChip(l)).join("") + (subL.length?`<span class="arrow">›</span>`+subL.map(l=>laneChip(l,true)).join(""):"");
     const streakTxt = s.streak>0?`<span class="streak up">${s.streak}연승</span>`:s.streak<0?`<span class="streak down">${-s.streak}연패</span>`:'';
     const rec = s.g>=1 ? `<span class="rec num">${s.w}승 ${s.l}패 · ${Math.round(s.wr*100)}%</span> ${streakTxt}` : `<span>내전 기록 없음</span>`;
-    return `<div class="card">
+    return `<div class="card" data-pid="${m.id}">
       <div class="tierstripe" style="background:${TIER_COLOR[m.tier]}"></div>
       <div class="card-top">
         <div class="who"><b>${m.name}</b><small>${m.age}세</small></div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">${tierBadge(m.tier)}<span class="score-chip">${s.score}점</span></div>
       </div>
-      <div class="nick">${m.nick}</div>
+      <div class="nick" title="${escHtml((m.nicks||[]).join(' / '))}">${m.nick}${(m.nicks||[]).length>1?`<span class="nick-more">+${m.nicks.length-1}</span>`:""}</div>
+      ${soloLine(m)}
       <div class="lines">${laneHtml}</div>
       <div class="card-foot">
         <span>${rec}</span>
@@ -1445,6 +1501,83 @@ $("#themeBtn").addEventListener("click",()=>{
 });
 
 /* tier dist modal */
+/* 라이엇 갱신 실패 목록 — 어느 단원의 어느 계정이 왜 실패했는지 그대로 보여준다 */
+function showRiotErrors(list){
+  const box=document.querySelector("#riotErrs");
+  if(!box) return;
+  if(!list||!list.length){ box.style.display="none"; box.innerHTML=""; return; }
+  box.innerHTML=`<h4>⚠ 갱신 실패 ${list.length}건<button class="x" data-close="1">닫기</button></h4>`
+    +`<ul>${list.map(e=>`<li>${escHtml(e)}</li>`).join("")}</ul>`;
+  box.style.display="block";
+  box.querySelector("[data-close]").onclick=()=>{ box.style.display="none"; };
+}
+/* 전체 티어 갱신 — 갱신 API 가 관리자 전용이라 관리자로 로그인했을 때만 버튼을 보여준다.
+   단원 한 명씩 순서대로 부르고(서버 limiter 가 라이엇 호출 한도를 지킨다) 진행률을 버튼에 띄운다. */
+(async()=>{
+  try{ const me=await jget('/api/admin/me'); if(me.authed) $("#riotAllBtn").style.display=''; }catch(ex){}
+})();
+/* 단원별 티어 갱신 — 로그인 없이 누구나 누를 수 있다(서버가 5분 쿨다운으로 호출을 아낀다).
+   전체 갱신은 계속 관리자 전용이다. */
+$("#roster").addEventListener("click",async e=>{
+  const btn=e.target.closest&&e.target.closest(".tref");
+  if(!btn) return;
+  e.stopPropagation();
+  const id=+btn.dataset.tref, old=btn.textContent;
+  btn.disabled=true; btn.textContent='…';
+  try{
+    const res=await fetch('/api/members/'+id+'/riot-refresh',{method:'POST'});
+    const j=await res.json().catch(()=>({}));
+    if(!res.ok){
+      const msg=(j.messages&&j.messages[0])||j.message||('HTTP '+res.status);
+      showRiotErrors([msg]); toast(msg);
+    }else if(j.skipped){
+      const min=Math.ceil((j.retryAfterSec||0)/60);
+      toast(`방금 갱신된 단원입니다 · ${min}분 뒤에 다시 시도할 수 있어요`);
+    }else{
+      const i=S.members.findIndex(x=>x.id===id);
+      if(i>=0&&j.member) S.members[i]={...S.members[i],...j.member};
+      S.byId=new Map(S.members.map(x=>[x.id,x]));
+      const name=(j.member&&j.member.name)||'';
+      showRiotErrors((j.errors||[]).map(x=>`${name} — ${x}`));
+      toast(j.errors&&j.errors.length
+        ? `${name} · 계정 ${j.errors.length}건 갱신 실패`
+        : `${name} 티어를 갱신했습니다 — ${j.member.tier}`);
+      if(typeof clearDashStatsCache==='function') clearDashStatsCache();
+      renderAll();
+    }
+  }catch(ex){ toast('갱신 실패: '+ex.message); }
+  finally{ btn.disabled=false; btn.textContent=old; }
+});
+$("#riotAllBtn").addEventListener("click",async()=>{
+  const targets=S.members.filter(m=>(m.accounts||[]).length);
+  if(!targets.length){ toast('등록된 계정이 없습니다'); return; }
+  if(!confirm(`${targets.length}명의 계정 티어를 라이엇에서 다시 가져옵니다.\n1~2분 걸릴 수 있습니다. 계속할까요?`)) return;
+  const btn=$("#riotAllBtn"), label=btn.textContent;
+  btn.disabled=true;
+  let done=0, failed=0, stopped=''; const errs=[];
+  for(const t of targets){
+    btn.textContent=`갱신 중 ${done+1}/${targets.length}`;
+    try{
+      const res=await fetch('/api/admin/members/'+t.id+'/riot-refresh',{method:'POST'});
+      const j=await res.json().catch(()=>({}));
+      const list=res.ok?(j.errors||[]):[(j.messages&&j.messages[0])||j.message||('HTTP '+res.status)];
+      if(list.length){
+        failed++;
+        list.forEach(e=>{ errs.push(`${t.name} — ${e}`); if(/한도/.test(e)) stopped=e; });
+      }
+    }catch(ex){ failed++; errs.push(`${t.name} — ${ex.message}`); }
+    done++;
+    if(stopped) break;   // 호출 한도에 걸리면 멈춘다 (그때까지는 이미 저장돼 있다)
+  }
+  btn.disabled=false; btn.textContent=label;
+  await loadMembers();
+  if(typeof clearDashStatsCache==='function') clearDashStatsCache();
+  renderAll();
+  showRiotErrors(errs);
+  toast(stopped?`한도로 중단 — ${done}/${targets.length}명 갱신 · ${stopped}`
+               :`${done}명 티어를 갱신했습니다${failed?` · 실패 ${failed}명`:''}`);
+});
+
 $("#tierDistBtn").addEventListener("click",()=>{renderDist();$("#tierModal").classList.add("on")});
 $("#tierModalClose").addEventListener("click",()=>$("#tierModal").classList.remove("on"));
 $("#tierModal").addEventListener("click",e=>{if(e.target.id==="tierModal")$("#tierModal").classList.remove("on")});
