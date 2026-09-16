@@ -13,7 +13,7 @@ const { SEASON_YEAR, TIER_RANK } = require('./scales');
  *   nicks    : 닉네임 문자열만 뽑은 파생값 (검색·표시용)
  *   nick     : 대표 계정 닉네임 = accounts[0].nick
  *   solo*    : 계정 중 가장 높은 솔로랭크(부계정이 더 높으면 그쪽)
- *   tier     : 실제로 쓰는 티어 — 라이엇에서 받은 최고 티어가 있으면 그 값, 없으면 baseTier
+ *   tier     : 실제로 쓰는 티어 — 관리자가 고른 baseTier 가 우선, 언랭이면 라이엇에서 받은 soloTier, 그것도 없으면 언랭
  *   baseTier : 시트/관리자가 직접 넣은 티어 (DB members.tier 에 저장되는 값)
  * 명단·경매·밸런서·대시보드가 모두 m.tier 를 보므로, 여기서 한 번만 바꾸면 전 화면에 적용된다.
  * DB 에는 members.nicks(jsonb) 한 칸에 accounts 배열을 통째로 넣는다.
@@ -100,9 +100,10 @@ function buildFromObj(m) {
   const rawAcc = (Array.isArray(m.accounts) && m.accounts.length) ? m.accounts
     : ((Array.isArray(m.nicks) ? m.nicks.length : m.nicks) ? m.nicks : m.nick);
   const accounts = parseAccounts(rawAcc);
-  const best = bestAccount(accounts);   // 표기 티어는 대표가 아니라 '가장 높은 계정' 기준
+  const best = bestAccount(accounts);   // 솔로랭크 표기는 대표가 아니라 '가장 높은 계정' 기준
   const anyFetched = accounts.find(a => a.tier);   // 조회는 했지만 전 계정이 언랭인 경우
-  const baseTier = m.tier || '언랭';    // 저장된(수동) 티어 — 랭크 조회 결과가 없을 때만 쓴다
+  const baseTier = m.tier || '언랭';    // 관리자가 직접 고른 티어 — 이 값이 최우선이다
+  const soloTier = best ? best.tier : (anyFetched ? '언랭' : null);   // 계정 중 최고 솔로랭크 (미조회면 null)
   return {
     id: m.id,
     name: m.name,
@@ -111,11 +112,12 @@ function buildFromObj(m) {
     nick: accounts.length ? accounts[0].nick : '',   // 대표 닉 — 카드·칩 등 한 줄만 보여주는 자리
     nicks: accounts.map(a => a.nick),                // 검색·표시용 문자열 목록
     accounts,                                        // 부계정 포함 전체 (puuid, tier, rank, lp, fetchedAt)
-    soloTier: best ? best.tier : (anyFetched ? '언랭' : null),   // 계정 중 최고 솔로랭크 (미조회면 null)
+    soloTier,                                        // 계정 중 최고 솔로랭크 (미조회면 null)
     soloRank: best ? best.rank : null,
     soloLp: best ? best.lp : null,
     soloNick: best ? best.nick : (anyFetched ? anyFetched.nick : null),   // 그 티어가 나온 계정 — 대표와 다를 수 있다
-    tier: best ? best.tier : baseTier,   // 계정 중 최고 티어 우선 (전 화면 공통)
+    // 관리자가 고른 티어 → 라이엇 조회 티어 → 언랭 (전 화면 공통)
+    tier: baseTier !== '언랭' ? baseTier : (soloTier || '언랭'),
     baseTier,                            // 관리자 화면에서 직접 고치는 값
     main: mainArr,
     sub: subArr,

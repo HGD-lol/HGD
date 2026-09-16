@@ -272,7 +272,7 @@ update public.members set nicks = to_jsonb(array[nick])
 <div class="modal-bg" id="accModal">
   <div class="modal">
     <h3 id="accTitle">계정 관리</h3>
-    <p style="color:var(--ink-3);font-size:12px;margin:0">★ 가 대표 계정입니다. 명단·내전 화면에는 대표 계정이 표시되고, 검색은 모든 계정으로 됩니다. 티어·LP·PUUID 는 단원 목록의 [⟳ 티어] 버튼이 라이엇에서 가져와 채웁니다. 닉이나 PUUID 를 고치면 그 값들은 초기화됩니다.</p>
+    <p style="color:var(--ink-3);font-size:12px;margin:0">★ 가 대표 계정입니다. 명단·내전 화면에는 대표 계정이 표시되고, 검색은 모든 계정으로 됩니다. 계정별 티어·LP·PUUID 는 단원 목록의 [⟳ 티어] 버튼이 라이엇에서 가져와 채웁니다(표시 티어는 수동 티어가 우선). 닉이나 PUUID 를 고치면 그 값들은 초기화됩니다.</p>
     <div class="acc-list" id="accList"></div>
     <div style="display:flex;gap:8px">
       <input id="accNew" placeholder="라이엇 ID (예: 닉네임#KR1)" style="flex:1;min-width:0">
@@ -476,7 +476,7 @@ function editRow(m){
     <label class="fld">이름<input data-f="name" value="${esc(m.name)}" style="width:110px"></label>
     <label class="fld">출생연도<input data-f="birth" type="number" value="${m.birth}" style="width:86px"></label>
     <label class="fld">가입날짜<input data-f="joined" type="date" value="${esc(m.joined||'')}" style="width:140px"></label>
-    <label class="fld" title="라이엇에서 받은 계정 티어가 있으면 그 값이 우선 표시됩니다. 여기 값은 조회 결과가 없을 때 쓰는 수동 티어입니다.">티어(수동)<select data-f="tier" style="width:112px">${opt(TIER_ORDER,m.baseTier||m.tier)}</select></label>
+    <label class="fld" title="여기서 고른 티어가 명단에 우선 표시됩니다. '언랭'으로 두면 라이엇에서 조회한 솔로랭크 티어가 대신 표시됩니다.">티어(수동)<select data-f="tier" style="width:112px">${opt(TIER_ORDER,m.baseTier||m.tier)}</select></label>
     <label class="fld">주라인<select data-f="main" style="width:100px">${lineSel((m.main&&m.main[0])||'없음')}</select></label>
     <label class="fld">부라인1<select data-f="sub1" style="width:100px">${lineSel((m.sub&&m.sub[0])||'없음')}</select></label>
     <label class="fld">부라인2<select data-f="sub2" style="width:100px">${lineSel((m.sub&&m.sub[1])||'없음')}</select></label>
