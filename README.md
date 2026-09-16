@@ -120,6 +120,11 @@ $env:ADMIN_PASSWORD="비밀번호"; $env:SESSION_SECRET="랜덤문자열"; npm s
 - 내전 기록을 저장하면(`POST /api/matches`) 이 행은 삭제된다
 - 컬럼 변경 쿼리: [`sql/pending.sql`](sql/pending.sql) — Supabase SQL Editor 에서 실행
 
+**접속 기록(dashboard_config)** — 푸터에 표시되는 `마지막 접속` / `오늘 접속 N명`
+- `last_visit_at` : 직전 방문 시각
+- `visit_date`, `visit_ips` : 오늘(KST) 접속 건수와 IP 해시별 마지막 집계 시각. 같은 IP 는 1시간 안의 재방문을 한 건으로 묶고, 1시간이 지나면 새 건으로 센다
+- 컬럼 추가 쿼리: [`sql/visitors.sql`](sql/visitors.sql) — 없으면 서버 재시작 시 오늘 접속자 수가 0 부터 다시 센다
+
 ## API
 
 | 메서드 | 경로 | 설명 |

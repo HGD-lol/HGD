@@ -1,5 +1,6 @@
 'use strict';
 
+const crypto = require('crypto');
 const express = require('express');
 const store = require('../store');
 const { memberById, activeMembers, pool } = require('../lib/members');
@@ -7,6 +8,12 @@ const { serializeMatch } = require('../lib/match');
 const { TIER_ORDER, TIER_RANK, TIER_COLOR } = require('../lib/scales');
 
 const router = express.Router();
+
+/* 접속자 집계용 — IP 원문 대신 짧은 해시만 쓴다 (suggestions 라우트와 같은 방식) */
+function hashIp(req) {
+  const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+  return crypto.createHash('sha256').update(ip).digest('hex').slice(0, 16);
+}
 
 /* GET /api/dashboard — 대시보드 집계 */
 router.get('/', (req, res) => {
@@ -82,6 +89,7 @@ router.get('/', (req, res) => {
     recentMatches,
     counts: store.counts(),
     lastVisit: store.touchVisit(),   // 이 화면을 열기 직전에 누가 접속했던 시각
+    todayVisitors: store.countVisitor(hashIp(req)),   // 오늘(KST) 접속 건수 (같은 IP 는 1시간 단위로 한 건, 지금 이 사람 포함)
   });
 });
 

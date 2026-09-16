@@ -11,6 +11,11 @@ let seasons = [];
 let dashConfig = { title: '협곡단 내전 기록실', description: '단원 명단과 티어, 내전 전적을 한곳에서.', season: '2026 Split 2', matchRegistrationEnabled: true };
 let rosterInfo = { source: 'uninitialized', count: 0 };
 let lastVisitAt = null;    // 마지막으로 누군가 메인 화면을 연 시각 (dashboard_config.last_visit_at 에 보관)
+let visitDate = null;      // 오늘 접속자 집계 기준일 'YYYY-MM-DD' (KST) — dashboard_config.visit_date
+let visitCount = 0;        // 오늘 접속 건수 — dashboard_config.visit_ips.count
+let visitLast = {};        // IP 해시 → 마지막으로 한 건으로 센 시각(ms) — dashboard_config.visit_ips.last (최근 1시간치만 보관)
+const VISIT_GAP_MS = 60 * 60 * 1000;   // 같은 IP 라도 이 시간이 지나 다시 오면 새 접속으로 센다
+let hasVisitColumns = true;
 let cachedAll = null;
 let cachedStats = null;
 let cachedStatsRift = null;
@@ -143,6 +148,19 @@ async function init() {
     dashConfig = { title: c.title, description: c.description, season: c.season, matchRegistrationEnabled: c.match_registration_enabled !== false };
     // 컬럼이 아직 없으면 undefined — 그때는 이번 기동부터 다시 쌓인다
     lastVisitAt = c.last_visit_at || null;
+    hasVisitColumns = Object.prototype.hasOwnProperty.call(c, 'visit_ips');
+    if (!hasVisitColumns) {
+      console.warn('  ⚠ dashboard_config.visit_date/visit_ips 컬럼이 없어 오늘 접속자 수가 재시작하면 초기화됩니다. Supabase 에서 실행하세요:');
+      console.warn("    alter table public.dashboard_config add column if not exists visit_date text, add column if not exists visit_ips jsonb not null default '[]'::jsonb;");
+    } else if (c.visit_date === todayKST() && c.visit_ips && typeof c.visit_ips === 'object' && !Array.isArray(c.visit_ips)) {
+      visitDate = c.visit_date;
+      visitCount = Number(c.visit_ips.count) || 0;
+      visitLast = {};
+      for (const [h, iso] of Object.entries(c.visit_ips.last || {})) {
+        const t = Date.parse(iso);
+        if (!Number.isNaN(t)) visitLast[h] = t;
+      }
+    }
   }
 
   // 시즌
@@ -359,6 +377,32 @@ function touchVisit() {
   return prev;
 }
 
+/* 오늘(KST) — 'YYYY-MM-DD'. UTC 로 자르면 한국 밤 시간에 하루 밀린다 */
+function todayKST() {
+  return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+}
+
+/*
+ * 오늘 접속 건수 — 같은 IP 는 1시간 안의 재방문은 한 건으로 묶고, 1시간이 지나 다시 오면 새 건으로 센다.
+ * 날짜(KST)가 바뀌면 처음부터 다시. IP 원문은 저장하지 않고 해시만 보관한다.
+ */
+function countVisitor(ipHash) {
+  const today = todayKST();
+  if (visitDate !== today) { visitDate = today; visitCount = 0; visitLast = {}; }
+  const now = Date.now();
+  if (ipHash && !(visitLast[ipHash] > now - VISIT_GAP_MS)) {
+    // 1시간이 지난 항목은 판정에 더 쓰이지 않으므로 버린다 → 저장 크기는 '최근 1시간 안의 IP 수' 로 묶인다
+    for (const h of Object.keys(visitLast)) if (!(visitLast[h] > now - VISIT_GAP_MS)) delete visitLast[h];
+    visitLast[ipHash] = now;
+    visitCount += 1;
+    if (hasVisitColumns) {
+      const last = Object.fromEntries(Object.entries(visitLast).map(([h, t]) => [h, new Date(t).toISOString()]));
+      dbWrite(() => sb.update('dashboard_config', 'id=eq.1', { visit_date: visitDate, visit_ips: { count: visitCount, last } }));
+    }
+  }
+  return visitCount;
+}
+
 function counts() { return { matches: allMatches().length, userMatches: userMatches.length, pending: pendingDraft ? 1 : 0 }; }
 function roster() { return rosterInfo; }
 
@@ -369,7 +413,7 @@ module.exports = {
   getPending, savePending, clearPending,
   getDashConfig, setDashConfig,
   editMember, addMember, removeMember, permanentDeleteMember, restoreMember, nicksPersisted,
-  touchVisit,
+  touchVisit, countVisitor,
   getSeasons, getCurrentSeason, createSeason,
   counts, roster,
 };
