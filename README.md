@@ -39,6 +39,11 @@ $env:ADMIN_PASSWORD="비밀번호"; $env:SESSION_SECRET="랜덤문자열"; npm s
   연승 n → +n, 연패 n → −n (승리 시 연패 보너스 초기화, 패배 시 연승 보너스 초기화). `src/lib/scoring.js`.
 - **관리자**: 공용 비밀번호 로그인(쿠키 세션). 단원 편집/추가/삭제(소프트, 과거 기록 보존)는
   `data/members-override.json` 오버레이로 저장되어 시트 위에 덧입혀짐. 내전 수정/삭제도 관리자 전용.
+- **내전 달력**: 대시보드 맨 아래, 깃허브 잔디처럼 최근 1년 동안 내전이 있었던 날을 주 단위 격자로 표시한다.
+  경기 수에 따라 5단계 색, 마우스를 올리면 날짜와 협곡/칼바람 경기 수, 클릭하면 내전 기록 탭으로. 시즌과 무관하게 전체 기록(KST 날짜 기준)을 쓴다. `GET /api/matches/calendar`
+- **업데이트 게시판**: 관리자 페이지 `업데이트 게시판` 탭에서 제목/내용을 쓰고 저장하면 메인 화면 `업데이트` 탭에 바로 공개된다.
+  상단 고정, 수정, 삭제 지원. 최근 7일 안에 올라온 글은 `NEW` 배지와 탭 숫자로 표시. 본문은 평문이며 줄바꿈 유지, `- ` 로 시작하는 줄은 목록, URL 은 링크로 보인다.
+  저장소는 Supabase `updates` 테이블 — 최초 1회 [`sql/updates.sql`](sql/updates.sql) 을 SQL Editor 에서 실행. `src/routes/updates.js`
 - **실시간 팀 경매**: 방 생성 → 코드 공유 → 캡틴들이 각 기기에서 접속해 동시 입찰.
   서버가 타이머·낙찰을 소유(`src/auction/`), WebSocket `/ws/auction` 으로 상태 브로드캐스트.
 
@@ -136,6 +141,7 @@ $env:ADMIN_PASSWORD="비밀번호"; $env:SESSION_SECRET="랜덤문자열"; npm s
 | GET | `/api/members/:id` | 단원 상세 |
 | GET | `/api/matches` | 내전 기록 최신순 (`?limit=`) |
 | GET | `/api/matches/:id` | 단일 매치 |
+| GET | `/api/matches/calendar` | 최근 1년 날짜별 내전 수 (대시보드 내전 달력용, `?days=`) |
 | POST | `/api/matches` | 내전 등록 (저장 시 `pending` 행 삭제) |
 | DELETE | `/api/matches/:id` | 사용자 매치 삭제 |
 | GET | `/api/pending` | 선택 중인 선수 (새로고침 복원) |
@@ -149,6 +155,9 @@ $env:ADMIN_PASSWORD="비밀번호"; $env:SESSION_SECRET="랜덤문자열"; npm s
 | POST | `/api/admin/login` · `logout` · `GET me` | 관리자 인증 |
 | POST/PATCH/DELETE | `/api/admin/members[/:id]` | 단원 추가/편집/삭제 (관리자) |
 | POST | `/api/auction/rooms` | 경매방 생성 (WS `/ws/auction`) |
+| GET | `/api/updates` | 업데이트 게시판 목록 (고정글 → 최신순, `?limit=`) |
+| GET | `/api/updates/:id` | 게시글 하나 |
+| POST/PATCH/DELETE | `/api/updates[/:id]` | 업데이트 작성/수정/삭제 (관리자) — `{title, content, pinned}` |
 | GET | `/api/roster/source` | 로스터 데이터 출처(라이브 시트/폴백) |
 | POST | `/api/roster/refresh` | 시트에서 로스터 다시 불러오기 |
 
@@ -209,7 +218,8 @@ src/
     rooms.js              경매방 인메모리 상태·타이머·낙찰 로직
     ws.js                 /ws/auction WebSocket 핸들러
   store.js                매치·오버레이 저장소 (JSON 영속 + 통계 캐시)
-  routes/                 members · matches · stats · scores · balance · dashboard · admin · auction
+  routes/                 members · matches · stats · scores · balance · dashboard · admin · auction · updates
+sql/updates.sql           업데이트 게시판 테이블 생성 쿼리 (Supabase SQL Editor 에서 1회 실행)
 data/matches.json         사용자 등록 내전 (런타임 생성)
 data/members-override.json 관리자 단원 편집/추가/삭제 (런타임 생성)
 ```

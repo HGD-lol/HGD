@@ -86,6 +86,28 @@ router.get('/', (req, res) => {
   res.json({ count: total, matches: list.map(serializeMatch) });
 });
 
+/* GET /api/matches/calendar — 최근 1년 동안 내전이 있었던 날 (깃허브 잔디용)
+   시즌과 상관없이 전체 기록을 KST 날짜별로 센다. ?days= 로 기간 조절(기본 365, 최대 730). */
+const KST_MS = 9 * 3600 * 1000;
+const dayKST = (d) => new Date(d.getTime() + KST_MS).toISOString().slice(0, 10);
+router.get('/calendar', (req, res) => {
+  const daysReq = parseInt(req.query.days, 10);
+  const span = Number.isFinite(daysReq) && daysReq > 0 ? Math.min(daysReq, 730) : 365;
+  const today = dayKST(new Date());
+  const from = dayKST(new Date(Date.now() - (span - 1) * 86400 * 1000));
+  const days = {};
+  for (const m of store.allMatches()) {
+    const key = dayKST(m.date);
+    if (key < from || key > today) continue;
+    const cell = days[key] || (days[key] = { count: 0, rift: 0, aram: 0 });
+    cell.count += 1;
+    if (m.mode === '칼바람') cell.aram += 1; else cell.rift += 1;
+  }
+  const activeDays = Object.keys(days).length;
+  const total = Object.values(days).reduce((a, c) => a + c.count, 0);
+  res.json({ from, to: today, total, activeDays, days });
+});
+
 /* GET /api/matches/:id — 단일 매치 */
 router.get('/:id', (req, res) => {
   const m = store.findMatch(req.params.id);

@@ -187,6 +187,37 @@
     .helptip::before{display:none}
   }
   .badgegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:8px}
+  /* 내전 달력 (깃허브 잔디) */
+  .cal-panel{margin-top:28px}
+  .cal-panel > h3 .cal-sum{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--ink-3);white-space:nowrap}
+  .cal-panel > h3 .cal-sum b{color:var(--gold-bright);font-variant-numeric:tabular-nums}
+  .cal-scroll{overflow-x:auto;overscroll-behavior-x:contain;padding-bottom:4px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+  .cal{--cell:12px;--gap:3px;display:grid;grid-template-columns:auto 1fr;gap:6px 8px;width:max-content;min-width:100%}
+  .cal .months{grid-column:2;display:grid;grid-auto-flow:column;grid-auto-columns:calc(var(--cell) + var(--gap));font-size:10.5px;color:var(--ink-3);font-weight:700;height:14px;position:relative}
+  .cal .months span{white-space:nowrap}
+  .cal .dows{grid-column:1;display:grid;grid-template-rows:repeat(7,var(--cell));gap:var(--gap);font-size:10px;color:var(--ink-3);font-weight:700;line-height:var(--cell);text-align:right;
+    position:sticky;left:0;z-index:1;background:var(--surface);padding-right:4px;margin-right:-4px}
+  .cal .weeks{grid-column:2;display:grid;grid-auto-flow:column;grid-auto-columns:var(--cell);grid-template-rows:repeat(7,var(--cell));gap:var(--gap)}
+  .cal .d{width:var(--cell);height:var(--cell);border-radius:3px;background:var(--surface-2);border:1px solid color-mix(in srgb,var(--line) 55%,transparent);position:relative}
+  .cal .d.out{visibility:hidden}
+  .cal .d.l1{background:color-mix(in srgb,var(--gold) 32%,var(--surface-2));border-color:color-mix(in srgb,var(--gold) 40%,transparent)}
+  .cal .d.l2{background:color-mix(in srgb,var(--gold) 58%,var(--surface-2));border-color:color-mix(in srgb,var(--gold) 65%,transparent)}
+  .cal .d.l3{background:color-mix(in srgb,var(--gold) 82%,var(--surface-2));border-color:var(--gold)}
+  .cal .d.l4{background:var(--gold-bright);border-color:var(--gold-bright)}
+  .cal .d.today{outline:1.5px solid var(--blue);outline-offset:1px}
+  .cal .d:hover{transform:scale(1.25);z-index:2;border-color:var(--ink)}
+  .cal .d.has{cursor:pointer}
+  .cal-foot{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:11.5px;color:var(--ink-3)}
+  .cal-foot .legend{display:flex;align-items:center;gap:4px;margin-left:auto}
+  .cal-foot .legend .d{width:11px;height:11px;border-radius:3px;background:var(--surface-2);border:1px solid color-mix(in srgb,var(--line) 55%,transparent);display:inline-block}
+  .cal-foot .legend .d.l1{background:color-mix(in srgb,var(--gold) 32%,var(--surface-2))}
+  .cal-foot .legend .d.l2{background:color-mix(in srgb,var(--gold) 58%,var(--surface-2))}
+  .cal-foot .legend .d.l3{background:color-mix(in srgb,var(--gold) 82%,var(--surface-2))}
+  .cal-foot .legend .d.l4{background:var(--gold-bright)}
+  .cal-tip{position:fixed;z-index:40;pointer-events:none;background:var(--surface-2);border:1px solid var(--gold-deep);color:var(--ink);
+    padding:7px 10px;border-radius:9px;font-size:12px;font-weight:700;box-shadow:var(--shadow);white-space:nowrap;display:none;transform:translate(-50%,calc(-100% - 10px))}
+  .cal-tip small{display:block;font-weight:600;color:var(--ink-3);margin-top:2px}
+  @media (max-width:700px){ .cal{--cell:11px} .cal-panel > h3 .cal-sum{margin-left:0;flex-basis:100%;white-space:normal} }
   .panel-note{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--ink-3);white-space:nowrap}
   .panel-note + .panel-modes{margin-left:8px}
   .morebtn{display:block;width:100%;margin-top:9px;padding:8px 10px;border-radius:9px;
@@ -283,6 +314,24 @@
     display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--ink-3)}
   .card-foot .rec{font-weight:700;color:var(--ink-2)}
   .empty{text-align:center;padding:60px 20px;color:var(--ink-3);font-size:14px}
+  /* 업데이트 게시판 */
+  .upd-list{display:flex;flex-direction:column;gap:14px;max-width:860px}
+  .upd-post{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:18px 22px;transition:.16s}
+  .upd-post:hover{border-color:var(--gold-deep)}
+  .upd-post.pinned{border-color:var(--gold-deep);background:linear-gradient(180deg,color-mix(in srgb,var(--gold) 7%,var(--surface)),var(--surface))}
+  .upd-post .head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .upd-post .head h3{margin:0;font-size:16px;font-weight:800;color:var(--ink);letter-spacing:-.01em}
+  .upd-post .head .date{font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums;margin-left:auto;white-space:nowrap}
+  .upd-post .pin{font-size:10px;font-weight:800;color:var(--gold);border:1px solid var(--gold-deep);border-radius:5px;padding:1px 6px;letter-spacing:.06em;white-space:nowrap}
+  .upd-post .new{font-size:10px;font-weight:800;color:var(--good);border:1px solid var(--good);border-radius:5px;padding:1px 6px;letter-spacing:.06em;white-space:nowrap}
+  .upd-post .content{font-size:14px;line-height:1.7;color:var(--ink-2);word-break:break-word}
+  .upd-post .content p{margin:0 0 8px}
+  .upd-post .content p:last-child{margin-bottom:0}
+  .upd-post .content ul{margin:0 0 8px;padding-left:20px}
+  .upd-post .content li{margin:2px 0}
+  .upd-post .content a{color:var(--blue);text-decoration:underline;text-underline-offset:2px}
+  .upd-post .edited{font-size:11.5px;color:var(--ink-3);margin-top:10px}
+  .tab .c.new-dot{color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent)}
 
   /* ============ MATCHES ============ */
   /* 한 카드 = 한 줄:  BLUE [블루 5명] (결과·날짜·모드) [레드 5명] RED
@@ -566,6 +615,7 @@
       <button class="tab" role="tab" aria-selected="false" data-view="matches">내전 기록 <span class="c" id="cMatch">0</span></button>
       <button class="tab" role="tab" aria-selected="false" data-view="rank">전적 순위</button>
       <button class="tab" role="tab" aria-selected="false" data-view="synergy">듀오 궁합</button>
+      <button class="tab" role="tab" aria-selected="false" data-view="updates">업데이트 <span class="c" id="cUpd" style="display:none">0</span></button>
       <button class="tab tab-add" role="tab" aria-selected="false" data-view="add">＋ 내전 등록</button>
     </nav>
   </div>
@@ -623,6 +673,17 @@
 
     <div class="sec-h"><h2>최근 내전</h2><div class="rule"></div></div>
     <div class="matches" id="recentMatches"></div>
+
+    <div class="panel cal-panel" id="calPanel">
+      <h3><span class="dot"></span> <span class="htitle">내전 달력</span>
+        <span class="cal-sum" id="calSum"></span>
+      </h3>
+      <div class="cal-scroll" id="calScroll"><div class="cal" id="cal"></div></div>
+      <div class="cal-foot">
+        <span id="calStreak"></span>
+        <span class="legend">적음 <span class="d"></span><span class="d l1"></span><span class="d l2"></span><span class="d l3"></span><span class="d l4"></span> 많음</span>
+      </div>
+    </div>
   </section>
 
   <!-- ROSTER -->
@@ -728,6 +789,13 @@
       </div>
     </div>
     <p style="color:var(--ink-3);font-size:12px;margin-top:12px">※ 용병은 매번 새로 등록되는 임시 선수라 조합 통계에서 제외됩니다.</p>
+  </section>
+
+  <!-- UPDATES (업데이트 게시판) -->
+  <section class="view" id="view-updates" role="tabpanel">
+    <div class="sec-h"><span class="eyebrow">Updates</span><h2 style="font-size:22px">업데이트</h2><div class="rule"></div></div>
+    <p style="color:var(--ink-3);font-size:13px;margin:-6px 0 18px">기록실에 새로 추가되거나 바뀐 내용을 관리자가 정리해 올립니다.</p>
+    <div class="upd-list" id="updList"><div class="empty">불러오는 중…</div></div>
   </section>
 
   <!-- ADD MATCH (내전 등록) -->
@@ -890,6 +958,7 @@ async function refreshData(){
   clearDashStatsCache();
   $("#cMatch").textContent=S.matches.length;
   $("#fMatches").textContent=S.matches.length;
+  if(window.__calReady) renderCalendar();
 }
 let matchRegEnabled=true;
 async function loadDashConfig(){
@@ -1486,10 +1555,170 @@ function renderRank(){
   });
 }
 
+/* ========== UPDATES (업데이트 게시판) ==========
+   관리자가 admin.html 에서 작성한 글을 GET /api/updates 로 받아 보여준다.
+   본문은 평문 — 줄바꿈 유지, '- ' 로 시작하는 줄은 목록, URL 은 링크로. */
+let UPDATES=[], updatesLoaded=false;
+const UPD_NEW_DAYS=7;   // 이 기간 안의 글은 NEW 배지
+function updFmtDate(iso){
+  const d=new Date(iso); if(isNaN(d)) return '';
+  const p=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}.${p(d.getMonth()+1)}.${p(d.getDate())}`;
+}
+function updIsNew(u){ return Date.now()-new Date(u.createdAt).getTime() < UPD_NEW_DAYS*86400e3; }
+/* 이스케이프한 뒤 URL 만 링크로 바꾼다 */
+function updInline(text){
+  return escHtml(text).replace(/https?:\/\/[^\s<]+/g,m=>`<a href="${m}" target="_blank" rel="noopener">${m}</a>`);
+}
+function updRender(content){
+  const lines=String(content||'').split('\n');
+  const out=[]; let para=[], list=[];
+  const flushPara=()=>{ if(para.length){ out.push(`<p>${para.map(updInline).join('<br>')}</p>`); para=[]; } };
+  const flushList=()=>{ if(list.length){ out.push(`<ul>${list.map(l=>`<li>${updInline(l)}</li>`).join('')}</ul>`); list=[]; } };
+  for(const raw of lines){
+    const line=raw.replace(/\s+$/,'');
+    const m=line.match(/^\s*[-*•]\s+(.*)$/);
+    if(m){ flushPara(); list.push(m[1]); continue; }
+    flushList();
+    if(!line.trim()){ flushPara(); continue; }
+    para.push(line);
+  }
+  flushPara(); flushList();
+  return out.join('');
+}
+function renderUpdates(){
+  const box=$("#updList"); if(!box) return;
+  if(!UPDATES.length){ box.innerHTML='<div class="empty">아직 올라온 업데이트가 없습니다.</div>'; return; }
+  box.innerHTML=UPDATES.map(u=>`
+    <article class="upd-post${u.pinned?' pinned':''}">
+      <div class="head">
+        ${u.pinned?'<span class="pin">고정</span>':''}
+        ${updIsNew(u)?'<span class="new">NEW</span>':''}
+        <h3>${escHtml(u.title)}</h3>
+        <span class="date">${updFmtDate(u.createdAt)}</span>
+      </div>
+      <div class="content">${updRender(u.content)||'<p style="color:var(--ink-3)">내용 없음</p>'}</div>
+      ${u.updatedAt&&u.updatedAt!==u.createdAt?`<div class="edited">마지막 수정 ${updFmtDate(u.updatedAt)}</div>`:''}
+    </article>`).join('');
+}
+function updTabCount(){
+  const c=$("#cUpd"); if(!c) return;
+  const n=UPDATES.filter(updIsNew).length;
+  if(n>0){ c.textContent=n; c.classList.add('new-dot'); c.title=`최근 ${UPD_NEW_DAYS}일 안에 올라온 글`; c.style.display=''; }
+  else if(UPDATES.length){ c.textContent=UPDATES.length; c.classList.remove('new-dot'); c.title=''; c.style.display=''; }
+  else c.style.display='none';
+}
+async function loadUpdates(force){
+  if(updatesLoaded&&!force) return;
+  try{
+    const r=await jget('/api/updates');
+    UPDATES=r.updates||[]; updatesLoaded=true;
+    updTabCount(); renderUpdates();
+  }catch(ex){
+    const box=$("#updList");
+    if(box) box.innerHTML=`<div class="empty" style="color:var(--red)">업데이트를 불러오지 못했습니다: ${escHtml(ex.message)}</div>`;
+  }
+}
+
+/* ========== CALENDAR (내전 달력 · 깃허브 잔디) ==========
+   GET /api/matches/calendar 로 최근 1년치 '날짜 → 경기 수' 를 받아 주 단위 세로 7칸 격자로 그린다.
+   시즌 필터와 무관하게 전체 기록을 쓴다. */
+const CAL_DOW=['일','월','화','수','목','금','토'];
+function calKey(d){ const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
+function calLevel(n){ return n<=0?0:n===1?1:n===2?2:n<=4?3:4; }
+function calDate(key){ const [y,m,d]=key.split('-').map(Number); return new Date(y,m-1,d); }
+function calStreaks(days,from,to){
+  // 내전한 날 기준 최장 연속일 · 마지막 내전 이후 경과일
+  const keys=Object.keys(days).sort();
+  let best=0,cur=0,prev=null;
+  for(const k of keys){
+    if(prev){ const diff=Math.round((calDate(k)-calDate(prev))/86400e3); cur=diff===1?cur+1:1; } else cur=1;
+    if(cur>best) best=cur; prev=k;
+  }
+  const last=keys[keys.length-1];
+  const since=last?Math.round((calDate(to)-calDate(last))/86400e3):null;
+  return {best,last,since};
+}
+async function renderCalendar(){
+  const cal=$("#cal"); if(!cal) return;
+  let data;
+  try{ data=await jget('/api/matches/calendar?days=365'); }
+  catch(ex){ cal.innerHTML=`<div class="empty" style="padding:20px">달력을 불러오지 못했습니다: ${escHtml(ex.message)}</div>`; return; }
+  const days=data.days||{};
+  const to=calDate(data.to), from=calDate(data.from);
+  // 격자는 일요일에서 시작 — 시작일 앞의 빈 칸은 숨긴다
+  const start=new Date(from); start.setDate(start.getDate()-start.getDay());
+  const weeks=[]; const months=[]; let lastMonth=-1;
+  for(let d=new Date(start), wi=0; d<=to; wi++){
+    const col=[];
+    for(let i=0;i<7;i++){
+      const key=calKey(d);
+      const inRange=d>=from&&d<=to;
+      const cell=days[key];
+      col.push({key,inRange,cell,today:key===data.to});
+      if(inRange&&d.getMonth()!==lastMonth&&d.getDate()<=7&&i===d.getDay()){
+        // 그 달의 첫 주에 라벨 — 마지막 라벨과 2주 이상 떨어져 있을 때만 (겹침 방지)
+        if(!months.length||wi-months[months.length-1].wi>=2) months.push({wi,label:`${d.getMonth()+1}월`});
+        lastMonth=d.getMonth();
+      }
+      d.setDate(d.getDate()+1);
+    }
+    weeks.push(col);
+  }
+  const monthsHtml=months.map(m=>`<span style="grid-column:${m.wi+1}">${m.label}</span>`).join('');
+  const dowsHtml=CAL_DOW.map(n=>`<span>${n}</span>`).join('');
+  const cells=weeks.map(col=>col.map(c=>{
+    if(!c.inRange) return '<span class="d out"></span>';
+    const n=c.cell?c.cell.count:0;
+    return `<span class="d l${calLevel(n)}${n?' has':''}${c.today?' today':''}" data-k="${c.key}" data-n="${n}"${c.cell?` data-r="${c.cell.rift}" data-a="${c.cell.aram}"`:''}></span>`;
+  }).join('')).join('');
+  cal.innerHTML=`<div class="months">${monthsHtml}</div><div class="dows">${dowsHtml}</div><div class="weeks">${cells}</div>`;
+  $("#calSum").innerHTML=`최근 1년 내전 <b>${data.total}</b>경기 · 내전한 날 <b>${data.activeDays}</b>일`;
+  const st=calStreaks(days,data.from,data.to);
+  $("#calStreak").textContent=st.last
+    ? `최장 연속 ${st.best}일 · 마지막 내전 ${st.since===0?'오늘':st.since+'일 전'} (${calDate(st.last).getMonth()+1}월 ${calDate(st.last).getDate()}일)`
+    : '최근 1년간 기록된 내전이 없습니다.';
+  cal.dataset.weeks=weeks.length;
+  calFit();
+  // 최신(오른쪽)이 보이도록 스크롤
+  const sc=$("#calScroll"); sc.scrollLeft=sc.scrollWidth;
+}
+/* 셀 크기를 패널 폭에 맞춘다 — 넓은 화면에선 키우고, 좁으면 11px 까지 줄인 뒤 가로 스크롤 */
+function calFit(){
+  const cal=$("#cal"), sc=$("#calScroll"); if(!cal||!sc||!cal.dataset.weeks) return;
+  const weeks=+cal.dataset.weeks, gap=3, dowCol=30;
+  const cell=Math.max(11,Math.min(17,Math.floor((sc.clientWidth-dowCol)/weeks)-gap));
+  cal.style.setProperty('--cell',cell+'px');
+}
+addEventListener("resize",()=>{clearTimeout(window.__calFitT);window.__calFitT=setTimeout(calFit,120);});
+/* 툴팁 — 셀 위에 마우스를 올리면 날짜와 경기 수 */
+(function(){
+  let tip=null;
+  const getTip=()=>{ if(!tip){ tip=el("div","cal-tip"); document.body.appendChild(tip); } return tip; };
+  const cal=$("#cal"); if(!cal) return;
+  cal.addEventListener("mouseover",e=>{
+    const c=e.target.closest(".d"); if(!c||!c.dataset.k) return;
+    const d=calDate(c.dataset.k), n=+c.dataset.n;
+    const t=getTip();
+    const detail=n?`내전 ${n}경기`+(n>1||c.dataset.a>0?` (협곡 ${c.dataset.r} · 칼바람 ${c.dataset.a})`:''):'내전 없음';
+    t.innerHTML=`${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${CAL_DOW[d.getDay()]})<small>${detail}</small>`;
+    const r=c.getBoundingClientRect();
+    t.style.left=(r.left+r.width/2)+'px'; t.style.top=r.top+'px'; t.style.display='block';
+  });
+  cal.addEventListener("mouseout",e=>{ if(tip&&!e.relatedTarget?.closest?.(".d")) tip.style.display='none'; });
+  cal.addEventListener("click",e=>{
+    const c=e.target.closest(".d.has"); if(!c) return;
+    // 그 날 내전을 보러 내전 기록 탭으로
+    if(tip) tip.style.display='none';
+    switchView("matches");
+  });
+})();
+
 /* ========== NAV ========== */
 function switchView(v){
   if(v==="add")ensureAddModeStats();
   if(v==="synergy"){fillSynMembers();renderSynergy();}
+  if(v==="updates")loadUpdates(true);
   $$(".tab").forEach(t=>t.setAttribute("aria-selected",t.dataset.view===v));
   $$(".view").forEach(s=>s.classList.toggle("on",s.id==="view-"+v));
   window.scrollTo({top:0,behavior:"smooth"});
@@ -1907,7 +2136,9 @@ function toast(msg){
     await refreshData();
     await loadDashConfig();
     renderChips();renderAddPicker();renderAll();
+    window.__calReady=true; renderCalendar();
     await loadPending();
+    loadUpdates();
   }catch(ex){
     document.querySelector("main").insertAdjacentHTML("afterbegin",
       `<div class="empty" style="color:var(--red)">API 로딩 실패: ${ex.message}<br>서버가 실행 중인지 확인하세요 (npm start).</div>`);
