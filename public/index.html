@@ -909,6 +909,58 @@
     .curtain{display:none}
     .sec-h.reveal h2{clip-path:none}
   }
+
+  /* ── 히어로 하단: 최근 패치노트 ── */
+  .hero-notes{position:relative;z-index:2;padding:22px 28px 26px}
+  .hn-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;animation:rise .9s .9s var(--ease-out) both}
+  .hn-title{font-size:15px;font-weight:800;letter-spacing:-.02em}
+  .hn-more{margin-left:auto;appearance:none;background:none;border:1px solid color-mix(in srgb,var(--gold) 35%,transparent);color:var(--gold-bright);
+    border-radius:9px;padding:6px 12px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:.25s var(--ease-out)}
+  .hn-more:hover{background:color-mix(in srgb,var(--gold) 14%,transparent);border-color:var(--gold)}
+  .hn-list{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .hn{position:relative;overflow:hidden;border:1px solid color-mix(in srgb,var(--line) 85%,transparent);border-radius:14px;padding:14px 16px;
+    background:color-mix(in srgb,var(--surface-2) 55%,transparent);cursor:pointer;transform-style:preserve-3d;
+    transition:transform .4s var(--ease-out),border-color .3s,box-shadow .4s;animation:tileIn .9s var(--ease-out) backwards;animation-delay:calc(1s + var(--i,0)*.12s)}
+  html.introing .hn{animation-play-state:paused}
+  .hn:hover{border-color:color-mix(in srgb,var(--gold) 45%,var(--line));box-shadow:0 20px 40px -24px rgba(0,0,0,.6)}
+  .hn::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(260px circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--gold) 12%,transparent),transparent 60%);opacity:0;transition:opacity .4s}
+  .hn:hover::before{opacity:1}
+  .hn .hn-meta{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums;margin-bottom:6px}
+  .hn .hn-meta .new{font-size:9.5px;font-weight:800;color:var(--good);border:1px solid var(--good);border-radius:5px;padding:0 5px;letter-spacing:.06em}
+  .hn .hn-meta .pin{font-size:9.5px;font-weight:800;color:var(--gold);border:1px solid var(--gold-deep);border-radius:5px;padding:0 5px;letter-spacing:.06em}
+  .hn b{display:block;font-size:14px;font-weight:800;line-height:1.35;letter-spacing:-.01em;margin-bottom:6px;
+    overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .hn p{margin:0;font-size:12px;line-height:1.55;color:var(--ink-2);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .hn::after{content:"";position:absolute;left:16px;right:16px;bottom:0;height:2px;border-radius:2px;
+    background:linear-gradient(90deg,var(--gold),transparent);transform:scaleX(0);transform-origin:left;transition:transform .55s var(--ease-out)}
+  .hn:hover::after{transform:scaleX(1)}
+  .hn-empty{grid-column:1/-1;text-align:center;padding:18px;font-size:12.5px;color:var(--ink-3);border:1px dashed color-mix(in srgb,var(--line) 85%,transparent);border-radius:12px}
+  @media (max-width:820px){.hn-list{grid-template-columns:1fr}.hero-notes{padding:18px 20px 22px}}
+
+  /* ── 모바일 헤더: 로고 문구가 세로로 갈라지거나 잘리지 않게 ── */
+  .mark{flex:0 0 auto;min-width:0}
+  .mark b,.mark small{white-space:nowrap}
+  .bar .navlink,.bar .theme-btn{flex:0 0 auto}
+  @media (max-width:560px){
+    .bar{gap:8px}
+    .mark{gap:9px}
+    .crest{width:34px;height:34px}
+    .mark b{font-size:17px}
+    .mark small{font-size:8.5px;letter-spacing:.22em}
+    .navlink{height:34px;padding:0 9px;font-size:12px;border-radius:9px}
+    .theme-btn{width:34px;height:34px;border-radius:9px}
+    .hero-eyebrow{white-space:nowrap;letter-spacing:.22em;font-size:9.5px}
+    .hn-head .eyebrow{display:none}
+    .hn-head{gap:10px}
+  }
+  @media (max-width:380px){
+    .mark small{display:none}
+    .navlink{padding:0 8px}
+  }
+  /* 히어로 제목은 단어 단위로만 줄바꿈 */
+  .hero-title{min-width:0}
+  .hero-title h1 .w{display:inline-block;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -940,11 +992,11 @@
   <div class="wrap">
     <nav id="nav" role="tablist">
       <button class="tab" role="tab" aria-selected="true" data-view="dash">대시보드</button>
+      <button class="tab" role="tab" aria-selected="false" data-view="updates">업데이트 <span class="c" id="cUpd" style="display:none">0</span></button>
       <button class="tab" role="tab" aria-selected="false" data-view="roster">단원 명단 <span class="c" id="cRoster">0</span></button>
       <button class="tab" role="tab" aria-selected="false" data-view="matches">내전 기록 <span class="c" id="cMatch">0</span></button>
       <button class="tab" role="tab" aria-selected="false" data-view="rank">전적 순위</button>
       <button class="tab" role="tab" aria-selected="false" data-view="synergy">듀오 궁합</button>
-      <button class="tab" role="tab" aria-selected="false" data-view="updates">업데이트 <span class="c" id="cUpd" style="display:none">0</span></button>
       <button class="tab tab-add" role="tab" aria-selected="false" data-view="add">＋ 내전 등록</button>
     </nav>
   </div>
@@ -972,7 +1024,14 @@
           </div>
         </div>
       </div>
-      <div class="tiles" id="dashTiles"></div>
+      <div class="hero-notes" id="heroNotes">
+        <div class="hn-head">
+          <span class="eyebrow">Patch Notes</span>
+          <span class="hn-title">최근 패치노트</span>
+          <button type="button" class="hn-more" data-go="updates">전체 보기 →</button>
+        </div>
+        <div class="hn-list" id="heroNoteList"><div class="hn-empty">불러오는 중…</div></div>
+      </div>
     </div>
 
     <div class="ticker" id="ticker" aria-hidden="true" style="display:none"><div class="ticker-track" id="tickerTrack"></div></div>
@@ -1317,7 +1376,6 @@ async function loadDashConfig(){
     applyMatchRegState();
   }
   setLastVisit(dash.lastVisit, dash.todayVisitors);
-  renderTiles(dash.tiles);
 }
 function applyMatchRegState(){
   const addView=$("#view-add");
@@ -1946,6 +2004,20 @@ function renderUpdates(){
       ${u.updatedAt&&u.updatedAt!==u.createdAt?`<div class="edited">마지막 수정 ${updFmtDate(u.updatedAt)}</div>`:''}
     </article>`).join('');
 }
+/* 히어로 하단 — 최근 패치노트 3건 (고정글 우선, 최신순) */
+function renderHeroNotes(){
+  const box=$("#heroNoteList"); if(!box) return;
+  const list=UPDATES.slice(0,3);
+  if(!list.length){ box.innerHTML='<div class="hn-empty">아직 올라온 패치노트가 없습니다.</div>'; return; }
+  box.innerHTML=list.map((u,i)=>`
+    <div class="hn" style="--i:${i}" data-go="updates" role="link" tabindex="0">
+      <div class="hn-meta">${u.pinned?'<span class="pin">고정</span>':''}${updIsNew(u)?'<span class="new">NEW</span>':''}<span>${updFmtDate(u.createdAt)}</span></div>
+      <b>${escHtml(u.title)}</b>
+      <p>${escHtml(String(u.content||'').replace(/^\s*[-*•]\s+/gm,'').replace(/\s+/g,' ').trim())||'내용 없음'}</p>
+    </div>`).join('');
+}
+document.addEventListener("click",e=>{ const t=e.target.closest&&e.target.closest('[data-go]'); if(t) switchView(t.dataset.go); });
+document.addEventListener("keydown",e=>{ if(e.key==='Enter'&&e.target.matches&&e.target.matches('.hn[data-go]')) switchView(e.target.dataset.go); });
 function updTabCount(){
   const c=$("#cUpd"); if(!c) return;
   const n=UPDATES.filter(updIsNew).length;
@@ -1958,10 +2030,12 @@ async function loadUpdates(force){
   try{
     const r=await jget('/api/updates');
     UPDATES=r.updates||[]; updatesLoaded=true;
-    updTabCount(); renderUpdates();
+    updTabCount(); renderUpdates(); renderHeroNotes();
   }catch(ex){
     const box=$("#updList");
     if(box) box.innerHTML=`<div class="empty" style="color:var(--red)">업데이트를 불러오지 못했습니다: ${escHtml(ex.message)}</div>`;
+    const hn=$("#heroNoteList");
+    if(hn) hn.innerHTML=`<div class="hn-empty">패치노트를 불러오지 못했습니다</div>`;
   }
 }
 
@@ -2506,7 +2580,13 @@ function heroTitleReveal(){
   const text=h.textContent;
   if(REDUCE){ h.textContent=text; return; }
   h.setAttribute('aria-label',text);
-  h.innerHTML=[...text].map((c,i)=>`<span class="ch" style="--i:${i}" aria-hidden="true">${escHtml(c)}</span>`).join('');
+  // 글자별 등장 — 단어(.w) 단위로 묶어 줄바꿈은 띄어쓰기에서만 일어나게 한다
+  let i=0;
+  h.innerHTML=text.split(/(\s+)/).map(part=>{
+    if(!part) return '';
+    if(/^\s+$/.test(part)){ i+=part.length; return ' '; }
+    return `<span class="w">${[...part].map(c=>`<span class="ch" style="--i:${i++}" aria-hidden="true">${escHtml(c)}</span>`).join('')}</span>`;
+  }).join('');
 }
 
 /* 통계 타일 — 카운트업 */
@@ -2554,7 +2634,7 @@ moveNavInd();
 
 /* 커서 스포트라이트 — 카드 위 마우스 위치를 CSS 변수로 */
 document.addEventListener("pointermove",e=>{
-  const t=e.target.closest&&e.target.closest(".panel,.card,.badge-card,.match,.upd-post"); if(!t) return;
+  const t=e.target.closest&&e.target.closest(".panel,.card,.badge-card,.match,.upd-post,.hn"); if(!t) return;
   const r=t.getBoundingClientRect();
   t.style.setProperty('--mx',(e.clientX-r.left)+'px'); t.style.setProperty('--my',(e.clientY-r.top)+'px');
 },{passive:true});
@@ -2587,7 +2667,7 @@ document.addEventListener("pointermove",e=>{
   const c=$("#cur"); if(!c) return;
   document.documentElement.classList.add('has-cur');
   let tx=-100,ty=-100,dx=tx,dy=ty,rx=tx,ry=ty;
-  const HOV='a,button,.chip,.tab,.card,.badge-card,.d.has,input,select,label,.rankmini .r,.match,.tile';
+  const HOV='a,button,.chip,.tab,.card,.badge-card,.d.has,input,select,label,.rankmini .r,.match,.tile,.hn';
   addEventListener("pointermove",e=>{
     tx=e.clientX; ty=e.clientY;
     c.classList.toggle('hov',!!(e.target.closest&&e.target.closest(HOV)));
@@ -2633,7 +2713,7 @@ document.addEventListener("pointermove",e=>{
 /* 3D 틸트 + 마그네틱 버튼 + 히어로 패럴랙스 */
 (function(){
   if(REDUCE||!matchMedia("(hover:hover)").matches) return;
-  const TILT='.card,.badge-card,.tile,.season,.upd-post';
+  const TILT='.card,.badge-card,.tile,.season,.upd-post,.hn';
   const MAG='.navlink,.theme-btn,.morebtn,.btn';
   const hero=$("#hero");
   document.addEventListener("pointermove",e=>{
