@@ -4,12 +4,6 @@
 <meta charset="utf-8">
 <title>협곡단 · 내전 기록실</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0A1428">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&display=swap">
 <style>
   /* ============ TOKENS ============ */
   :root{
@@ -596,348 +590,23 @@
   @media(max-width:520px){
     .hero-title h1{font-size:24px}
   }
-
-  /* ============================================================
-     SHOWCASE POLISH — 분위기·모션·타이포. 기존 규칙 뒤에서 덮어쓴다.
-     ============================================================ */
-  :root{
-    --font:"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-    --display:"Cinzel","Pretendard Variable","Pretendard",serif;
-    --ease:cubic-bezier(.2,.7,.2,1);--ease-out:cubic-bezier(.16,1,.3,1);
-  }
-  html{scroll-behavior:smooth}
-  html.introing{overflow:hidden}
-  body{background-image:none;background-attachment:scroll}
-  main{padding:40px 0 90px}
-  ::selection{background:color-mix(in srgb,var(--gold) 35%,transparent);color:var(--ink)}
-
-  /* ── 배경: 오로라 + 그레인 + 비네트 ── */
-  .bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;background:var(--rift)}
-  .bg .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.5;mix-blend-mode:screen;will-change:transform}
-  .bg .o1{width:62vw;height:62vw;left:-16vw;top:-28vw;background:radial-gradient(circle,rgba(30,157,227,.6),transparent 62%);animation:drift1 28s ease-in-out infinite alternate}
-  .bg .o2{width:56vw;height:56vw;right:-18vw;top:-22vw;background:radial-gradient(circle,rgba(232,64,87,.5),transparent 62%);animation:drift2 34s ease-in-out infinite alternate}
-  .bg .o3{width:54vw;height:54vw;left:28vw;bottom:-34vw;background:radial-gradient(circle,rgba(200,170,110,.42),transparent 62%);animation:drift3 40s ease-in-out infinite alternate}
-  .bg .grain{position:absolute;inset:-50%;width:200%;height:200%;opacity:.05;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");animation:grain 1.4s steps(5) infinite}
-  .bg .vignette{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 0%,transparent 45%,rgba(0,0,0,.42))}
-  :root[data-theme="light"] .bg .orb{mix-blend-mode:normal;opacity:.22;filter:blur(90px)}
-  :root[data-theme="light"] .bg .grain{opacity:.07}
-  :root[data-theme="light"] .bg .vignette{background:radial-gradient(120% 90% at 50% 0%,transparent 50%,rgba(60,50,20,.12))}
-  @media (prefers-color-scheme: light){
-    :root:not([data-theme="dark"]) .bg .orb{mix-blend-mode:normal;opacity:.22;filter:blur(90px)}
-    :root:not([data-theme="dark"]) .bg .grain{opacity:.07}
-    :root:not([data-theme="dark"]) .bg .vignette{background:radial-gradient(120% 90% at 50% 0%,transparent 50%,rgba(60,50,20,.12))}
-  }
-  @keyframes drift1{to{transform:translate(9vw,7vw) scale(1.12)}}
-  @keyframes drift2{to{transform:translate(-8vw,9vw) scale(1.08)}}
-  @keyframes drift3{to{transform:translate(-10vw,-6vw) scale(1.15)}}
-  @keyframes grain{0%{transform:translate(0,0)}20%{transform:translate(-4%,3%)}40%{transform:translate(3%,-5%)}60%{transform:translate(-5%,-2%)}80%{transform:translate(4%,4%)}100%{transform:translate(0,0)}}
-
-  /* ── 인트로 ── */
-  #intro{position:fixed;inset:0;z-index:100;background:var(--rift);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .7s var(--ease),visibility .7s}
-  #intro.done{opacity:0;visibility:hidden}
-  #intro .crest-big{width:104px;height:104px;border-radius:28px;overflow:hidden;
-    box-shadow:0 0 0 1px color-mix(in srgb,var(--gold) 45%,transparent),0 40px 100px -24px color-mix(in srgb,var(--gold) 45%,transparent);
-    animation:introPop 1s var(--ease-out) both}
-  #intro .crest-big img{width:100%;height:100%;object-fit:cover;display:block}
-  #intro .word{margin-top:20px;font-family:var(--display);letter-spacing:.46em;text-indent:.46em;text-transform:uppercase;font-size:11px;font-weight:600;color:var(--gold);animation:introFade .9s .3s var(--ease-out) both}
-  #intro .ibar{position:absolute;left:0;bottom:0;height:2px;width:100%;transform-origin:left;background:linear-gradient(90deg,var(--gold-deep),var(--gold-bright));animation:introBar 1.05s .1s var(--ease) both}
-  @keyframes introPop{from{opacity:0;transform:scale(.72) translateY(14px);filter:blur(12px)}to{opacity:1;transform:none;filter:blur(0)}}
-  @keyframes introFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-  @keyframes introBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-  html.introing .hero .ch,html.introing .hero-sub,html.introing .season,html.introing .hero-bg .shine,html.introing .hero{animation-play-state:paused}
-
-  /* ── 스크롤 진행 바 ── */
-  .progress{position:fixed;top:0;left:0;height:2px;width:0;z-index:70;background:linear-gradient(90deg,var(--gold-deep),var(--gold-bright));box-shadow:0 0 10px color-mix(in srgb,var(--gold) 70%,transparent);pointer-events:none}
-
-  /* ── 헤더 ── */
-  header{background:color-mix(in srgb,var(--rift) 68%,transparent);backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5);
-    border-bottom-color:color-mix(in srgb,var(--line) 75%,transparent)}
-  header::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;
-    background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--gold) 70%,transparent) 50%,transparent);opacity:.5;pointer-events:none}
-  .bar{transition:height .35s var(--ease)}
-  header.scrolled .bar{height:56px}
-  .crest{border-radius:11px;background:var(--surface-2);border-color:transparent;transition:transform .4s var(--ease-out),box-shadow .4s;
-    box-shadow:0 0 0 1px color-mix(in srgb,var(--gold) 45%,transparent),0 10px 26px -10px color-mix(in srgb,var(--gold) 55%,transparent)}
-  .crest img{border-radius:inherit!important}
-  .mark:hover .crest{transform:rotate(-5deg) scale(1.06)}
-  .mark b{font-size:20px;font-weight:900;letter-spacing:-.035em}
-  .mark small{font-family:var(--display);letter-spacing:.34em;font-size:9.5px;color:var(--gold);font-weight:600}
-  .navlink,.theme-btn{border-radius:11px;background:color-mix(in srgb,var(--surface) 78%,transparent);transition:.25s var(--ease-out)}
-  .navlink:hover,.theme-btn:hover{transform:translateY(-1px);box-shadow:0 10px 22px -12px color-mix(in srgb,var(--gold) 70%,transparent)}
-  nav{position:relative;border-bottom:1px solid color-mix(in srgb,var(--line) 75%,transparent)}
-  .tab{border-bottom:0;padding:14px 16px;position:relative;z-index:1;transition:color .2s}
-  .tab::after{content:"";position:absolute;inset:7px 3px;border-radius:9px;background:color-mix(in srgb,var(--ink) 6%,transparent);opacity:0;transition:opacity .2s;z-index:-1}
-  .tab:hover::after{opacity:1}
-  .tab[aria-selected="true"]{border-bottom-color:transparent}
-  .nav-ind{position:absolute;bottom:-1px;height:2px;left:0;width:0;border-radius:2px;pointer-events:none;
-    background:linear-gradient(90deg,var(--gold-deep),var(--gold-bright));box-shadow:0 0 14px color-mix(in srgb,var(--gold) 65%,transparent);
-    transition:left .5s var(--ease-out),width .5s var(--ease-out),opacity .3s;opacity:0}
-  .nav-ind.on{opacity:1}
-
-  /* ── 섹션 헤더 · 아이브로우 ── */
-  .eyebrow{font-family:var(--display);letter-spacing:.3em;font-size:10px;font-weight:600;color:var(--gold)}
-  .sec-h{margin:0 0 20px;align-items:center}
-  .sec-h h2{font-size:26px!important;font-weight:900;letter-spacing:-.035em}
-  .sec-h .rule{height:1px;background:linear-gradient(90deg,color-mix(in srgb,var(--gold) 45%,transparent),var(--line) 35%,transparent)}
-
-  /* ── 히어로 ── */
-  .hero{border-radius:26px;margin-bottom:34px;isolation:isolate;border-color:transparent;
-    background:linear-gradient(160deg,color-mix(in srgb,var(--surface) 90%,transparent),color-mix(in srgb,var(--rift-2) 84%,transparent));
-    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-    box-shadow:0 40px 100px -40px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.06);
-    animation:heroIn 1.1s var(--ease-out) both}
-  .hero::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;z-index:3;pointer-events:none;
-    background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 65%,transparent),transparent 38%,transparent 62%,color-mix(in srgb,var(--blue) 45%,transparent));
-    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
-  .hero-bg{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;border-radius:inherit}
-  .hero-mark{position:absolute;right:-6%;top:50%;width:min(48vw,540px);aspect-ratio:1;object-fit:cover;border-radius:50%;
-    opacity:.16;filter:saturate(1.3) blur(.5px);transform:translateY(-50%) rotate(-8deg);
-    -webkit-mask:radial-gradient(circle at 50% 50%,#000 28%,transparent 70%);mask:radial-gradient(circle at 50% 50%,#000 28%,transparent 70%);
-    animation:markFloat 16s ease-in-out infinite alternate}
-  :root[data-theme="light"] .hero-mark{opacity:.12}
-  .hero-bg .glow{position:absolute;width:70%;height:140%;left:-10%;top:-40%;background:radial-gradient(closest-side,color-mix(in srgb,var(--blue) 18%,transparent),transparent);filter:blur(30px)}
-  .hero-bg .shine{position:absolute;top:-40%;bottom:-40%;width:34%;left:-50%;transform:skewX(-18deg);
-    background:linear-gradient(100deg,transparent,rgba(255,255,255,.08),transparent);animation:shine 2.6s 1s var(--ease) both}
-  .hero-top{padding:46px 44px 38px;z-index:2;align-items:flex-end;border-bottom-color:color-mix(in srgb,var(--line) 80%,transparent)}
-  .hero-top::before,.hero-top::after{display:none}
-  .hero-eyebrow{display:flex;align-items:center;gap:12px;margin-bottom:18px;animation:rise .9s .15s var(--ease-out) both}
-  .hero-eyebrow .ey-line{width:36px;height:1px;background:linear-gradient(90deg,var(--gold),transparent)}
-  .hero-title h1{font-size:clamp(36px,5.6vw,70px);font-weight:900;line-height:1.02;letter-spacing:-.045em;color:var(--ink)}
-  .hero-title h1 .ch{display:inline-block;white-space:pre;
-    background:linear-gradient(180deg,var(--ink) 35%,color-mix(in srgb,var(--ink) 55%,var(--gold)));-webkit-background-clip:text;background-clip:text;color:transparent;
-    animation:chIn 1s var(--ease-out) both;animation-delay:calc(var(--i) * 42ms + .2s)}
-  .hero-sub{margin:18px 0 0;color:var(--ink-2);font-size:15px;line-height:1.6;max-width:54ch;animation:rise 1s .7s var(--ease-out) both}
-  .hero-sub b{color:var(--gold-bright);font-weight:700}
-  .season{margin-left:auto;text-align:left;display:flex;align-items:center;gap:14px;padding:14px 20px 14px 16px;border-radius:16px;
-    border:1px solid color-mix(in srgb,var(--gold) 35%,transparent);background:color-mix(in srgb,var(--gold) 7%,transparent);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.05);animation:rise 1s .55s var(--ease-out) both}
-  .season .live{width:8px;height:8px;border-radius:50%;background:var(--good);flex:0 0 auto;animation:pulse 2.2s infinite}
-  .season .eyebrow{margin:0 0 3px;font-size:9.5px}
-  .season b{font-size:18px;letter-spacing:-.02em}
-  .tiles{z-index:2}
-  .tile{padding:24px 28px;position:relative;overflow:hidden;border-right-color:color-mix(in srgb,var(--line) 80%,transparent);transition:background .3s}
-  .tile:hover{background:color-mix(in srgb,var(--ink) 3%,transparent)}
-  .tile::after{content:"";position:absolute;left:28px;right:28px;bottom:0;height:2px;border-radius:2px;
-    background:linear-gradient(90deg,var(--gold),transparent);transform:scaleX(0);transform-origin:left;transition:transform .55s var(--ease-out)}
-  .tile:hover::after{transform:scaleX(1)}
-  .tile .k{display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:.14em;color:var(--ink-3)}
-  .tile .k::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold)}
-  .tile .v{font-size:42px;font-weight:900;letter-spacing:-.045em;margin-top:10px;font-variant-numeric:tabular-nums;color:var(--ink)}
-  .tile:nth-child(2) .v{color:var(--gold-bright)}
-  .tile:nth-child(3) .v{color:var(--blue)}
-  .tile .s{margin-top:7px}
-  @keyframes heroIn{from{opacity:0;transform:translateY(26px) scale(.985)}to{opacity:1;transform:none}}
-  @keyframes chIn{from{opacity:0;transform:translateY(.55em) rotate(3deg);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
-  @keyframes shine{from{left:-50%}to{left:140%}}
-  @keyframes markFloat{from{transform:translateY(-50%) rotate(-8deg)}to{transform:translateY(-46%) rotate(-1deg) scale(1.04)}}
-  @keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--good) 60%,transparent)}70%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}
-
-  /* ── 패널·카드: 유리감 + 커서 스포트라이트 + 호버 ── */
-  .panel,.badge-card,.match,.card,.tablewrap,.upd-post{
-    background:color-mix(in srgb,var(--surface) 86%,transparent);
-    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-    transition:transform .4s var(--ease-out),border-color .3s,box-shadow .4s var(--ease-out),background .3s}
-  .panel{border-radius:20px;padding:22px 24px;overflow:hidden}
-  .panel::before,.badge-card::before,.card::before,.match::before,.upd-post::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
-    background:radial-gradient(340px circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--gold) 10%,transparent),transparent 60%);
-    opacity:0;transition:opacity .4s}
-  .badge-card,.match,.upd-post{position:relative;overflow:hidden}
-  .panel:hover::before,.badge-card:hover::before,.card:hover::before,.match:hover::before,.upd-post:hover::before{opacity:1}
-  .panel>*{position:relative;z-index:1}
-  .panel:hover,.badge-card:hover,.match:hover,.tablewrap:hover{border-color:color-mix(in srgb,var(--gold) 38%,var(--line));box-shadow:0 30px 70px -36px rgba(0,0,0,.6)}
-  .badge-card:hover{transform:translateY(-3px)}
-  .badge-card{border-radius:14px}
-  .badge-card .bi{transition:transform .4s var(--ease-out)}
-  .badge-card:hover .bi{transform:scale(1.18) rotate(-6deg)}
-  .match{border-radius:16px}
-  .card{border-radius:16px}
-  .card:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--gold) 45%,var(--line));box-shadow:0 30px 60px -30px rgba(0,0,0,.6)}
-  .upd-post{border-radius:16px}
-  .rankmini .r{padding:10px 10px;border-radius:12px;transition:.28s var(--ease-out)}
-  .rankmini .r:hover{background:color-mix(in srgb,var(--ink) 5%,transparent);transform:translateX(5px)}
-  .rankmini .pos{font-family:var(--display);font-size:14px;font-weight:700}
-  .rankmini .r:nth-child(1){background:linear-gradient(90deg,color-mix(in srgb,var(--gold) 13%,transparent),transparent 72%)}
-  .rankmini .r:nth-child(1) .pos{text-shadow:0 0 16px color-mix(in srgb,var(--gold) 80%,transparent)}
-  .morebtn{border-radius:11px}
-  .morebtn:hover{transform:translateY(-1px)}
-
-  /* ── 칩 · 인풋 ── */
-  .chip{transition:.24s var(--ease-out)}
-  .chip:hover{transform:translateY(-1px)}
-  .chip[aria-pressed="true"]{box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 12%,transparent),0 8px 20px -10px color-mix(in srgb,var(--gold) 70%,transparent)}
-  .search input{transition:.25s;background:color-mix(in srgb,var(--surface) 80%,transparent)}
-  .search input:focus{box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 14%,transparent)}
-  .tablewrap{border-radius:18px}
-  thead th{font-family:var(--display);letter-spacing:.14em;font-size:10px}
-  tbody tr{transition:background .2s}
-
-  /* ── 뷰 전환 ── */
-  .view{animation:viewIn .55s var(--ease-out)}
-  @keyframes viewIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-
-  /* ── 스크롤 리빌 ── */
-  .reveal{opacity:0;transform:translateY(22px);transition:opacity .9s var(--ease-out),transform .9s var(--ease-out)}
-  .reveal.in{opacity:1;transform:none}
-
-  /* ── 푸터 ── */
-  footer{margin-top:70px;position:relative;overflow:hidden;border-top-color:color-mix(in srgb,var(--line) 80%,transparent)}
-  footer::before{content:"";position:absolute;left:0;right:0;top:-1px;height:1px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--gold) 60%,transparent),transparent)}
-  footer .wrap{padding:38px 22px 46px;position:relative;z-index:1;font-size:12.5px}
-  footer .wordmark{position:absolute;right:-1%;bottom:-.22em;font-size:clamp(96px,17vw,210px);font-weight:900;letter-spacing:-.07em;line-height:1;
-    color:var(--ink);opacity:.045;pointer-events:none;user-select:none;z-index:0;white-space:nowrap}
-  .toast{border-radius:14px;backdrop-filter:blur(10px)}
-
-  /* ── 모션 최소화 ── */
-  @media (prefers-reduced-motion:reduce){
-    *,*::before,*::after{animation-duration:.001s!important;animation-iteration-count:1!important;transition-duration:.001s!important}
-    .reveal{opacity:1;transform:none}
-    .bg .grain,.bg .orb{animation:none}
-    html{scroll-behavior:auto}
-  }
-  @media (max-width:820px){
-    .hero-top{padding:32px 24px 26px}
-    .hero-mark{width:78vw;right:-30%;opacity:.1}
-    .tile{padding:18px 20px}
-    .tile .v{font-size:32px}
-    footer .wordmark{bottom:-.15em}
-  }
-  @media (max-width:520px){
-    .hero-title h1{font-size:clamp(30px,10vw,40px)!important}
-    .season{width:100%;margin-left:0}
-  }
-
-  /* ============================================================
-     SHOWCASE II — 커서 · 파티클 · 3D 틸트 · 커튼 · 티커 · 웨이브
-     ============================================================ */
-  /* 커스텀 커서 (마우스 환경에서만) */
-  html.has-cur,html.has-cur *{cursor:none!important}
-  .cur{position:fixed;left:0;top:0;z-index:300;pointer-events:none;mix-blend-mode:difference;display:none}
-  html.has-cur .cur{display:block}
-  .cur-dot{position:absolute;left:0;top:0;width:6px;height:6px;margin:-3px;border-radius:50%;background:#fff;translate:var(--dx,-100px) var(--dy,-100px)}
-  .cur-ring{position:absolute;left:0;top:0;width:38px;height:38px;margin:-19px;border:1.5px solid #fff;border-radius:50%;
-    translate:var(--rx,-100px) var(--ry,-100px);scale:1;opacity:.9;transition:scale .35s var(--ease-out),opacity .35s,border-width .35s}
-  .cur.hov .cur-ring{scale:1.75;opacity:.55;border-width:1px}
-  .cur.down .cur-ring{scale:.75}
-  .cur.off{opacity:0}
-  @media (hover:none),(pointer:coarse){.cur{display:none!important}}
-
-  /* 파티클 캔버스 */
-  .bg canvas{position:absolute;inset:0;width:100%;height:100%;mix-blend-mode:screen}
-  :root[data-theme="light"] .bg canvas{mix-blend-mode:normal}
-  @media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .bg canvas{mix-blend-mode:normal}}
-
-  /* 탭 전환 커튼 */
-  .curtain{position:fixed;inset:0;z-index:95;pointer-events:none;opacity:0;clip-path:inset(0 100% 0 0);
-    background:linear-gradient(100deg,var(--gold-deep),var(--gold-bright) 50%,var(--gold-deep));display:grid;place-items:center}
-  .curtain::after{content:"협곡단";font-family:var(--font);font-weight:900;letter-spacing:.28em;text-indent:.28em;font-size:clamp(22px,3.4vw,40px);color:var(--rift);opacity:.88}
-  .curtain.go{animation:wipe .72s var(--ease) forwards}
-  @keyframes wipe{0%{clip-path:inset(0 100% 0 0);opacity:1}42%{clip-path:inset(0 0 0 0);opacity:1}100%{clip-path:inset(0 0 0 100%);opacity:1}}
-
-  /* 뉴스 티커 */
-  .ticker{position:relative;overflow:hidden;margin:-14px 0 30px;border:1px solid color-mix(in srgb,var(--line) 80%,transparent);border-radius:14px;
-    background:color-mix(in srgb,var(--surface) 70%,transparent);backdrop-filter:blur(8px);
-    -webkit-mask:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);
-    animation:rise 1s 1.1s var(--ease-out) both}
-  .ticker-track{display:flex;width:max-content;animation:marquee 40s linear infinite}
-  .ticker:hover .ticker-track{animation-play-state:paused}
-  .tk{display:inline-flex;align-items:center;gap:9px;padding:11px 24px;font-size:12.5px;color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
-  .tk .dot{width:5px;height:5px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold);flex:0 0 auto}
-  .tk .dot.fire{background:var(--red);box-shadow:0 0 8px var(--red)}
-  .tk b{color:var(--ink);font-weight:800}
-  .tk b.b{color:var(--blue)} .tk b.r{color:var(--red)}
-  @keyframes marquee{to{transform:translateX(-50%)}}
-
-  /* 히어로 — 마우스 패럴랙스 + 스크롤 패럴랙스 */
-  .hero{--px:0;--py:0;--sy:0;--sp:0}
-  .hero-bg{translate:0 calc(var(--sy)*1px)}
-  .hero-mark{translate:calc(var(--px)*16px) calc(var(--py)*12px);transition:translate .7s var(--ease-out)}
-  .hero-bg .glow{translate:calc(var(--px)*-40px) calc(var(--py)*-26px);transition:translate .9s var(--ease-out)}
-  .hero-top{translate:0 calc(var(--sy)*.35px);opacity:calc(1 - var(--sp))}
-  .tile{animation:tileIn .9s var(--ease-out) backwards;animation-delay:calc(1s + var(--i,0)*.12s)}
-  html.introing .tile{animation-play-state:paused}
-  @keyframes tileIn{from{opacity:0;transform:perspective(800px) rotateX(-22deg) translateY(28px)}to{opacity:1;transform:none}}
-
-  /* 3D 틸트 중에는 반응을 빠르게 */
-  .tilting{transition:transform .14s ease-out,box-shadow .4s,border-color .3s!important}
-  .card,.badge-card,.tile,.season,.upd-post{transform-style:preserve-3d}
-
-  /* 순위 행 — 승률 바 */
-  .rankmini .r{position:relative;overflow:hidden}
-  .rankmini .r .rbar{position:absolute;left:10px;right:10px;bottom:0;height:2px;border-radius:2px;opacity:.75;
-    background:linear-gradient(90deg,var(--gold),color-mix(in srgb,var(--gold) 15%,transparent));
-    transform:scaleX(var(--w,0));transform-origin:left;transition:transform 1.4s var(--ease-out)}
-
-  /* 섹션 제목 — 클립 와이프 */
-  .sec-h.reveal h2{clip-path:inset(0 100% 0 0)}
-  .sec-h.reveal.in h2{clip-path:inset(0 0 0 0);transition:clip-path 1s var(--ease-out) .1s}
-  .sec-h.reveal .rule{transform:scaleX(0);transform-origin:left}
-  .sec-h.reveal.in .rule{transform:none;transition:transform 1.2s var(--ease-out) .2s}
-
-  /* 배지 아이콘 둥실 · 매치 카드 라인 스윕 */
-  .badge-card .bi{animation:bob 3.8s ease-in-out infinite}
-  .badge-card:nth-child(2n) .bi{animation-delay:-1.3s}
-  .badge-card:nth-child(3n) .bi{animation-delay:-2.4s}
-  .badge-card:hover .bi{animation-play-state:paused}
-  @keyframes bob{0%,100%{translate:0 0}50%{translate:0 -4px}}
-  .match::after{content:"";position:absolute;top:0;left:-40%;width:40%;height:1px;pointer-events:none;opacity:0;
-    background:linear-gradient(90deg,transparent,var(--gold-bright),transparent)}
-  .match:hover::after{animation:lineSweep 1.1s var(--ease) forwards}
-  @keyframes lineSweep{0%{left:-40%;opacity:1}100%{left:100%;opacity:1}}
-  .match .m-mid .res{transition:text-shadow .3s,letter-spacing .3s}
-  .match:hover .m-mid .res{text-shadow:0 0 18px currentColor;letter-spacing:.02em}
-
-  /* 달력 — 왼쪽에서 오른쪽으로 번지는 웨이브 */
-  .cal .weeks .d{animation:cellIn .6s var(--ease-out) backwards;animation-delay:calc(var(--c,0)*11ms)}
-  @keyframes cellIn{from{opacity:0;transform:scale(.3) rotate(-20deg)}to{opacity:1;transform:none}}
-
-  /* 테마 전환 — 원형 와이프 (View Transitions) */
-  ::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
-  ::view-transition-new(root){z-index:1}
-  ::view-transition-old(root){z-index:0}
-
-  /* 헤더 로고 링 회전 */
-  .crest::after{content:"";position:absolute;inset:-5px;border-radius:15px;border:1px dashed color-mix(in srgb,var(--gold) 55%,transparent);opacity:0;transition:opacity .3s;animation:spin 14s linear infinite}
-  .mark:hover .crest::after{opacity:1}
-  @keyframes spin{to{rotate:360deg}}
-
-  /* 탭 카운트 배지 살짝 통통 */
-  .tab:hover .c{animation:pop .45s var(--ease-out)}
-  @keyframes pop{40%{scale:1.25}100%{scale:1}}
-
-  @media (prefers-reduced-motion:reduce){
-    .ticker-track,.badge-card .bi,.cal .weeks .d,.tile,.crest::after{animation:none!important}
-    .curtain{display:none}
-    .sec-h.reveal h2{clip-path:none}
-  }
-
   /* ── 히어로 하단: 최근 패치노트 ── */
-  .hero-notes{position:relative;z-index:2;padding:22px 28px 26px}
-  .hn-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;animation:rise .9s .9s var(--ease-out) both}
+  .hero-notes{position:relative;z-index:1;padding:18px 26px 22px}
+  .hn-head{display:flex;align-items:baseline;gap:12px;margin-bottom:12px}
   .hn-title{font-size:15px;font-weight:800;letter-spacing:-.02em}
-  .hn-more{margin-left:auto;appearance:none;background:none;border:1px solid color-mix(in srgb,var(--gold) 35%,transparent);color:var(--gold-bright);
-    border-radius:9px;padding:6px 12px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:.25s var(--ease-out)}
-  .hn-more:hover{background:color-mix(in srgb,var(--gold) 14%,transparent);border-color:var(--gold)}
+  .hn-more{margin-left:auto;appearance:none;background:none;border:1px solid var(--line);color:var(--gold-bright);
+    border-radius:9px;padding:6px 12px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:.15s}
+  .hn-more:hover{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent)}
   .hn-list{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-  .hn{position:relative;overflow:hidden;border:1px solid color-mix(in srgb,var(--line) 85%,transparent);border-radius:14px;padding:14px 16px;
-    background:color-mix(in srgb,var(--surface-2) 55%,transparent);cursor:pointer;transform-style:preserve-3d;
-    transition:transform .4s var(--ease-out),border-color .3s,box-shadow .4s;animation:tileIn .9s var(--ease-out) backwards;animation-delay:calc(1s + var(--i,0)*.12s)}
-  html.introing .hn{animation-play-state:paused}
-  .hn:hover{border-color:color-mix(in srgb,var(--gold) 45%,var(--line));box-shadow:0 20px 40px -24px rgba(0,0,0,.6)}
-  .hn::before{content:"";position:absolute;inset:0;pointer-events:none;
-    background:radial-gradient(260px circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--gold) 12%,transparent),transparent 60%);opacity:0;transition:opacity .4s}
-  .hn:hover::before{opacity:1}
+  .hn{border:1px solid var(--line-soft);border-radius:12px;padding:14px 16px;background:var(--surface-2);cursor:pointer;transition:border-color .15s}
+  .hn:hover{border-color:var(--gold-deep)}
   .hn .hn-meta{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums;margin-bottom:6px}
   .hn .hn-meta .new{font-size:9.5px;font-weight:800;color:var(--good);border:1px solid var(--good);border-radius:5px;padding:0 5px;letter-spacing:.06em}
   .hn .hn-meta .pin{font-size:9.5px;font-weight:800;color:var(--gold);border:1px solid var(--gold-deep);border-radius:5px;padding:0 5px;letter-spacing:.06em}
-  .hn b{display:block;font-size:14px;font-weight:800;line-height:1.35;letter-spacing:-.01em;margin-bottom:6px;
-    overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .hn b{display:block;font-size:14px;font-weight:800;line-height:1.35;margin-bottom:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
   .hn p{margin:0;font-size:12px;line-height:1.55;color:var(--ink-2);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-  .hn::after{content:"";position:absolute;left:16px;right:16px;bottom:0;height:2px;border-radius:2px;
-    background:linear-gradient(90deg,var(--gold),transparent);transform:scaleX(0);transform-origin:left;transition:transform .55s var(--ease-out)}
-  .hn:hover::after{transform:scaleX(1)}
-  .hn-empty{grid-column:1/-1;text-align:center;padding:18px;font-size:12.5px;color:var(--ink-3);border:1px dashed color-mix(in srgb,var(--line) 85%,transparent);border-radius:12px}
-  @media (max-width:820px){.hn-list{grid-template-columns:1fr}.hero-notes{padding:18px 20px 22px}}
-
+  .hn-empty{grid-column:1/-1;text-align:center;padding:18px;font-size:12.5px;color:var(--ink-3);border:1px dashed var(--line);border-radius:12px}
+  @media (max-width:820px){.hn-list{grid-template-columns:1fr}.hero-notes{padding:16px 20px 20px}}
   /* ── 모바일 헤더: 로고 문구가 세로로 갈라지거나 잘리지 않게 ── */
   .mark{flex:0 0 auto;min-width:0}
   .mark b,.mark small{white-space:nowrap}
@@ -950,30 +619,14 @@
     .mark small{font-size:8.5px;letter-spacing:.22em}
     .navlink{height:34px;padding:0 9px;font-size:12px;border-radius:9px}
     .theme-btn{width:34px;height:34px;border-radius:9px}
-    .hero-eyebrow{white-space:nowrap;letter-spacing:.22em;font-size:9.5px}
-    .hn-head .eyebrow{display:none}
-    .hn-head{gap:10px}
   }
   @media (max-width:380px){
     .mark small{display:none}
     .navlink{padding:0 8px}
   }
-  /* 히어로 제목은 단어 단위로만 줄바꿈 */
-  .hero-title{min-width:0}
-  .hero-title h1 .w{display:inline-block;white-space:nowrap}
 </style>
 </head>
 <body>
-
-<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div><canvas id="embers"></canvas><div class="grain"></div><div class="vignette"></div></div>
-<div class="progress" id="progress" aria-hidden="true"></div>
-<div class="curtain" id="curtain" aria-hidden="true"></div>
-<div class="cur" id="cur" aria-hidden="true"><div class="cur-ring"></div><div class="cur-dot"></div></div>
-<div id="intro" aria-hidden="true">
-  <div class="crest-big"><img src="/logo.jpg" alt=""></div>
-  <div class="word">Hyeopgok</div>
-  <div class="ibar"></div>
-</div>
 
 <header>
   <div class="wrap bar">
@@ -1005,36 +658,24 @@
 <main class="wrap">
   <!-- DASHBOARD -->
   <section class="view on" id="view-dash" role="tabpanel">
-    <div class="hero" id="hero">
-      <div class="hero-bg" aria-hidden="true">
-        <div class="glow"></div>
-        <img class="hero-mark" src="/logo.jpg" alt="">
-        <div class="shine"></div>
-      </div>
+    <div class="hero">
       <div class="hero-top">
         <div class="hero-title">
-          <div class="eyebrow hero-eyebrow"><span class="ey-line"></span>Hyeopgok · Scrim Archive</div>
           <h1 id="dashTitle">협곡단 내전 기록실</h1>
         </div>
         <div class="season">
-          <span class="live" aria-hidden="true"></span>
-          <div>
-            <div class="eyebrow">현재 시즌</div>
-            <b id="seasonLabel">2026 Split 2</b>
-          </div>
+          <div class="eyebrow">현재 시즌</div>
+          <b id="seasonLabel">2026 Split 2</b>
         </div>
       </div>
       <div class="hero-notes" id="heroNotes">
         <div class="hn-head">
-          <span class="eyebrow">Patch Notes</span>
           <span class="hn-title">최근 패치노트</span>
           <button type="button" class="hn-more" data-go="updates">전체 보기 →</button>
         </div>
         <div class="hn-list" id="heroNoteList"><div class="hn-empty">불러오는 중…</div></div>
       </div>
     </div>
-
-    <div class="ticker" id="ticker" aria-hidden="true" style="display:none"><div class="ticker-track" id="tickerTrack"></div></div>
 
     <div class="grid2">
       <div class="panel">
@@ -1268,7 +909,6 @@
 </div>
 
 <footer>
-  <div class="wordmark" aria-hidden="true">협곡단</div>
   <div class="wrap">
     <span>총괄 : <b>협곡단</b></span>
     <span>·</span>
@@ -1360,14 +1000,12 @@ async function refreshData(){
   $("#cMatch").textContent=S.matches.length;
   $("#fMatches").textContent=S.matches.length;
   if(window.__calReady) renderCalendar();
-  renderTicker();
 }
 let matchRegEnabled=true;
 async function loadDashConfig(){
   const dash=await jget('/api/dashboard');
   if(dash.config){
     $("#dashTitle").textContent=dash.config.title||'협곡단 내전 기록실';
-    heroTitleReveal();
     const desc=(dash.config.description||'').trim();
     $("#dashDesc").textContent=desc;
     $("#scoreHelpBtn").style.display=desc?'':'none';
@@ -2009,8 +1647,8 @@ function renderHeroNotes(){
   const box=$("#heroNoteList"); if(!box) return;
   const list=UPDATES.slice(0,3);
   if(!list.length){ box.innerHTML='<div class="hn-empty">아직 올라온 패치노트가 없습니다.</div>'; return; }
-  box.innerHTML=list.map((u,i)=>`
-    <div class="hn" style="--i:${i}" data-go="updates" role="link" tabindex="0">
+  box.innerHTML=list.map(u=>`
+    <div class="hn" data-go="updates" role="link" tabindex="0">
       <div class="hn-meta">${u.pinned?'<span class="pin">고정</span>':''}${updIsNew(u)?'<span class="new">NEW</span>':''}<span>${updFmtDate(u.createdAt)}</span></div>
       <b>${escHtml(u.title)}</b>
       <p>${escHtml(String(u.content||'').replace(/^\s*[-*•]\s+/gm,'').replace(/\s+/g,' ').trim())||'내용 없음'}</p>
@@ -2086,10 +1724,10 @@ async function renderCalendar(){
   }
   const monthsHtml=months.map(m=>`<span style="grid-column:${m.wi+1}">${m.label}</span>`).join('');
   const dowsHtml=CAL_DOW.map(n=>`<span>${n}</span>`).join('');
-  const cells=weeks.map((col,wi)=>col.map(c=>{
+  const cells=weeks.map(col=>col.map(c=>{
     if(!c.inRange) return '<span class="d out"></span>';
     const n=c.cell?c.cell.count:0;
-    return `<span class="d l${calLevel(n)}${n?' has':''}${c.today?' today':''}" style="--c:${wi}" data-k="${c.key}" data-n="${n}"${c.cell?` data-r="${c.cell.rift}" data-a="${c.cell.aram}"`:''}></span>`;
+    return `<span class="d l${calLevel(n)}${n?' has':''}${c.today?' today':''}" data-k="${c.key}" data-n="${n}"${c.cell?` data-r="${c.cell.rift}" data-a="${c.cell.aram}"`:''}></span>`;
   }).join('')).join('');
   cal.innerHTML=`<div class="months">${monthsHtml}</div><div class="dows">${dowsHtml}</div><div class="weeks">${cells}</div>`;
   $("#calSum").innerHTML=`최근 1년 내전 <b>${data.total}</b>경기 · 내전한 날 <b>${data.activeDays}</b>일`;
@@ -2146,20 +1784,10 @@ $("#nav").addEventListener("click",e=>{const t=e.target.closest(".tab");if(t)swi
 $("#rsearch").addEventListener("input",e=>{searchQ=e.target.value.trim();renderRoster()});
 
 /* theme */
-$("#themeBtn").addEventListener("click",e=>{
+$("#themeBtn").addEventListener("click",()=>{
   const cur=document.documentElement.getAttribute("data-theme");
   const isDark = cur ? cur==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
-  const apply=()=>document.documentElement.setAttribute("data-theme",isDark?"light":"dark");
-  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if(!document.startViewTransition||reduce){ apply(); return; }
-  // 버튼 위치에서 원이 퍼져 나가며 테마가 바뀐다
-  const x=e.clientX||innerWidth-40, y=e.clientY||40;
-  const r=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y));
-  const vt=document.startViewTransition(apply);
-  vt.ready.then(()=>document.documentElement.animate(
-    {clipPath:[`circle(0px at ${x}px ${y}px)`,`circle(${r}px at ${x}px ${y}px)`]},
-    {duration:700,easing:'cubic-bezier(.2,.7,.2,1)',pseudoElement:'::view-transition-new(root)'}
-  )).catch(()=>{});
+  document.documentElement.setAttribute("data-theme",isDark?"light":"dark");
 });
 
 /* tier dist modal */
@@ -2555,224 +2183,6 @@ function toast(msg){
   t.textContent=msg;t.classList.add("show");
   clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2600);
 }
-
-/* ========== SHOWCASE (모션 · 인터랙션) ==========
-   기능과 무관한 연출만 모아 둔다. 모션 최소화 설정이면 대부분 건너뛴다. */
-const REDUCE=matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-/* 인트로 — 세션당 한 번만 */
-(function(){
-  const intro=$("#intro"); if(!intro) return;
-  let seen=false; try{ seen=sessionStorage.getItem('hgd_intro')==='1'; }catch(ex){}
-  if(REDUCE||seen){ intro.remove(); return; }
-  try{ sessionStorage.setItem('hgd_intro','1'); }catch(ex){}
-  document.documentElement.classList.add('introing');
-  setTimeout(()=>{
-    intro.classList.add('done');
-    document.documentElement.classList.remove('introing');
-    setTimeout(()=>intro.remove(),800);
-  },1250);
-})();
-
-/* 히어로 제목 — 글자별 등장 */
-function heroTitleReveal(){
-  const h=$("#dashTitle"); if(!h) return;
-  const text=h.textContent;
-  if(REDUCE){ h.textContent=text; return; }
-  h.setAttribute('aria-label',text);
-  // 글자별 등장 — 단어(.w) 단위로 묶어 줄바꿈은 띄어쓰기에서만 일어나게 한다
-  let i=0;
-  h.innerHTML=text.split(/(\s+)/).map(part=>{
-    if(!part) return '';
-    if(/^\s+$/.test(part)){ i+=part.length; return ' '; }
-    return `<span class="w">${[...part].map(c=>`<span class="ch" style="--i:${i++}" aria-hidden="true">${escHtml(c)}</span>`).join('')}</span>`;
-  }).join('');
-}
-
-/* 통계 타일 — 카운트업 */
-function countUp(node,to,dur=1200){
-  if(!Number.isFinite(to)||REDUCE){ node.textContent=to; return; }
-  const t0=performance.now();
-  const step=n=>{ const p=Math.min(1,(n-t0)/dur); const e=1-Math.pow(1-p,3); node.textContent=Math.round(to*e); if(p<1) requestAnimationFrame(step); };
-  requestAnimationFrame(step);
-}
-function renderTiles(tiles){
-  const box=$("#dashTiles"); if(!box||!Array.isArray(tiles)) return;
-  box.innerHTML=tiles.map((t,i)=>`<div class="tile" style="--i:${i}"><div class="k">${escHtml(t.key)}</div><div class="v num" data-v="${escHtml(t.value)}">0</div><div class="s">${escHtml(t.sub||'')}</div></div>`).join('');
-  $$(".tile .v",box).forEach(v=>countUp(v,Number(v.dataset.v)));
-}
-
-/* 탭 인디케이터 — 선택된 탭 아래로 미끄러진다 */
-const navInd=el("div","nav-ind"); $("#nav").appendChild(navInd);
-function moveNavInd(){
-  const t=$('.tab[aria-selected="true"]'); if(!t) return;
-  navInd.style.left=t.offsetLeft+'px'; navInd.style.width=t.offsetWidth+'px'; navInd.classList.add('on');
-}
-{ const _sv=switchView; let curView='dash';
-  switchView=function(v){
-    const same=v===curView; curView=v;
-    const c=$("#curtain");
-    if(same||REDUCE||!c){ _sv(v); moveNavInd(); return; }
-    $$(".tab").forEach(t=>t.setAttribute("aria-selected",t.dataset.view===v)); moveNavInd();
-    c.classList.remove('go'); void c.offsetWidth; c.classList.add('go');
-    setTimeout(()=>_sv(v),280);
-  }; }
-addEventListener("resize",moveNavInd);
-if(document.fonts&&document.fonts.ready) document.fonts.ready.then(moveNavInd);
-moveNavInd();
-
-/* 헤더 축소 + 스크롤 진행 바 */
-(function(){
-  const hd=document.querySelector("header"), pg=$("#progress");
-  const onScroll=()=>{
-    hd.classList.toggle('scrolled',scrollY>24);
-    const max=document.documentElement.scrollHeight-innerHeight;
-    if(pg) pg.style.width=(max>0?Math.min(100,scrollY/max*100):0)+'%';
-  };
-  addEventListener("scroll",onScroll,{passive:true}); onScroll();
-})();
-
-/* 커서 스포트라이트 — 카드 위 마우스 위치를 CSS 변수로 */
-document.addEventListener("pointermove",e=>{
-  const t=e.target.closest&&e.target.closest(".panel,.card,.badge-card,.match,.upd-post,.hn"); if(!t) return;
-  const r=t.getBoundingClientRect();
-  t.style.setProperty('--mx',(e.clientX-r.left)+'px'); t.style.setProperty('--my',(e.clientY-r.top)+'px');
-},{passive:true});
-
-/* 스크롤 리빌 — 화면에 들어올 때 한 번 떠오른다. 동적으로 생기는 카드도 MutationObserver 로 잡는다 */
-(function(){
-  if(REDUCE||!('IntersectionObserver' in window)) return;
-  const SEL='.panel,.sec-h,.badge-card,.match,.card,.upd-post,.tablewrap';
-  const io=new IntersectionObserver(es=>{
-    es.forEach(e=>{
-      if(!e.isIntersecting) return;
-      const n=e.target; io.unobserve(n); n.classList.add('in');
-      setTimeout(()=>{ n.classList.remove('reveal','in'); n.style.transitionDelay=''; },1000);
-    });
-  },{rootMargin:'0px 0px -6% 0px',threshold:.06});
-  function bind(){
-    $$(SEL).filter(n=>!n.dataset.rv).forEach((n,i)=>{
-      n.dataset.rv='1'; n.classList.add('reveal'); n.style.transitionDelay=Math.min(i,9)*60+'ms'; io.observe(n);
-    });
-  }
-  let w; new MutationObserver(()=>{ clearTimeout(w); w=setTimeout(bind,40); }).observe(document.querySelector("main"),{childList:true,subtree:true});
-  bind();
-})();
-
-/* ========== SHOWCASE II ========== */
-
-/* 커스텀 커서 — 점은 바로, 링은 살짝 늦게 따라온다 */
-(function(){
-  if(REDUCE||!matchMedia("(hover:hover) and (pointer:fine)").matches) return;
-  const c=$("#cur"); if(!c) return;
-  document.documentElement.classList.add('has-cur');
-  let tx=-100,ty=-100,dx=tx,dy=ty,rx=tx,ry=ty;
-  const HOV='a,button,.chip,.tab,.card,.badge-card,.d.has,input,select,label,.rankmini .r,.match,.tile,.hn';
-  addEventListener("pointermove",e=>{
-    tx=e.clientX; ty=e.clientY;
-    c.classList.toggle('hov',!!(e.target.closest&&e.target.closest(HOV)));
-    c.classList.remove('off');
-  },{passive:true});
-  addEventListener("pointerdown",()=>c.classList.add('down'));
-  addEventListener("pointerup",()=>c.classList.remove('down'));
-  document.documentElement.addEventListener("mouseleave",()=>c.classList.add('off'));
-  (function loop(){
-    dx+=(tx-dx)*.55; dy+=(ty-dy)*.55; rx+=(tx-rx)*.16; ry+=(ty-ry)*.16;
-    c.style.setProperty('--dx',dx+'px'); c.style.setProperty('--dy',dy+'px');
-    c.style.setProperty('--rx',rx+'px'); c.style.setProperty('--ry',ry+'px');
-    requestAnimationFrame(loop);
-  })();
-})();
-
-/* 금빛 파티클 — 천천히 떠오르며 흔들리는 불씨 */
-(function(){
-  const cv=$("#embers"); if(!cv||REDUCE) return;
-  const ctx=cv.getContext('2d'); let W=0,H=0,ps=[],light=false,running=false;
-  const isLight=()=>{ const t=document.documentElement.getAttribute('data-theme'); return t?t==='light':matchMedia('(prefers-color-scheme: light)').matches; };
-  const mk=init=>({x:Math.random()*W,y:init?Math.random()*H:H+12,r:Math.random()*1.7+.6,s:Math.random()*.32+.12,a:Math.random()*.45+.15,w:Math.random()*Math.PI*2,ws:Math.random()*.018+.004,dr:Math.random()*.5+.15});
-  function resize(){ W=cv.width=innerWidth; H=cv.height=innerHeight; ps=Array.from({length:Math.min(120,Math.round(W*H/15000))},()=>mk(true)); }
-  function tick(){
-    if(document.hidden){ running=false; return; }
-    ctx.clearRect(0,0,W,H);
-    const col=light?'154,122,50':'240,224,184';
-    for(const p of ps){
-      p.y-=p.s; p.w+=p.ws; p.x+=Math.sin(p.w)*p.dr*.35;
-      const tw=.55+Math.sin(p.w*2.3)*.45, a=p.a*tw;
-      ctx.beginPath(); ctx.arc(p.x,p.y,p.r*3.2,0,Math.PI*2); ctx.fillStyle=`rgba(${col},${(a*.12).toFixed(3)})`; ctx.fill();
-      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle=`rgba(${col},${a.toFixed(3)})`; ctx.fill();
-      if(p.y<-12) Object.assign(p,mk(false));
-    }
-    requestAnimationFrame(tick);
-  }
-  const start=()=>{ if(!running){ running=true; requestAnimationFrame(tick); } };
-  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) start(); });
-  new MutationObserver(()=>{ light=isLight(); }).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
-  light=isLight(); addEventListener('resize',resize); resize(); start();
-})();
-
-/* 3D 틸트 + 마그네틱 버튼 + 히어로 패럴랙스 */
-(function(){
-  if(REDUCE||!matchMedia("(hover:hover)").matches) return;
-  const TILT='.card,.badge-card,.tile,.season,.upd-post,.hn';
-  const MAG='.navlink,.theme-btn,.morebtn,.btn';
-  const hero=$("#hero");
-  document.addEventListener("pointermove",e=>{
-    const t=e.target.closest&&e.target.closest(TILT);
-    if(t){
-      const r=t.getBoundingClientRect(), px=(e.clientX-r.left)/r.width-.5, py=(e.clientY-r.top)/r.height-.5;
-      const max=t.classList.contains('tile')?4:7;
-      t.style.transform=`perspective(900px) rotateX(${(-py*max).toFixed(2)}deg) rotateY(${(px*max).toFixed(2)}deg) translateY(-3px)`;
-      t.classList.add('tilting');
-    }
-    const m=e.target.closest&&e.target.closest(MAG);
-    if(m){ const r=m.getBoundingClientRect(); m.style.translate=`${(((e.clientX-r.left)/r.width-.5)*8).toFixed(1)}px ${(((e.clientY-r.top)/r.height-.5)*8).toFixed(1)}px`; }
-    if(hero&&hero.contains(e.target)){
-      const r=hero.getBoundingClientRect();
-      hero.style.setProperty('--px',(((e.clientX-r.left)/r.width-.5)*2).toFixed(3));
-      hero.style.setProperty('--py',(((e.clientY-r.top)/r.height-.5)*2).toFixed(3));
-    }
-  },{passive:true});
-  document.addEventListener("pointerout",e=>{
-    const leaving=(sel)=>{ const t=e.target.closest&&e.target.closest(sel); return t&&!(e.relatedTarget&&t.contains(e.relatedTarget))?t:null; };
-    const t=leaving(TILT); if(t){ t.style.transform=''; t.classList.remove('tilting'); }
-    const m=leaving(MAG); if(m) m.style.translate='';
-    if(hero&&leaving('#hero')){ hero.style.setProperty('--px',0); hero.style.setProperty('--py',0); }
-  },{passive:true});
-  // 스크롤 패럴랙스 — 히어로 배경은 느리게, 본문은 살짝 흐려진다
-  if(hero){
-    const onS=()=>{ const y=Math.max(0,scrollY); hero.style.setProperty('--sy',Math.min(y*.22,140).toFixed(1)); hero.style.setProperty('--sp',Math.min(.75,y/520).toFixed(3)); };
-    addEventListener("scroll",onS,{passive:true}); onS();
-  }
-})();
-
-/* 뉴스 티커 — 최근 내전 결과 · MVP · 연승 진행 중 */
-function renderTicker(){
-  const tr=$("#tickerTrack"), box=$("#ticker"); if(!tr||!box) return;
-  const items=[];
-  [...S.matches].sort((a,b)=>b.date-a.date).slice(0,8).forEach(m=>{
-    const mvp=m.mvpId!=null?S.byId.get(m.mvpId):null;
-    items.push(`<span class="tk"><span class="dot"></span>${fmtDate(m.date)} · ${escHtml(m.mode||'협곡')} · <b class="${m.blueWin?'b':'r'}">${m.blueWin?'블루':'레드'} 승</b>${mvp?` · MVP <b>${escHtml(mvp.name)}</b>`:''}</span>`);
-  });
-  Object.values(S.stats).filter(s=>s.streak>=3).sort((a,b)=>b.streak-a.streak).slice(0,4).forEach(s=>{
-    const m=S.byId.get(s.id); if(m) items.push(`<span class="tk"><span class="dot fire"></span><b>${escHtml(m.name)}</b> ${s.streak}연승 진행 중 🔥</span>`);
-  });
-  if(!items.length){ box.style.display='none'; return; }
-  const html=items.join('');
-  tr.innerHTML=html+html;   // 두 벌 이어 붙여 끊김 없이 순환
-  tr.style.animationDuration=Math.max(26,items.length*5.5)+'s';
-  box.style.display='';
-}
-
-/* 순위 행 승률 바 — 행 텍스트의 % 를 읽어 길이를 정한다 */
-function decorateRanks(){
-  $$(".rankmini .r").forEach(r=>{
-    if(r.querySelector('.rbar')) return;
-    const m=r.textContent.match(/(\d+)%/); const w=m?Math.min(100,+m[1])/100:.4;
-    const b=el("span","rbar"); r.appendChild(b);
-    requestAnimationFrame(()=>requestAnimationFrame(()=>b.style.setProperty('--w',w)));
-  });
-}
-(function(){ let w; new MutationObserver(()=>{ clearTimeout(w); w=setTimeout(decorateRanks,30); }).observe(document.querySelector("main"),{childList:true,subtree:true}); decorateRanks(); })();
 
 /* ========== INIT ========== */
 (async function init(){
