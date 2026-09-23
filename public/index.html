@@ -354,6 +354,17 @@
   .match.red-win .m-row{background-image:linear-gradient(270deg,
     color-mix(in srgb,var(--red) 17%,transparent), transparent 46%)}
 
+  /* ── 승패 구분 ── 이긴 팀은 팀 색을 지키고, 진 팀은 통째로 회색으로 물러난다 */
+  .m-tag em{display:block;font-style:normal;font-size:8px;letter-spacing:.08em;margin-top:1px;opacity:.85}
+  .m-tag.win{box-shadow:inset 0 0 0 1px currentColor}
+  .m-tag.lose{color:var(--ink-3);background:color-mix(in srgb,var(--ink-3) 12%,transparent)}
+  .m-ps.lose{background:color-mix(in srgb,var(--ink-3) 10%,transparent);opacity:.82}
+  .m-ps.lose .m-p .n{color:var(--ink-3)}
+  .m-ps.lose .m-p .t{color:var(--ink-3)}
+  .m-ps.lose .m-p .bs{filter:grayscale(1);opacity:.65}
+  .match.blue-win .m-ps.blue{background:color-mix(in srgb,var(--blue) 9%,transparent)}
+  .match.red-win .m-ps.red{background:color-mix(in srgb,var(--red) 9%,transparent)}
+
   /* 가운데 결과 */
   .m-mid{grid-area:mid;text-align:center;line-height:1.3}
   .m-mid .res{display:block;font-size:12.5px;font-weight:800;letter-spacing:.02em}
@@ -362,7 +373,7 @@
   .m-mid .sub{display:block;font-size:9.5px;font-weight:700;color:var(--ink-3);margin-top:1px}
 
   /* 5칸 격자 */
-  .m-ps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0 8px}
+  .m-ps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0 8px;padding:5px 7px;border-radius:10px}
   .m-p{min-width:0}
   .m-p{cursor:default}
   /* 이름은 크게. 좁은 화면에서는 배지에 밀려 잘리므로 폭에 따라 줄어든다 */
@@ -377,7 +388,7 @@
   .m-p .s{display:flex;align-items:center;gap:4px;min-width:0;min-height:11px;
     font-size:8.5px;line-height:1.3}
   .m-p .k{color:var(--ink-3);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .m-p .t{font-weight:800;flex:0 0 auto;white-space:nowrap}
+  .m-p .t{font-weight:800;flex:0 0 auto;white-space:nowrap;color:var(--tc,var(--ink-2))}
   .m-p .bs .more{font-size:8px;font-weight:800;color:var(--ink-3);margin-left:1px}
 
   /* 선수에 마우스를 올리면 뜨는 상세 카드 */
@@ -454,6 +465,25 @@
   .merc-remove:hover{border-color:var(--red);background:color-mix(in srgb,var(--red) 12%,transparent)}
 
   /* 검색어 일치 부분 강조 — 노란 배경엔 항상 어두운 글자를 써서 두 테마 모두 읽힌다 */
+  /* 단원 한 명으로 거른 상태를 알려주는 줄 — 그 단원의 해당 조건 전적을 함께 보여준다 */
+  .pfilter[hidden]{display:none}
+  .pfilter{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:-6px 0 16px;
+    padding:10px 14px;border:1px solid var(--gold-deep);border-radius:12px;
+    background:color-mix(in srgb,var(--gold) 10%,transparent)}
+  .pfilter .who{font-size:13.5px;font-weight:800;color:var(--gold-bright)}
+  .pfilter .rec{font-size:12.5px;font-weight:700;color:var(--ink-2)}
+  .pfilter .rec b{color:var(--ink);font-weight:800}
+  .pfilter .x{margin-left:auto;appearance:none;border:1px solid var(--line);background:var(--surface);
+    color:var(--ink-2);font-family:inherit;font-size:12px;font-weight:700;padding:5px 11px;
+    border-radius:20px;cursor:pointer}
+  .pfilter .x:hover{border-color:var(--gold);color:var(--gold-bright)}
+  /* 거른 단원 본인의 칩 — 진 팀에서도 묻히지 않게 테두리로 띄운다 */
+  .m-p.focus{outline:1.5px solid var(--gold);outline-offset:2px;border-radius:7px}
+  .m-ps.lose .m-p.focus .n{color:var(--ink-2)}
+  /* 명단 카드는 눌러서 그 단원 내전만 볼 수 있다 */
+  .card[data-pid]{cursor:pointer}
+  .card[data-pid]:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
   mark.hl{background:#FFE066;color:#131A28;font-weight:800;border-radius:3px;padding:0 2px;
     box-decoration-break:clone;-webkit-box-decoration-break:clone}
 
@@ -768,6 +798,7 @@
         <select id="matchSeasonSel"></select>
       </div>
     </div>
+    <div class="pfilter" id="matchPlayerBar" hidden></div>
     <div class="matches" id="allMatches"></div>
   </section>
 
@@ -1184,24 +1215,31 @@ function hlName(name,q){
   return out;
 }
 
-function matchNode(mt,q){
-  const node=el("div","match "+(mt.blueWin?"blue-win":"red-win"));
-  const chips=(arr,side)=>`<div class="m-ps ${side}">${arr.map(p=>playerChip(p,q)).join("")}</div>`;
+function matchNode(mt,q,focusId){
+  const blueWin=!!mt.blueWin;
+  const won=side=>(side==="blue")===blueWin;
+  const node=el("div","match "+(blueWin?"blue-win":"red-win"));
+  const chips=(arr,side)=>`<div class="m-ps ${side} ${won(side)?'win':'lose'}">${
+    arr.map(p=>playerChip(p,q,focusId)).join("")}</div>`;
+  // 팀 태그에 승/패를 직접 적어 색을 못 알아보는 경우에도 구분된다
+  const tag=(side,label)=>`<span class="m-tag ${side} ${won(side)?'win':'lose'}">${label}<em>${
+    won(side)?'WIN':'LOSE'}</em></span>`;
   node.innerHTML=`
     <div class="m-row">
-      <span class="m-tag blue">Blue</span>
+      ${tag("blue","Blue")}
       ${chips(mt.blue,"blue")}
       <div class="m-mid">
-        <span class="res">${mt.blueWin?'블루 승':'레드 승'}</span>
+        <span class="res">${blueWin?'블루 승':'레드 승'}</span>
         <span class="sub">${fmtDate(mt.date)} · ${mt.mode==='칼바람'?'칼바람':'협곡'}</span>
       </div>
       ${chips(mt.red,"red")}
-      <span class="m-tag red">Red</span>
+      ${tag("red","Red")}
     </div>`;
   return node;
 }
 /* 선수 칩 — 1줄: 이름+기록배지 / 2줄: 닉네임+티어 */
-function playerChip(p,q){
+/* focusId — 단원 한 명으로 걸러 볼 때, 그 단원 칩만 눈에 띄게 표시한다 */
+function playerChip(p,q,focusId){
   // 용병은 단원이 아니라 닉네임·배지가 없다
   const m=p.mercenary?null:memberById(p.id);
   const nick=m&&m.nick?m.nick:(p.mercenary?'용병':'');
@@ -1209,9 +1247,10 @@ function playerChip(p,q){
   const badgeTags=p.mercenary?'':badgeIcons(p.id,'bs',false);
   const gone=!p.mercenary&&!m?` data-gone="${escHtml(p.name)}" data-tier="${escHtml(p.tier)}"`:'';
   const key=p.mercenary?`data-merc="${escHtml(p.name)}" data-tier="${escHtml(p.tier)}"`:`data-pid="${p.id}"${gone}`;
-  return `<div class="m-p" ${key}>
+  const focus=focusId!=null&&!p.mercenary&&p.id===focusId?" focus":"";
+  return `<div class="m-p${focus}" ${key}>
     <div class="n"><span class="mp-name">${hlName(p.name,q)}</span>${badgeTags}</div>
-    <div class="s"><span class="k">${nick?hlName(nick,q):''}</span><span class="t" style="color:${TIER_COLOR[p.tier]}">${p.tier}</span></div>
+    <div class="s"><span class="k">${nick?hlName(nick,q):''}</span><span class="t" style="--tc:${TIER_COLOR[p.tier]}">${p.tier}</span></div>
   </div>`;
 }
 /* ── 선수 상세 카드 (마우스 오버) ── */
@@ -1321,7 +1360,7 @@ document.addEventListener("mouseout",e=>{
 addEventListener("scroll",hidePlCard,{passive:true});
 addEventListener("resize",hidePlCard);
 
-let matchModeFilter="전체", matchSearchQ="";
+let matchModeFilter="전체", matchSearchQ="", matchPlayerFilter=null;
 $$(".match-mode-chip").forEach(btn=>btn.addEventListener("click",()=>{
   matchModeFilter=btn.dataset.mmode;
   $$(".match-mode-chip").forEach(b=>b.setAttribute("aria-pressed",b===btn));
@@ -1346,6 +1385,8 @@ function renderMatchList(){
   const all=$("#allMatches");all.innerHTML="";
   let list=S.matches;
   if(matchModeFilter!=="전체") list=list.filter(mt=>(mt.mode||'협곡')===matchModeFilter);
+  // 단원 한 명만 보기 — 이름이 아니라 번호로 걸러, 닉네임이 달라도 빠짐없이 잡힌다
+  if(matchPlayerFilter!=null) list=list.filter(mt=>matchSideOf(mt,matchPlayerFilter)!==null);
   if(matchSearchQ) list=list.filter(mt=>{
     // 화면에 닉네임이 보이므로 닉네임으로도 찾을 수 있게 한다
     return [...mt.blue,...mt.red].some(p=>{
@@ -1354,8 +1395,44 @@ function renderMatchList(){
       return !!(m&&(m.nicks||[]).some(n=>n.toLowerCase().includes(matchSearchQ)));
     });
   });
+  renderMatchPlayerBar(list);
   if(!list.length){all.innerHTML=`<div class="empty">조건에 맞는 내전 기록이 없습니다.</div>`;return}
-  list.forEach(mt=>all.appendChild(matchNode(mt,matchSearchQ)));
+  list.forEach(mt=>all.appendChild(matchNode(mt,matchSearchQ,matchPlayerFilter)));
+}
+
+/* ── 단원 한 명만 보기 ── 명단에서 카드를 누르면 여기로 넘어온다 */
+// 그 경기에서 이 단원이 어느 팀이었나 — 없으면 null
+function matchSideOf(mt,id){
+  if(mt.blue.some(p=>!p.mercenary&&p.id===id))return "blue";
+  if(mt.red.some(p=>!p.mercenary&&p.id===id))return "red";
+  return null;
+}
+function setMatchPlayer(id){
+  const m=memberById(id); if(!m)return;
+  matchPlayerFilter=+id;
+  renderMatchList();
+  switchView("matches");
+}
+function clearMatchPlayer(){
+  if(matchPlayerFilter==null)return;
+  matchPlayerFilter=null;
+  renderMatchList();
+}
+// 걸러진 목록 그대로 집계하므로, 모드·시즌·검색어까지 반영된 전적이 나온다
+function renderMatchPlayerBar(list){
+  const bar=$("#matchPlayerBar"); if(!bar)return;
+  if(matchPlayerFilter==null){bar.hidden=true;bar.innerHTML="";return}
+  const m=memberById(matchPlayerFilter);
+  if(!m){bar.hidden=true;bar.innerHTML="";matchPlayerFilter=null;return}
+  let w=0;
+  list.forEach(mt=>{ if(matchSideOf(mt,matchPlayerFilter)===(mt.blueWin?"blue":"red")) w++; });
+  const g=list.length, l=g-w;
+  const rec=g?`<span class="rec"><b>${g}전</b> ${w}승 ${l}패 · <b>${Math.round(w/g*100)}%</b></span>`
+             :`<span class="rec">이 조건에 맞는 기록이 없습니다</span>`;
+  bar.innerHTML=`<span class="who">${escHtml(m.name)} 전적만 보는 중</span>${rec}
+    <button type="button" class="x" id="matchPlayerClear">✕ 전체 보기</button>`;
+  bar.hidden=false;
+  $("#matchPlayerClear").addEventListener("click",clearMatchPlayer);
 }
 function renderMatches(){
   renderMatchList();
@@ -1408,7 +1485,7 @@ function renderRoster(){
       : mainL.map(l=>laneChip(l)).join("") + (subL.length?`<span class="arrow">›</span>`+subL.map(l=>laneChip(l,true)).join(""):"");
     const streakTxt = s.streak>0?`<span class="streak up">${s.streak}연승</span>`:s.streak<0?`<span class="streak down">${-s.streak}연패</span>`:'';
     const rec = s.g>=1 ? `<span class="rec num">${s.w}승 ${s.l}패 · ${Math.round(s.wr*100)}%</span> ${streakTxt}` : `<span>내전 기록 없음</span>`;
-    return `<div class="card" data-pid="${m.id}">
+    return `<div class="card" data-pid="${m.id}" role="button" tabindex="0" title="${escHtml(m.name)} 단원의 내전 전적 보기">
       <div class="tierstripe" style="background:${TIER_COLOR[m.tier]}"></div>
       <div class="card-top">
         <div class="who"><b>${m.name}</b><small>${m.age}세</small></div>
@@ -1782,6 +1859,20 @@ function switchView(v){
 }
 $("#nav").addEventListener("click",e=>{const t=e.target.closest(".tab");if(t)switchView(t.dataset.view)});
 $("#rsearch").addEventListener("input",e=>{searchQ=e.target.value.trim();renderRoster()});
+
+/* 명단 카드를 누르면 그 단원의 내전 기록만 걸러 보여준다 (⟳ 티어 갱신 버튼은 제외) */
+$("#roster").addEventListener("click",e=>{
+  if(e.target.closest(".tref"))return;
+  const card=e.target.closest(".card[data-pid]");
+  if(card)setMatchPlayer(+card.dataset.pid);
+});
+$("#roster").addEventListener("keydown",e=>{
+  if(e.key!=="Enter"&&e.key!==" ")return;
+  const card=e.target.closest&&e.target.closest(".card[data-pid]");
+  if(!card||e.target.closest(".tref"))return;
+  e.preventDefault();
+  setMatchPlayer(+card.dataset.pid);
+});
 
 /* theme */
 $("#themeBtn").addEventListener("click",()=>{
