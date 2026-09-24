@@ -47,6 +47,41 @@ router.get('/', (req, res) => {
   res.json({ count: list.length, members: list.map(decorate) });
 });
 
+/*
+ * POST /api/members/riot-refresh-all — 대시보드 '솔랭 점수 TOP 5' 새로고침.
+ * 활동 단원 전원의 솔로랭크를 다시 받되, 5분 안에 갱신된 단원은 건너뛴다(단원별 갱신과 같은 쿨다운).
+ * 여러 사람이 동시에 눌러도 라이엇 호출은 한 번만 돌도록 진행 중인 작업을 같이 기다린다.
+ * 호출 한도에 걸리면 거기서 멈추고, 그때까지 받은 값은 이미 저장돼 있다.
+ */
+let refreshAllRun = null;
+async function refreshAllMembers() {
+  const now = Date.now();
+  const targets = activeMembers().filter((m) => m.accounts.length && m.accounts.some((a) =>
+    !a.fetchedAt || now - new Date(a.fetchedAt).getTime() >= REFRESH_COOLDOWN_MS));
+  const errors = [];
+  let refreshed = 0;
+  let stopped = null;
+  for (const t of targets) {
+    const { accounts, errors: errs } = await riot.refreshAccounts(t.accounts);
+    store.editMember(t.id, { accounts });
+    refreshed++;
+    errs.forEach((e) => errors.push(`${t.name} — ${e}`));
+    stopped = errs.find((e) => /한도|키가 만료|API_KEY/.test(e)) || null;
+    if (stopped) break;   // 키 문제·한도 초과면 나머지를 두드려도 소용없다
+  }
+  return { targets: targets.length, refreshed, errors, stopped };
+}
+router.post('/riot-refresh-all', async (req, res, next) => {
+  try {
+    if (!riot.HAS_KEY) {
+      return res.status(400).json({ error: 'no_riot_key', messages: ['라이엇 API 키가 설정되지 않았습니다.'] });
+    }
+    if (!refreshAllRun) refreshAllRun = refreshAllMembers().finally(() => { refreshAllRun = null; });
+    const result = await refreshAllRun;
+    res.json({ ...result, members: activeMembers().map(decorate) });
+  } catch (e) { next(e); }
+});
+
 /* GET /api/members/:id — 단원 상세 */
 router.get('/:id', (req, res) => {
   const m = memberById(Number(req.params.id));

@@ -225,6 +225,16 @@
     font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;transition:.15s}
   .morebtn:hover{border-color:var(--gold-deep);color:var(--gold-bright);background:var(--surface-2)}
   .morebtn[hidden]{display:none}
+  /* 대시보드 순위 3단 — 좁아지면 2단(솔랭은 아래 전체 폭) → 1단 */
+  .grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  @media(max-width:1100px){ .grid3{grid-template-columns:1fr 1fr} .grid3 > .panel:nth-child(3){grid-column:1 / -1} }
+  .soloref{appearance:none;width:24px;height:24px;padding:0;border-radius:7px;cursor:pointer;margin-left:6px;
+    border:1px solid var(--line);background:transparent;color:var(--ink-3);font-family:inherit;font-size:13px;line-height:1;transition:.15s}
+  .soloref:hover{color:var(--gold-bright);border-color:var(--gold-deep);background:var(--surface-2)}
+  .soloref:disabled{cursor:default;opacity:.7}
+  .soloref.spin{animation:solospin .9s linear infinite}
+  @keyframes solospin{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){ .soloref.spin{animation:none} }
   .badge-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:12px 14px;
     display:flex;align-items:center;gap:11px}
   .badge-card .bi{font-size:22px;line-height:1;flex:0 0 auto}
@@ -613,6 +623,7 @@
 
   @media(max-width:820px){
     .grid2{grid-template-columns:1fr}
+    .grid3 > .panel:nth-child(3){grid-column:auto}
     .tiles{grid-template-columns:repeat(2,1fr)}
     .tile:nth-child(2){border-right:0}
     .tile:nth-child(1),.tile:nth-child(2){border-bottom:1px solid var(--line-soft)}
@@ -712,7 +723,7 @@
       </div>
     </div>
 
-    <div class="grid2">
+    <div class="grid2 grid3">
       <div class="panel">
         <h3><span class="dot"></span> <span class="htitle">내전 점수 TOP 5</span>
           <span class="helpwrap">
@@ -734,6 +745,13 @@
           </span>
         </h3>
         <div class="rankmini" id="topPlayers"></div>
+      </div>
+      <div class="panel">
+        <h3><span class="dot"></span> <span class="htitle">솔랭 점수 TOP 5</span>
+          <span class="panel-note" id="soloNote"></span>
+          <button type="button" class="soloref" id="soloRefBtn" title="라이엇에서 솔로랭크를 다시 가져옵니다 (5분 안에 갱신된 단원은 건너뜀)" aria-label="솔랭 점수 새로고침">⟳</button>
+        </h3>
+        <div class="rankmini" id="topSolo"></div>
       </div>
     </div>
 
@@ -1060,7 +1078,7 @@ function applyMatchRegState(){
     addView.innerHTML=`<div class="empty" style="padding:60px 20px;color:var(--ink-3);font-size:15px">내전 등록이 비활성화되었습니다.<br>관리자에게 문의하세요.</div>`;
   }
 }
-function renderAll(){renderDist();renderTopScores();renderTopPlayers();renderBadges();renderMatches();renderRoster();renderRank();}
+function renderAll(){renderDist();renderTopScores();renderTopPlayers();renderTopSolo();renderBadges();renderMatches();renderRoster();renderRank();}
 
 /* ========== HELPERS ========== */
 function tierBadge(t){const c=TIER_COLOR[t];
@@ -1193,6 +1211,56 @@ async function renderTopPlayers(){
   const note=$("#wrNote");
   if(note)note.textContent=`${MIN_WR_GAMES}경기 이상`;
 }
+
+/* 솔랭 점수 TOP 5 — 라이엇에서 받아 둔 솔로랭크(계정 중 가장 높은 것) 기준. 티어 → 세부 등급 → LP 순.
+   ⟳ 를 누르면 서버가 활동 단원 전원을 다시 조회한다(5분 안에 갱신된 단원은 건너뜀). */
+const SOLO_DIV={I:4,II:3,III:2,IV:1};
+function soloScore(m){
+  if(!m.soloTier||m.soloTier==='언랭')return -1;
+  return (TIER_RANK[m.soloTier]||0)*1e6+(m.soloRank?(SOLO_DIV[m.soloRank]||0):5)*1e4+(m.soloLp||0);
+}
+function renderTopSolo(){
+  const ranked=S.members.filter(m=>soloScore(m)>=0).sort((a,b)=>soloScore(b)-soloScore(a)||a.id-b.id);
+  $("#topSolo").innerHTML=ranked.slice(0,5).map((m,i)=>{
+    const tierTxt=[m.soloTier,m.soloRank].filter(Boolean).join(' ');
+    const fromSub=m.soloNick&&m.soloNick!==m.nick;
+    return `<div class="r">
+      <span class="pos num">${i+1}</span>
+      <span class="nm"><span class="nmline"><b>${escHtml(m.name)}</b></span><small title="${escHtml(m.soloNick||'')} 계정 기준">${escHtml(m.soloNick||m.nick||'')}${fromSub?' · 부계정':''}</small></span>
+      <span class="wr"><b style="color:${TIER_COLOR[m.soloTier]||'var(--ink)'}">${tierTxt}</b><small class="num">${m.soloLp!=null?m.soloLp+' LP':'—'}</small></span>
+    </div>`;
+  }).join("")||`<div class="empty">솔로랭크가 조회된 단원이 아직 없습니다. ⟳ 로 불러와 주세요.</div>`;
+  // 가장 최근 조회 시각 — 목록이 얼마나 신선한지 보여준다
+  const last=S.members.flatMap(m=>(m.accounts||[]).map(a=>a.fetchedAt)).filter(Boolean).sort().pop();
+  $("#soloNote").textContent=last?`갱신 ${fmtFetched(last)}`:'미조회';
+}
+$("#soloRefBtn").addEventListener("click",async()=>{
+  const btn=$("#soloRefBtn");
+  if(btn.disabled)return;
+  btn.disabled=true;btn.classList.add("spin");
+  $("#soloNote").textContent='불러오는 중…';
+  try{
+    const res=await fetch('/api/members/riot-refresh-all',{method:'POST'});
+    const j=await res.json().catch(()=>({}));
+    if(!res.ok){
+      const msg=(j.messages&&j.messages[0])||j.message||('HTTP '+res.status);
+      showRiotErrors([msg]);toast(msg);
+    }else{
+      if(Array.isArray(j.members)){
+        S.members=j.members;
+        S.byId=new Map(j.members.map(m=>[m.id,m]));
+        S.pool=j.members.filter(m=>m.role!=="예비");
+      }
+      showRiotErrors(j.errors||[]);
+      toast(j.stopped?`중단됨 — ${j.refreshed}/${j.targets}명 갱신 · ${j.stopped}`
+        :!j.targets?'모두 5분 안에 갱신된 상태라 최신 값입니다'
+        :`${j.refreshed}명 솔로랭크를 갱신했습니다${j.errors&&j.errors.length?` · 실패 ${j.errors.length}건`:''}`);
+      clearDashStatsCache();
+      renderAll();
+    }
+  }catch(ex){toast('갱신 실패: '+ex.message);}
+  finally{btn.disabled=false;btn.classList.remove("spin");renderTopSolo();}
+});
 
 /* ========== MATCH RENDER ========== */
 const escHtml=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
