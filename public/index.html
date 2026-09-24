@@ -234,6 +234,29 @@
   .soloref:disabled{cursor:default;opacity:.7}
   .soloref.spin{animation:solospin .9s linear infinite}
   @keyframes solospin{to{transform:rotate(360deg)}}
+  /* 솔랭 1위 — 티어 색(--tc)을 입힌 카드 + 왕관 + 한 번씩 지나가는 광택 */
+  .solo-champ{position:relative;overflow:hidden;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;
+    margin-bottom:6px;padding:14px 16px;border-radius:12px;
+    border:1px solid color-mix(in srgb,var(--tc) 55%,var(--line));
+    background:linear-gradient(135deg,color-mix(in srgb,var(--tc) 22%,var(--surface)) 0%,var(--surface) 70%);
+    box-shadow:0 0 0 1px color-mix(in srgb,var(--tc) 12%,transparent),0 8px 24px color-mix(in srgb,var(--tc) 18%,transparent)}
+  .solo-champ::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(105deg,transparent 35%,color-mix(in srgb,#fff 16%,transparent) 50%,transparent 65%);
+    transform:translateX(-100%);animation:champshine 4.5s ease-in-out 1s infinite}
+  @keyframes champshine{0%{transform:translateX(-100%)}35%,100%{transform:translateX(100%)}}
+  .solo-champ .crown{position:relative;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:22px;
+    background:color-mix(in srgb,var(--tc) 20%,var(--surface-2));border:1.5px solid var(--tc)}
+  .solo-champ .crown i{position:absolute;bottom:-5px;right:-5px;font-style:normal;font-size:10px;font-weight:900;
+    min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;
+    background:var(--gold-bright);color:#1a1405;border:2px solid var(--surface)}
+  .solo-champ .who{min-width:0}
+  .solo-champ .who .lab{font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--tc)}
+  .solo-champ .who b{display:block;font-size:17px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .solo-champ .who small{display:block;font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .solo-champ .tv{text-align:right}
+  .solo-champ .tv b{display:block;font-size:16px;font-weight:900;color:var(--tc);white-space:nowrap}
+  .solo-champ .tv small{display:block;font-size:13px;font-weight:800;color:var(--ink);margin-top:2px}
+  @media (prefers-reduced-motion:reduce){ .solo-champ::after{animation:none;display:none} }
   @media (prefers-reduced-motion:reduce){ .soloref.spin{animation:none} }
   .badge-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:12px 14px;
     display:flex;align-items:center;gap:11px}
@@ -752,6 +775,7 @@
           <button type="button" class="soloref" id="soloRefBtn" title="라이엇에서 솔로랭크를 다시 가져옵니다 (5분 안에 갱신된 단원은 건너뜀)" aria-label="솔랭 점수 새로고침">⟳</button>
         </h3>
         <div class="rankmini" id="topSolo"></div>
+        <button type="button" class="morebtn" id="soloMoreBtn" hidden></button>
       </div>
     </div>
 
@@ -1219,21 +1243,55 @@ function soloScore(m){
   if(!m.soloTier||m.soloTier==='언랭')return -1;
   return (TIER_RANK[m.soloTier]||0)*1e6+(m.soloRank?(SOLO_DIV[m.soloRank]||0):5)*1e4+(m.soloLp||0);
 }
+let soloShown=5, soloList=[];
 function renderTopSolo(){
-  const ranked=S.members.filter(m=>soloScore(m)>=0).sort((a,b)=>soloScore(b)-soloScore(a)||a.id-b.id);
-  $("#topSolo").innerHTML=ranked.slice(0,5).map((m,i)=>{
-    const tierTxt=[m.soloTier,m.soloRank].filter(Boolean).join(' ');
-    const fromSub=m.soloNick&&m.soloNick!==m.nick;
-    return `<div class="r">
-      <span class="pos num">${i+1}</span>
-      <span class="nm"><span class="nmline"><b>${escHtml(m.name)}</b></span><small title="${escHtml(m.soloNick||'')} 계정 기준">${escHtml(m.soloNick||m.nick||'')}${fromSub?' · 부계정':''}</small></span>
-      <span class="wr"><b style="color:${TIER_COLOR[m.soloTier]||'var(--ink)'}">${tierTxt}</b><small class="num">${m.soloLp!=null?m.soloLp+' LP':'—'}</small></span>
-    </div>`;
-  }).join("")||`<div class="empty">솔로랭크가 조회된 단원이 아직 없습니다. ⟳ 로 불러와 주세요.</div>`;
+  soloList=S.members.filter(m=>soloScore(m)>=0).sort((a,b)=>soloScore(b)-soloScore(a)||a.id-b.id);
+  paintTopSolo();
   // 가장 최근 조회 시각 — 목록이 얼마나 신선한지 보여준다
   const last=S.members.flatMap(m=>(m.accounts||[]).map(a=>a.fetchedAt)).filter(Boolean).sort().pop();
   $("#soloNote").textContent=last?`갱신 ${fmtFetched(last)}`:'미조회';
 }
+function paintTopSolo(){
+  const list=soloList;
+  const shown=Math.min(soloShown,list.length);
+  const title=$("#topSolo").closest(".panel").querySelector(".htitle");
+  if(title)title.textContent=(shown>=list.length&&list.length>5)
+    ? `솔랭 점수 전체 순위 ${list.length}명`
+    : `솔랭 점수 TOP ${shown||5}`;
+
+  $("#topSolo").innerHTML=list.slice(0,shown).map((m,i)=>{
+    const tierTxt=[m.soloTier,m.soloRank].filter(Boolean).join(' ');
+    const fromSub=m.soloNick&&m.soloNick!==m.nick;
+    const nickTxt=`${escHtml(m.soloNick||m.nick||'')}${fromSub?' · 부계정':''}`;
+    const lp=m.soloLp!=null?m.soloLp+' LP':'—';
+    if(i===0) return `<div class="solo-champ" style="--tc:${TIER_COLOR[m.soloTier]||'var(--gold-bright)'}">
+      <span class="crown">👑<i>1</i></span>
+      <span class="who"><span class="lab">SOLO RANK No.1</span><b>${escHtml(m.name)}</b><small title="${escHtml(m.soloNick||'')} 계정 기준">${nickTxt}</small></span>
+      <span class="tv"><b>${tierTxt}</b><small class="num">${lp}</small></span>
+    </div>`;
+    return `<div class="r">
+      <span class="pos num">${i+1}</span>
+      <span class="nm"><span class="nmline"><b>${escHtml(m.name)}</b></span><small title="${escHtml(m.soloNick||'')} 계정 기준">${nickTxt}</small></span>
+      <span class="wr"><b style="color:${TIER_COLOR[m.soloTier]||'var(--ink)'}">${tierTxt}</b><small class="num">${lp}</small></span>
+    </div>`;
+  }).join("")||`<div class="empty">솔로랭크가 조회된 단원이 아직 없습니다. ⟳ 로 불러와 주세요.</div>`;
+
+  const btn=$("#soloMoreBtn");
+  if(list.length<=5){btn.hidden=true;return}
+  btn.hidden=false;
+  if(shown<list.length){
+    const next=Math.min(SCORE_STEP,list.length-shown);
+    btn.textContent=`＋ ${next}명 더 보기 (${shown}/${list.length})`;
+    btn.dataset.act="more";
+  }else{
+    btn.textContent=`▲ 접기 (전체 ${list.length}명)`;
+    btn.dataset.act="less";
+  }
+}
+$("#soloMoreBtn").addEventListener("click",()=>{
+  soloShown=$("#soloMoreBtn").dataset.act==="less"?5:Math.min(soloShown+SCORE_STEP,soloList.length);
+  paintTopSolo();
+});
 $("#soloRefBtn").addEventListener("click",async()=>{
   const btn=$("#soloRefBtn");
   if(btn.disabled)return;
