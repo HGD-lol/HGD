@@ -6,6 +6,8 @@ const { computeStats } = require('./lib/stats');
 const { loadMembers, buildFromObj, toStoredMember, memberById, members, nextId, deletedMembers, parseAccounts, normNick, DELETED_ROLE } = require('./lib/members');
 
 let userMatches = [];
+let mvpVotes = new Map();  // matchId(string) → Map(voterId → mvpId) — MVP 투표 (mvp_votes 테이블)
+let hasVoteTable = true;
 let pendingDraft = null;   // 내전 등록 화면에서 선택 중인 초안 (pending 테이블 1행)
 let seasons = [];
 let dashConfig = { title: '협곡단 내전 기록실', description: '단원 명단과 티어, 내전 전적을 한곳에서.', season: '2026 Split 2', matchRegistrationEnabled: true };
@@ -137,6 +139,21 @@ async function init() {
     userMatches = sbMatches.map(row => buildMatch(fromDbMatch(row)));
   }
 
+  // MVP 투표 — 테이블이 아직 없으면 메모리에서만 돌고 재시작하면 사라진다
+  try {
+    const rows = await sb.select('mvp_votes', '', '*');
+    mvpVotes = new Map();
+    for (const r of rows || []) {
+      const key = String(r.match_id);
+      if (!mvpVotes.has(key)) mvpVotes.set(key, new Map());
+      mvpVotes.get(key).set(Number(r.voter_id), Number(r.mvp_id));
+    }
+  } catch (e) {
+    hasVoteTable = false;
+    console.warn('  ⚠ mvp_votes 테이블을 읽지 못해 MVP 투표가 저장되지 않습니다. Supabase 에서 sql/mvp_votes.sql 을 실행하세요.');
+    console.warn('    ' + e.message);
+  }
+
   // 대기 내전 — 선택 중인 초안 1건 (예전 데이터가 여러 건이면 최신 것만 쓴다)
   if (sbPending && sbPending.length > 0) {
     pendingDraft = fromDbPending(sbPending[0]);
@@ -212,7 +229,7 @@ async function createSeason(name) {
 
 /* ── 조회 ── */
 function allMatches(seasonId) {
-  if (!cachedAll) cachedAll = [...userMatches].sort((a, b) => b.date - a.date);
+  if (!cachedAll) cachedAll = userMatches.map(applyVotes).sort((a, b) => b.date - a.date);
   if (seasonId) return cachedAll.filter(m => m.seasonId === seasonId);
   return cachedAll;
 }
@@ -224,6 +241,58 @@ function stats(mode, seasonId) {
   return computeStats(allMatches(), mode);
 }
 function findMatch(id) { return allMatches().find(m => String(m.id) === String(id)) || null; }
+
+/* ── MVP 투표 ──
+   표가 하나라도 있으면 최다 득표자가 그 경기의 MVP 가 된다(동률이면 MVP 없음).
+   표가 없으면 관리자가 지정한 mvpId(manual) 를 그대로 쓴다. 통계(computeStats)는
+   allMatches() 가 돌려주는 사본의 p.mvp 를 세므로 투표 결과가 배지·MVP 횟수에 바로 반영된다. */
+function tallyVotes(matchId) {
+  const v = mvpVotes.get(String(matchId));
+  if (!v || !v.size) return null;
+  const counts = {};
+  const ballots = {};
+  for (const [voterId, mvpId] of v) {
+    counts[mvpId] = (counts[mvpId] || 0) + 1;
+    ballots[voterId] = mvpId;
+  }
+  let best = 0, leaders = [];
+  for (const [id, n] of Object.entries(counts)) {
+    if (n > best) { best = n; leaders = [Number(id)]; }
+    else if (n === best) leaders.push(Number(id));
+  }
+  return { total: v.size, counts, ballots, leaderId: leaders.length === 1 ? leaders[0] : null, tie: leaders.length > 1 };
+}
+function applyVotes(m) {
+  const t = tallyVotes(m.id);
+  const manual = m.mvpId == null ? null : Number(m.mvpId);
+  const effective = t ? t.leaderId : manual;
+  const mark = (arr) => arr.map(p => ({ ...p, mvp: !p.mercenary && effective != null && Number(p.id) === effective }));
+  return { ...m, blue: mark(m.blue), red: mark(m.red), mvpId: effective, manualMvpId: manual, votes: t };
+}
+function setVote(matchId, voterId, mvpId) {
+  const key = String(matchId);
+  if (!mvpVotes.has(key)) mvpVotes.set(key, new Map());
+  mvpVotes.get(key).set(Number(voterId), Number(mvpId));
+  if (hasVoteTable) {
+    dbWrite(() => sb.upsert('mvp_votes', { match_id: key, voter_id: Number(voterId), mvp_id: Number(mvpId), updated_at: new Date().toISOString() }));
+  }
+  invalidate();
+}
+function removeVote(matchId, voterId) {
+  const key = String(matchId);
+  const v = mvpVotes.get(key);
+  if (!v || !v.delete(Number(voterId))) return false;
+  if (!v.size) mvpVotes.delete(key);
+  if (hasVoteTable) dbWrite(() => sb.del('mvp_votes', `match_id=eq.${encodeURIComponent(key)}&voter_id=eq.${Number(voterId)}`));
+  invalidate();
+  return true;
+}
+function clearVotesFor(matchId) {
+  const key = String(matchId);
+  if (!mvpVotes.delete(key)) return;
+  if (hasVoteTable) dbWrite(() => sb.del('mvp_votes', `match_id=eq.${encodeURIComponent(key)}`));
+  invalidate();
+}
 
 /* ── 매치 변경 ── */
 function addUserMatch(match) {
@@ -249,6 +318,7 @@ function deleteUserMatch(id) {
   userMatches = userMatches.filter(m => String(m.id) !== String(id));
   if (userMatches.length === before) return false;
   dbWrite(() => sb.del('matches', `id=eq.${id}`));
+  clearVotesFor(id);   // 경기가 사라지면 그 경기의 표도 같이 지운다
   invalidate();
   return true;
 }
@@ -410,6 +480,7 @@ module.exports = {
   init, importFromSheet,
   allMatches, stats, findMatch,
   addUserMatch, replaceUserMatch, deleteUserMatch,
+  setVote, removeVote,
   getPending, savePending, clearPending,
   getDashConfig, setDashConfig,
   editMember, addMember, removeMember, permanentDeleteMember, restoreMember, nicksPersisted,

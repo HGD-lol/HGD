@@ -144,6 +144,50 @@ router.post('/', (req, res) => {
   res.status(201).json(serializeMatch(match));
 });
 
+/* ── MVP 투표 ──
+   메인 화면에서 자기 이름을 고른 단원이 경기별로 1표. 다시 누르면 덮어쓴다.
+   투표자·대상 모두 단원이어야 하고, 대상은 그 경기에 뛴 단원(용병 제외)이며 자기 자신은 안 된다. */
+const VOTE_WINDOW_DAYS = 14;   // 경기 후 이 기간이 지나면 투표 마감
+
+function voteGuard(req, res) {
+  const match = store.findMatch(req.params.id);
+  if (!match) { res.status(404).json({ error: 'match_not_found', id: req.params.id }); return null; }
+  const voterId = Number(req.body && req.body.voterId);
+  const voter = Number.isInteger(voterId) ? memberById(voterId) : null;
+  if (!voter) { res.status(403).json({ error: 'voter_invalid', message: '먼저 내 이름을 선택하세요.' }); return null; }
+  const ageMs = Date.now() - match.date.getTime();
+  if (ageMs > VOTE_WINDOW_DAYS * 86400 * 1000) {
+    res.status(400).json({ error: 'vote_closed', message: `경기 후 ${VOTE_WINDOW_DAYS}일이 지나 투표가 마감되었습니다.` });
+    return null;
+  }
+  return { match, voterId };
+}
+
+/* PUT /api/matches/:id/vote — { voterId, mvpId } */
+router.put('/:id/vote', (req, res) => {
+  const g = voteGuard(req, res);
+  if (!g) return;
+  const { match, voterId } = g;
+  const mvpId = Number(req.body.mvpId);
+  const players = [...match.blue, ...match.red].filter(p => !p.mercenary).map(p => Number(p.id));
+  if (!Number.isInteger(mvpId) || !players.includes(mvpId)) {
+    return res.status(400).json({ error: 'mvp_invalid', message: '이 경기에 참여한 단원만 MVP 로 뽑을 수 있습니다.' });
+  }
+  if (mvpId === voterId) {
+    return res.status(400).json({ error: 'self_vote', message: '자기 자신에게는 투표할 수 없습니다.' });
+  }
+  store.setVote(match.id, voterId, mvpId);
+  res.json(serializeMatch(store.findMatch(match.id)));
+});
+
+/* DELETE /api/matches/:id/vote — { voterId } 내 표 취소 */
+router.delete('/:id/vote', (req, res) => {
+  const g = voteGuard(req, res);
+  if (!g) return;
+  store.removeVote(g.match.id, g.voterId);
+  res.json(serializeMatch(store.findMatch(g.match.id)));
+});
+
 /* PUT /api/matches/:id — 내전 기록 수정 (관리자) */
 router.put('/:id', requireAdmin, (req, res) => {
   const id = req.params.id;

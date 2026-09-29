@@ -715,7 +715,7 @@ $("#matchTable").addEventListener("click",async e=>{
       if(dup!=null){toast('같은 선수가 중복 선택되었습니다.');return}
       try{
         // dur·mvpId 를 같이 보내지 않으면 수정할 때마다 경기시간·MVP 가 지워진다
-        await jsend('PUT','/api/matches/'+id,{date,dur:mt.dur,mvpId:mt.mvpId,winner,mode:mt.mode||'협곡',blue,red});
+        await jsend('PUT','/api/matches/'+id,{date,dur:mt.dur,mvpId:(mt.manualMvpId!==undefined?mt.manualMvpId:mt.mvpId),winner,mode:mt.mode||'협곡',blue,red});
         toast('수정했습니다');
         await refreshAll();
       }catch(ex){toast('수정 실패: '+(ex.payload&&ex.payload.messages&&ex.payload.messages[0]||ex.message));}

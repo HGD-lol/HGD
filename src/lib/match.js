@@ -51,6 +51,9 @@ function serializeMatch(m) {
     mode: m.mode || '협곡',
     blueWin: m.blueWin,
     mvpId: m.mvpId,
+    // manualMvpId = 관리자가 지정한 값, votes = 투표 집계(없으면 null). mvpId 는 둘을 합친 최종값.
+    manualMvpId: m.manualMvpId === undefined ? m.mvpId : m.manualMvpId,
+    votes: m.votes || null,
     blue: m.blue.map(serializePlayer),
     red: m.red.map(serializePlayer),
     seasonId: m.seasonId || null,
