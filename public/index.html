@@ -225,6 +225,39 @@
     font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;transition:.15s}
   .morebtn:hover{border-color:var(--gold-deep);color:var(--gold-bright);background:var(--surface-2)}
   .morebtn[hidden]{display:none}
+  /* 대시보드 순위 3단 — 좁아지면 2단(솔랭은 아래 전체 폭) → 1단 */
+  .grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  @media(max-width:1100px){ .grid3{grid-template-columns:1fr 1fr} .grid3 > .panel:nth-child(3){grid-column:1 / -1} }
+  .soloref{appearance:none;width:24px;height:24px;padding:0;border-radius:7px;cursor:pointer;margin-left:6px;
+    border:1px solid var(--line);background:transparent;color:var(--ink-3);font-family:inherit;font-size:13px;line-height:1;transition:.15s}
+  .soloref:hover{color:var(--gold-bright);border-color:var(--gold-deep);background:var(--surface-2)}
+  .soloref:disabled{cursor:default;opacity:.7}
+  .soloref.spin{animation:solospin .9s linear infinite}
+  @keyframes solospin{to{transform:rotate(360deg)}}
+  /* 솔랭 1위 — 티어 색(--tc)을 입힌 카드 + 왕관 + 한 번씩 지나가는 광택 */
+  .solo-champ{position:relative;overflow:hidden;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;
+    margin-bottom:6px;padding:14px 16px;border-radius:12px;
+    border:1px solid color-mix(in srgb,var(--tc) 55%,var(--line));
+    background:linear-gradient(135deg,color-mix(in srgb,var(--tc) 22%,var(--surface)) 0%,var(--surface) 70%);
+    box-shadow:0 0 0 1px color-mix(in srgb,var(--tc) 12%,transparent),0 8px 24px color-mix(in srgb,var(--tc) 18%,transparent)}
+  .solo-champ::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(105deg,transparent 35%,color-mix(in srgb,#fff 16%,transparent) 50%,transparent 65%);
+    transform:translateX(-100%);animation:champshine 4.5s ease-in-out 1s infinite}
+  @keyframes champshine{0%{transform:translateX(-100%)}35%,100%{transform:translateX(100%)}}
+  .solo-champ .crown{position:relative;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:22px;
+    background:color-mix(in srgb,var(--tc) 20%,var(--surface-2));border:1.5px solid var(--tc)}
+  .solo-champ .crown i{position:absolute;bottom:-5px;right:-5px;font-style:normal;font-size:10px;font-weight:900;
+    min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;
+    background:var(--gold-bright);color:#1a1405;border:2px solid var(--surface)}
+  .solo-champ .who{min-width:0}
+  .solo-champ .who .lab{font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--tc)}
+  .solo-champ .who b{display:block;font-size:17px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .solo-champ .who small{display:block;font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .solo-champ .tv{text-align:right}
+  .solo-champ .tv b{display:block;font-size:16px;font-weight:900;color:var(--tc);white-space:nowrap}
+  .solo-champ .tv small{display:block;font-size:13px;font-weight:800;color:var(--ink);margin-top:2px}
+  @media (prefers-reduced-motion:reduce){ .solo-champ::after{animation:none;display:none} }
+  @media (prefers-reduced-motion:reduce){ .soloref.spin{animation:none} }
   .badge-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:12px 14px;
     display:flex;align-items:center;gap:11px}
   .badge-card .bi{font-size:22px;line-height:1;flex:0 0 auto}
@@ -356,6 +389,17 @@
   .match.red-win .m-row{background-image:linear-gradient(270deg,
     color-mix(in srgb,var(--red) 17%,transparent), transparent 46%)}
 
+  /* ── 승패 구분 ── 이긴 팀은 팀 색을 지키고, 진 팀은 통째로 회색으로 물러난다 */
+  .m-tag em{display:block;font-style:normal;font-size:8px;letter-spacing:.08em;margin-top:1px;opacity:.85}
+  .m-tag.win{box-shadow:inset 0 0 0 1px currentColor}
+  .m-tag.lose{color:var(--ink-3);background:color-mix(in srgb,var(--ink-3) 12%,transparent)}
+  .m-ps.lose{background:color-mix(in srgb,var(--ink-3) 10%,transparent);opacity:.82}
+  .m-ps.lose .m-p .n{color:var(--ink-3)}
+  .m-ps.lose .m-p .t{color:var(--ink-3)}
+  .m-ps.lose .m-p .bs{filter:grayscale(1);opacity:.65}
+  .match.blue-win .m-ps.blue{background:color-mix(in srgb,var(--blue) 9%,transparent)}
+  .match.red-win .m-ps.red{background:color-mix(in srgb,var(--red) 9%,transparent)}
+
   /* 가운데 결과 */
   .m-mid{grid-area:mid;text-align:center;line-height:1.3}
   .m-mid .res{display:block;font-size:12.5px;font-weight:800;letter-spacing:.02em}
@@ -364,7 +408,7 @@
   .m-mid .sub{display:block;font-size:9.5px;font-weight:700;color:var(--ink-3);margin-top:1px}
 
   /* 5칸 격자 */
-  .m-ps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0 8px}
+  .m-ps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0 8px;padding:5px 7px;border-radius:10px}
   .m-p{min-width:0;position:relative}
   .m-p{cursor:default}
   /* 이름은 크게. 좁은 화면에서는 배지에 밀려 잘리므로 폭에 따라 줄어든다 */
@@ -379,7 +423,7 @@
   .m-p .s{display:flex;align-items:center;gap:4px;min-width:0;min-height:11px;
     font-size:8.5px;line-height:1.3}
   .m-p .k{color:var(--ink-3);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .m-p .t{font-weight:800;flex:0 0 auto;white-space:nowrap}
+  .m-p .t{font-weight:800;flex:0 0 auto;white-space:nowrap;color:var(--tc,var(--ink-2))}
   .m-p .bs .more{font-size:8px;font-weight:800;color:var(--ink-3);margin-left:1px}
   /* MVP 투표 — 모든 칩과 가운데 칸의 첫 줄(.b)은 같은 높이. 여기에 MVP 배지·득표 수·투표 버튼이 한 줄로 놓인다.
      투표·MVP 정보가 하나도 없는 카드(.match:not(.has-top))는 이 줄을 아예 접어 이전과 같은 높이를 유지한다 */
@@ -485,6 +529,25 @@
   .merc-remove:hover{border-color:var(--red);background:color-mix(in srgb,var(--red) 12%,transparent)}
 
   /* 검색어 일치 부분 강조 — 노란 배경엔 항상 어두운 글자를 써서 두 테마 모두 읽힌다 */
+  /* 단원 한 명으로 거른 상태를 알려주는 줄 — 그 단원의 해당 조건 전적을 함께 보여준다 */
+  .pfilter[hidden]{display:none}
+  .pfilter{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:-6px 0 16px;
+    padding:10px 14px;border:1px solid var(--gold-deep);border-radius:12px;
+    background:color-mix(in srgb,var(--gold) 10%,transparent)}
+  .pfilter .who{font-size:13.5px;font-weight:800;color:var(--gold-bright)}
+  .pfilter .rec{font-size:12.5px;font-weight:700;color:var(--ink-2)}
+  .pfilter .rec b{color:var(--ink);font-weight:800}
+  .pfilter .x{margin-left:auto;appearance:none;border:1px solid var(--line);background:var(--surface);
+    color:var(--ink-2);font-family:inherit;font-size:12px;font-weight:700;padding:5px 11px;
+    border-radius:20px;cursor:pointer}
+  .pfilter .x:hover{border-color:var(--gold);color:var(--gold-bright)}
+  /* 거른 단원 본인의 칩 — 진 팀에서도 묻히지 않게 테두리로 띄운다 */
+  .m-p.focus{outline:1.5px solid var(--gold);outline-offset:2px;border-radius:7px}
+  .m-ps.lose .m-p.focus .n{color:var(--ink-2)}
+  /* 명단 카드는 눌러서 그 단원 내전만 볼 수 있다 */
+  .card[data-pid]{cursor:pointer}
+  .card[data-pid]:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
   mark.hl{background:#FFE066;color:#131A28;font-weight:800;border-radius:3px;padding:0 2px;
     box-decoration-break:clone;-webkit-box-decoration-break:clone}
 
@@ -652,6 +715,7 @@
 
   @media(max-width:820px){
     .grid2{grid-template-columns:1fr}
+    .grid3 > .panel:nth-child(3){grid-column:auto}
     .tiles{grid-template-columns:repeat(2,1fr)}
     .tile:nth-child(2){border-right:0}
     .tile:nth-child(1),.tile:nth-child(2){border-bottom:1px solid var(--line-soft)}
@@ -666,16 +730,21 @@
   .hn-more{margin-left:auto;appearance:none;background:none;border:1px solid var(--line);color:var(--gold-bright);
     border-radius:9px;padding:6px 12px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:.15s}
   .hn-more:hover{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent)}
-  .hn-list{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-  .hn{border:1px solid var(--line-soft);border-radius:12px;padding:14px 16px;background:var(--surface-2);cursor:pointer;transition:border-color .15s}
-  .hn:hover{border-color:var(--gold-deep)}
+  .hn-list{display:block}
+  .hn{border:1px solid var(--line-soft);border-radius:12px;padding:16px 20px;background:var(--surface-2)}
   .hn .hn-meta{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums;margin-bottom:6px}
   .hn .hn-meta .new{font-size:9.5px;font-weight:800;color:var(--good);border:1px solid var(--good);border-radius:5px;padding:0 5px;letter-spacing:.06em}
   .hn .hn-meta .pin{font-size:9.5px;font-weight:800;color:var(--gold);border:1px solid var(--gold-deep);border-radius:5px;padding:0 5px;letter-spacing:.06em}
-  .hn b{display:block;font-size:14px;font-weight:800;line-height:1.35;margin-bottom:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-  .hn p{margin:0;font-size:12px;line-height:1.55;color:var(--ink-2);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-  .hn-empty{grid-column:1/-1;text-align:center;padding:18px;font-size:12.5px;color:var(--ink-3);border:1px dashed var(--line);border-radius:12px}
-  @media (max-width:820px){.hn-list{grid-template-columns:1fr}.hero-notes{padding:16px 20px 20px}}
+  .hn b{display:block;font-size:15px;font-weight:800;line-height:1.4;margin-bottom:8px}
+  .hn .content{font-size:13.5px;line-height:1.7;color:var(--ink-2);word-break:break-word}
+  .hn .content p{margin:0 0 8px}
+  .hn .content p:last-child{margin-bottom:0}
+  .hn .content ul{margin:0 0 8px;padding-left:20px}
+  .hn .content ul:last-child{margin-bottom:0}
+  .hn .content li{margin:2px 0}
+  .hn .content a{color:var(--blue);text-decoration:underline;text-underline-offset:2px}
+  .hn-empty{text-align:center;padding:18px;font-size:12.5px;color:var(--ink-3);border:1px dashed var(--line);border-radius:12px}
+  @media (max-width:820px){.hero-notes{padding:16px 20px 20px}}
   /* ── 모바일 헤더: 로고 문구가 세로로 갈라지거나 잘리지 않게 ── */
   .mark{flex:0 0 auto;min-width:0}
   .mark b,.mark small{white-space:nowrap}
@@ -756,14 +825,14 @@
       </div>
     </div>
 
-    <div class="grid2">
+    <div class="grid2 grid3">
       <div class="panel">
         <h3><span class="dot"></span> <span class="htitle">내전 점수 TOP 5</span>
           <span class="helpwrap">
             <button type="button" class="helpbtn" id="scoreHelpBtn" aria-label="내전 점수 설명 보기" aria-expanded="false" aria-describedby="scoreHelpTip">?</button>
             <span class="helptip" id="scoreHelpTip" role="tooltip"><span id="dashDesc"></span></span>
           </span>
-          <span class="panel-note">협곡 내전 기준</span>
+          <span class="panel-note">협곡 5판 이상</span>
         </h3>
         <div class="rankmini" id="topScores"></div>
         <button type="button" class="morebtn" id="scoreMoreBtn"></button>
@@ -778,6 +847,14 @@
           </span>
         </h3>
         <div class="rankmini" id="topPlayers"></div>
+      </div>
+      <div class="panel">
+        <h3><span class="dot"></span> <span class="htitle">솔랭 점수 TOP 5</span>
+          <span class="panel-note" id="soloNote"></span>
+          <button type="button" class="soloref" id="soloRefBtn" title="라이엇에서 솔로랭크를 다시 가져옵니다 (5분 안에 갱신된 단원은 건너뜀)" aria-label="솔랭 점수 새로고침">⟳</button>
+        </h3>
+        <div class="rankmini" id="topSolo"></div>
+        <button type="button" class="morebtn" id="soloMoreBtn" hidden></button>
       </div>
     </div>
 
@@ -847,6 +924,7 @@
         <select id="matchSeasonSel"></select>
       </div>
     </div>
+    <div class="pfilter" id="matchPlayerBar" hidden></div>
     <div class="matches" id="allMatches"></div>
   </section>
 
@@ -1103,7 +1181,7 @@ function applyMatchRegState(){
     addView.innerHTML=`<div class="empty" style="padding:60px 20px;color:var(--ink-3);font-size:15px">내전 등록이 비활성화되었습니다.<br>관리자에게 문의하세요.</div>`;
   }
 }
-function renderAll(){renderDist();renderTopScores();renderTopPlayers();renderBadges();renderMatches();renderRoster();renderRank();renderMeCard();}
+function renderAll(){renderDist();renderTopScores();renderTopPlayers();renderTopSolo();renderBadges();renderMatches();renderRoster();renderRank();renderMeCard();}
 
 /* ========== HELPERS ========== */
 function tierBadge(t){const c=TIER_COLOR[t];
@@ -1169,13 +1247,14 @@ $("#wrModes").addEventListener("click",e=>{
 
 /* 내전 점수 — 점수는 협곡 내전만 반영되므로(src/lib/stats.js) 옆에 붙는 전적도 협곡 기준으로 맞춘다.
    모드 구분 없이 한 목록으로 보여주고, 처음엔 5명만 → '더 보기'로 늘린다.
-   단원이 자기 점수를 찾을 수 있어야 해서 기록이 없는 사람도 포함한다. */
+   몇 판 안 한 단원이 순위를 흔들지 않도록 협곡 내전 MIN_SCORE_GAMES 판 이상인 단원만 보여준다. */
 const SCORE_STEP=10;
+const MIN_SCORE_GAMES=5;
 let scoreShown=5, scoreList=[];
 async function renderTopScores(){
   const src=await statsByMode('협곡');
   scoreList=Object.values(src)
-    .filter(s=>S.byId.has(s.id))
+    .filter(s=>S.byId.has(s.id)&&s.g>=MIN_SCORE_GAMES)
     .sort((a,b)=>b.score-a.score||a.id-b.id);
   paintTopScores();
 }
@@ -1199,7 +1278,7 @@ function paintTopScores(){
       <span class="nm"><span class="nmline"><b>${m.name}</b>${badgeIcons(s.id,'rbadges',true)}</span><small>${tierBadgeTxt(m.tier)}</small></span>
       <span class="wr"><b style="color:var(--gold-bright)">${s.score}점</b><small class="num">${rec}</small></span>
     </div>`;
-  }).join("")||`<div class="empty">아직 데이터가 없습니다.</div>`;
+  }).join("")||`<div class="empty">협곡 내전 ${MIN_SCORE_GAMES}판 이상인 단원이 아직 없습니다.</div>`;
 
   const btn=$("#scoreMoreBtn");
   if(!list.length){btn.hidden=true;return}
@@ -1236,6 +1315,90 @@ async function renderTopPlayers(){
   if(note)note.textContent=`${MIN_WR_GAMES}경기 이상`;
 }
 
+/* 솔랭 점수 TOP 5 — 라이엇에서 받아 둔 솔로랭크(계정 중 가장 높은 것) 기준. 티어 → 세부 등급 → LP 순.
+   ⟳ 를 누르면 서버가 활동 단원 전원을 다시 조회한다(5분 안에 갱신된 단원은 건너뜀). */
+const SOLO_DIV={I:4,II:3,III:2,IV:1};
+function soloScore(m){
+  if(!m.soloTier||m.soloTier==='언랭')return -1;
+  return (TIER_RANK[m.soloTier]||0)*1e6+(m.soloRank?(SOLO_DIV[m.soloRank]||0):5)*1e4+(m.soloLp||0);
+}
+let soloShown=5, soloList=[];
+function renderTopSolo(){
+  soloList=S.members.filter(m=>soloScore(m)>=0).sort((a,b)=>soloScore(b)-soloScore(a)||a.id-b.id);
+  paintTopSolo();
+  // 가장 최근 조회 시각 — 목록이 얼마나 신선한지 보여준다
+  const last=S.members.flatMap(m=>(m.accounts||[]).map(a=>a.fetchedAt)).filter(Boolean).sort().pop();
+  $("#soloNote").textContent=last?`갱신 ${fmtFetched(last)}`:'미조회';
+}
+function paintTopSolo(){
+  const list=soloList;
+  const shown=Math.min(soloShown,list.length);
+  const title=$("#topSolo").closest(".panel").querySelector(".htitle");
+  if(title)title.textContent=(shown>=list.length&&list.length>5)
+    ? `솔랭 점수 전체 순위 ${list.length}명`
+    : `솔랭 점수 TOP ${shown||5}`;
+
+  $("#topSolo").innerHTML=list.slice(0,shown).map((m,i)=>{
+    const tierTxt=[m.soloTier,m.soloRank].filter(Boolean).join(' ');
+    const fromSub=m.soloNick&&m.soloNick!==m.nick;
+    const nickTxt=`${escHtml(m.soloNick||m.nick||'')}${fromSub?' · 부계정':''}`;
+    const lp=m.soloLp!=null?m.soloLp+' LP':'—';
+    if(i===0) return `<div class="solo-champ" style="--tc:${TIER_COLOR[m.soloTier]||'var(--gold-bright)'}">
+      <span class="crown">👑<i>1</i></span>
+      <span class="who"><span class="lab">SOLO RANK No.1</span><b>${escHtml(m.name)}</b><small title="${escHtml(m.soloNick||'')} 계정 기준">${nickTxt}</small></span>
+      <span class="tv"><b>${tierTxt}</b><small class="num">${lp}</small></span>
+    </div>`;
+    return `<div class="r">
+      <span class="pos num">${i+1}</span>
+      <span class="nm"><span class="nmline"><b>${escHtml(m.name)}</b></span><small title="${escHtml(m.soloNick||'')} 계정 기준">${nickTxt}</small></span>
+      <span class="wr"><b style="color:${TIER_COLOR[m.soloTier]||'var(--ink)'}">${tierTxt}</b><small class="num">${lp}</small></span>
+    </div>`;
+  }).join("")||`<div class="empty">솔로랭크가 조회된 단원이 아직 없습니다. ⟳ 로 불러와 주세요.</div>`;
+
+  const btn=$("#soloMoreBtn");
+  if(list.length<=5){btn.hidden=true;return}
+  btn.hidden=false;
+  if(shown<list.length){
+    const next=Math.min(SCORE_STEP,list.length-shown);
+    btn.textContent=`＋ ${next}명 더 보기 (${shown}/${list.length})`;
+    btn.dataset.act="more";
+  }else{
+    btn.textContent=`▲ 접기 (전체 ${list.length}명)`;
+    btn.dataset.act="less";
+  }
+}
+$("#soloMoreBtn").addEventListener("click",()=>{
+  soloShown=$("#soloMoreBtn").dataset.act==="less"?5:Math.min(soloShown+SCORE_STEP,soloList.length);
+  paintTopSolo();
+});
+$("#soloRefBtn").addEventListener("click",async()=>{
+  const btn=$("#soloRefBtn");
+  if(btn.disabled)return;
+  btn.disabled=true;btn.classList.add("spin");
+  $("#soloNote").textContent='불러오는 중…';
+  try{
+    const res=await fetch('/api/members/riot-refresh-all',{method:'POST'});
+    const j=await res.json().catch(()=>({}));
+    if(!res.ok){
+      const msg=(j.messages&&j.messages[0])||j.message||('HTTP '+res.status);
+      showRiotErrors([msg]);toast(msg);
+    }else{
+      if(Array.isArray(j.members)){
+        S.members=j.members;
+        S.byId=new Map(j.members.map(m=>[m.id,m]));
+        S.pool=j.members.filter(m=>m.role!=="예비");
+      }
+      showRiotErrors(j.errors||[]);
+      toast(j.stopped?`중단됨 — ${j.refreshed}/${j.targets}명 갱신 · ${j.stopped}`
+        :!j.targets?'모두 5분 안에 갱신된 상태라 최신 값입니다'
+        :`${j.refreshed}명 솔로랭크를 갱신했습니다${j.errors&&j.errors.length?` · 실패 ${j.errors.length}건`:''}`);
+      clearDashStatsCache();
+      renderAll();
+    }
+  }catch(ex){toast('갱신 실패: '+ex.message);}
+  finally{btn.disabled=false;btn.classList.remove("spin");renderTopSolo();}
+});
+
 /* ========== MATCH RENDER ========== */
 const escHtml=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 /* 기록배지 아이콘 묶음 — 이름을 밀어내지 않게 3개까지, 나머지는 +N.
@@ -1263,29 +1426,36 @@ function hlName(name,q){
   return out;
 }
 
-function matchNode(mt,q){
-  const node=el("div","match "+(mt.blueWin?"blue-win":"red-win"));
+function matchNode(mt,q,focusId){
+  const blueWin=!!mt.blueWin;
+  const won=side=>(side==="blue")===blueWin;
+  const node=el("div","match "+(blueWin?"blue-win":"red-win"));
   node.dataset.mid=String(mt.id);
-  const chips=(arr,side)=>`<div class="m-ps ${side}">${arr.map(p=>playerChip(p,q,mt.votes)).join("")}</div>`;
+  const chips=(arr,side)=>`<div class="m-ps ${side} ${won(side)?'win':'lose'}">${
+    arr.map(p=>playerChip(p,q,mt.votes,focusId)).join("")}</div>`;
+  // 팀 태그에 승/패를 직접 적어 색을 못 알아보는 경우에도 구분된다
+  const tag=(side,label)=>`<span class="m-tag ${side} ${won(side)?'win':'lose'}">${label}<em>${
+    won(side)?'WIN':'LOSE'}</em></span>`;
   const btn=voteBtnHtml(mt), v=mt.votes;
   if(btn||v||mt.mvpId!=null) node.classList.add("has-top");
   const state=v&&v.tie?' · <span class="tie">MVP 동률</span>':(btn&&!v&&mt.mvpId==null?' · <span class="tie none">MVP 투표 전</span>':'');
   node.innerHTML=`
     <div class="m-row">
-      <span class="m-tag blue">Blue</span>
+      ${tag("blue","Blue")}
       ${chips(mt.blue,"blue")}
       <div class="m-mid">
         <div class="b">${btn}</div>
-        <span class="res">${mt.blueWin?'블루 승':'레드 승'}</span>
+        <span class="res">${blueWin?'블루 승':'레드 승'}</span>
         <span class="sub">${fmtDate(mt.date)} · ${mt.mode==='칼바람'?'칼바람':'협곡'}${state}</span>
       </div>
       ${chips(mt.red,"red")}
-      <span class="m-tag red">Red</span>
+      ${tag("red","Red")}
     </div>`;
   return node;
 }
 /* 선수 칩 — 1줄: 이름+기록배지 / 2줄: 닉네임+티어 */
-function playerChip(p,q,votes){
+/* focusId — 단원 한 명으로 걸러 볼 때, 그 단원 칩만 눈에 띄게 표시한다 */
+function playerChip(p,q,votes,focusId){
   // 용병은 단원이 아니라 닉네임·배지가 없다
   const m=p.mercenary?null:memberById(p.id);
   // 투표를 1표라도 받았으면 이름 오른쪽 위에 득표 수, 최다 득표(단독 1위)면 MVP 배지
@@ -1298,9 +1468,10 @@ function playerChip(p,q,votes){
   const badgeTags=p.mercenary?'':badgeIcons(p.id,'bs',false);
   const gone=!p.mercenary&&!m?` data-gone="${escHtml(p.name)}" data-tier="${escHtml(p.tier)}"`:'';
   const key=p.mercenary?`data-merc="${escHtml(p.name)}" data-tier="${escHtml(p.tier)}"`:`data-pid="${p.id}"${gone}`;
-  return `<div class="m-p${p.mvp?' top':''}" ${key}><div class="b">${mvpHtml}${vcHtml}</div>
+  const focus=focusId!=null&&!p.mercenary&&p.id===focusId?" focus":"";
+  return `<div class="m-p${p.mvp?' top':''}${focus}" ${key}><div class="b">${mvpHtml}${vcHtml}</div>
     <div class="n"><span class="mp-name">${hlName(p.name,q)}</span>${badgeTags}</div>
-    <div class="s"><span class="k">${nick?hlName(nick,q):''}</span><span class="t" style="color:${TIER_COLOR[p.tier]}">${p.tier}</span></div>
+    <div class="s"><span class="k">${nick?hlName(nick,q):''}</span><span class="t" style="--tc:${TIER_COLOR[p.tier]}">${p.tier}</span></div>
   </div>`;
 }
 /* ── 선수 상세 카드 (마우스 오버) ── */
@@ -1424,7 +1595,7 @@ document.addEventListener("mouseout",e=>{
 addEventListener("scroll",hidePlCard,{passive:true});
 addEventListener("resize",hidePlCard);
 
-let matchModeFilter="전체", matchSearchQ="";
+let matchModeFilter="전체", matchSearchQ="", matchPlayerFilter=null;
 $$(".match-mode-chip").forEach(btn=>btn.addEventListener("click",()=>{
   matchModeFilter=btn.dataset.mmode;
   $$(".match-mode-chip").forEach(b=>b.setAttribute("aria-pressed",b===btn));
@@ -1449,6 +1620,8 @@ function renderMatchList(){
   const all=$("#allMatches");all.innerHTML="";
   let list=S.matches;
   if(matchModeFilter!=="전체") list=list.filter(mt=>(mt.mode||'협곡')===matchModeFilter);
+  // 단원 한 명만 보기 — 이름이 아니라 번호로 걸러, 닉네임이 달라도 빠짐없이 잡힌다
+  if(matchPlayerFilter!=null) list=list.filter(mt=>matchSideOf(mt,matchPlayerFilter)!==null);
   if(matchSearchQ) list=list.filter(mt=>{
     // 화면에 닉네임이 보이므로 닉네임으로도 찾을 수 있게 한다
     return [...mt.blue,...mt.red].some(p=>{
@@ -1457,8 +1630,44 @@ function renderMatchList(){
       return !!(m&&(m.nicks||[]).some(n=>n.toLowerCase().includes(matchSearchQ)));
     });
   });
+  renderMatchPlayerBar(list);
   if(!list.length){all.innerHTML=`<div class="empty">조건에 맞는 내전 기록이 없습니다.</div>`;return}
-  list.forEach(mt=>all.appendChild(matchNode(mt,matchSearchQ)));
+  list.forEach(mt=>all.appendChild(matchNode(mt,matchSearchQ,matchPlayerFilter)));
+}
+
+/* ── 단원 한 명만 보기 ── 명단에서 카드를 누르면 여기로 넘어온다 */
+// 그 경기에서 이 단원이 어느 팀이었나 — 없으면 null
+function matchSideOf(mt,id){
+  if(mt.blue.some(p=>!p.mercenary&&p.id===id))return "blue";
+  if(mt.red.some(p=>!p.mercenary&&p.id===id))return "red";
+  return null;
+}
+function setMatchPlayer(id){
+  const m=memberById(id); if(!m)return;
+  matchPlayerFilter=+id;
+  renderMatchList();
+  switchView("matches");
+}
+function clearMatchPlayer(){
+  if(matchPlayerFilter==null)return;
+  matchPlayerFilter=null;
+  renderMatchList();
+}
+// 걸러진 목록 그대로 집계하므로, 모드·시즌·검색어까지 반영된 전적이 나온다
+function renderMatchPlayerBar(list){
+  const bar=$("#matchPlayerBar"); if(!bar)return;
+  if(matchPlayerFilter==null){bar.hidden=true;bar.innerHTML="";return}
+  const m=memberById(matchPlayerFilter);
+  if(!m){bar.hidden=true;bar.innerHTML="";matchPlayerFilter=null;return}
+  let w=0;
+  list.forEach(mt=>{ if(matchSideOf(mt,matchPlayerFilter)===(mt.blueWin?"blue":"red")) w++; });
+  const g=list.length, l=g-w;
+  const rec=g?`<span class="rec"><b>${g}전</b> ${w}승 ${l}패 · <b>${Math.round(w/g*100)}%</b></span>`
+             :`<span class="rec">이 조건에 맞는 기록이 없습니다</span>`;
+  bar.innerHTML=`<span class="who">${escHtml(m.name)} 전적만 보는 중</span>${rec}
+    <button type="button" class="x" id="matchPlayerClear">✕ 전체 보기</button>`;
+  bar.hidden=false;
+  $("#matchPlayerClear").addEventListener("click",clearMatchPlayer);
 }
 function renderMatches(){
   renderMatchList();
@@ -1511,7 +1720,7 @@ function renderRoster(){
       : mainL.map(l=>laneChip(l)).join("") + (subL.length?`<span class="arrow">›</span>`+subL.map(l=>laneChip(l,true)).join(""):"");
     const streakTxt = s.streak>0?`<span class="streak up">${s.streak}연승</span>`:s.streak<0?`<span class="streak down">${-s.streak}연패</span>`:'';
     const rec = s.g>=1 ? `<span class="rec num">${s.w}승 ${s.l}패 · ${Math.round(s.wr*100)}%</span> ${streakTxt}` : `<span>내전 기록 없음</span>`;
-    return `<div class="card" data-pid="${m.id}">
+    return `<div class="card" data-pid="${m.id}" role="button" tabindex="0" title="${escHtml(m.name)} 단원의 내전 전적 보기">
       <div class="tierstripe" style="background:${TIER_COLOR[m.tier]}"></div>
       <div class="card-top">
         <div class="who"><b>${m.name}</b><small>${m.age}세</small></div>
@@ -1745,20 +1954,19 @@ function renderUpdates(){
       ${u.updatedAt&&u.updatedAt!==u.createdAt?`<div class="edited">마지막 수정 ${updFmtDate(u.updatedAt)}</div>`:''}
     </article>`).join('');
 }
-/* 히어로 하단 — 최근 패치노트 3건 (고정글 우선, 최신순) */
+/* 히어로 하단 — 가장 최근에 올라온 패치노트 1건을 본문 전체로 (고정 여부와 무관하게 작성일 기준) */
 function renderHeroNotes(){
   const box=$("#heroNoteList"); if(!box) return;
-  const list=UPDATES.slice(0,3);
-  if(!list.length){ box.innerHTML='<div class="hn-empty">아직 올라온 패치노트가 없습니다.</div>'; return; }
-  box.innerHTML=list.map(u=>`
-    <div class="hn" data-go="updates" role="link" tabindex="0">
-      <div class="hn-meta">${u.pinned?'<span class="pin">고정</span>':''}${updIsNew(u)?'<span class="new">NEW</span>':''}<span>${updFmtDate(u.createdAt)}</span></div>
+  const u=UPDATES.reduce((a,b)=>!a||new Date(b.createdAt)>new Date(a.createdAt)?b:a,null);
+  if(!u){ box.innerHTML='<div class="hn-empty">아직 올라온 패치노트가 없습니다.</div>'; return; }
+  box.innerHTML=`
+    <article class="hn">
+      <div class="hn-meta">${updIsNew(u)?'<span class="new">NEW</span>':''}<span>${updFmtDate(u.createdAt)}</span></div>
       <b>${escHtml(u.title)}</b>
-      <p>${escHtml(String(u.content||'').replace(/^\s*[-*•]\s+/gm,'').replace(/\s+/g,' ').trim())||'내용 없음'}</p>
-    </div>`).join('');
+      <div class="content">${updRender(u.content)||'<p style="color:var(--ink-3)">내용 없음</p>'}</div>
+    </article>`;
 }
 document.addEventListener("click",e=>{ const t=e.target.closest&&e.target.closest('[data-go]'); if(t) switchView(t.dataset.go); });
-document.addEventListener("keydown",e=>{ if(e.key==='Enter'&&e.target.matches&&e.target.matches('.hn[data-go]')) switchView(e.target.dataset.go); });
 function updTabCount(){
   const c=$("#cUpd"); if(!c) return;
   const n=UPDATES.filter(updIsNew).length;
@@ -2002,6 +2210,20 @@ function switchView(v){
 }
 $("#nav").addEventListener("click",e=>{const t=e.target.closest(".tab");if(t)switchView(t.dataset.view)});
 $("#rsearch").addEventListener("input",e=>{searchQ=e.target.value.trim();renderRoster()});
+
+/* 명단 카드를 누르면 그 단원의 내전 기록만 걸러 보여준다 (⟳ 티어 갱신 버튼은 제외) */
+$("#roster").addEventListener("click",e=>{
+  if(e.target.closest(".tref"))return;
+  const card=e.target.closest(".card[data-pid]");
+  if(card)setMatchPlayer(+card.dataset.pid);
+});
+$("#roster").addEventListener("keydown",e=>{
+  if(e.key!=="Enter"&&e.key!==" ")return;
+  const card=e.target.closest&&e.target.closest(".card[data-pid]");
+  if(!card||e.target.closest(".tref"))return;
+  e.preventDefault();
+  setMatchPlayer(+card.dataset.pid);
+});
 
 /* theme */
 $("#themeBtn").addEventListener("click",()=>{
