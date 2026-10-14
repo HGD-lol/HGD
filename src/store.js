@@ -8,6 +8,9 @@ const { loadMembers, buildFromObj, toStoredMember, memberById, members, nextId, 
 let userMatches = [];
 let mvpVotes = new Map();  // matchId(string) → Map(voterId → mvpId) — MVP 투표 (mvp_votes 테이블)
 let hasVoteTable = true;
+let riotMatches = new Map();   // matchId → 압축 경기 레코드 (src/lib/duo.js compactMatch) — riot_matches 테이블
+let hasRiotTable = true;
+let riotSync = {};             // puuid → { lastAt, lastNew, error } — 마지막 동기화 결과(메모리)
 let pendingDraft = null;   // 내전 등록 화면에서 선택 중인 초안 (pending 테이블 1행)
 let seasons = [];
 let dashConfig = { title: '협곡단 내전 기록실', description: '단원 명단과 티어, 내전 전적을 한곳에서.', season: '2026 Split 2', matchRegistrationEnabled: true };
@@ -154,6 +157,19 @@ async function init() {
     console.warn('    ' + e.message);
   }
 
+  // 라이엇 실제 경기 캐시(듀오 통계) — 테이블이 없으면 메모리에서만 쌓이고 재시작하면 사라진다
+  try {
+    const rows = await sb.select('riot_matches', '', 'match_id,data', 'game_at.desc');
+    riotMatches = new Map();
+    for (const r of rows || []) {
+      if (r.data && r.data.id) riotMatches.set(String(r.match_id), r.data);
+    }
+  } catch (e) {
+    hasRiotTable = false;
+    console.warn('  ⚠ riot_matches 테이블을 읽지 못해 라이엇 경기 기록이 저장되지 않습니다. Supabase 에서 sql/riot_matches.sql 을 실행하세요.');
+    console.warn('    ' + e.message);
+  }
+
   // 대기 내전 — 선택 중인 초안 1건 (예전 데이터가 여러 건이면 최신 것만 쓴다)
   if (sbPending && sbPending.length > 0) {
     pendingDraft = fromDbPending(sbPending[0]);
@@ -293,6 +309,35 @@ function clearVotesFor(matchId) {
   if (hasVoteTable) dbWrite(() => sb.del('mvp_votes', `match_id=eq.${encodeURIComponent(key)}`));
   invalidate();
 }
+
+/* ── 라이엇 실제 경기 캐시 (듀오 통계) ──
+   레코드는 참가자 10명을 모두 담고 있어 특정 선수에 묶이지 않는다. anchor_puuid 는 누구 때문에
+   받아왔는지 기록용이고, 조회는 참가자 목록에 PUUID 가 있는지로 한다. */
+function riotMatchIds() { return new Set(riotMatches.keys()); }
+function riotMatchesWith(puuid) {
+  const out = [];
+  riotMatches.forEach((r) => { if ((r.participants || []).some((p) => p.puuid === puuid)) out.push(r); });
+  return out.sort((a, b) => (b.gameAt || 0) - (a.gameAt || 0));
+}
+function addRiotMatches(records, anchorPuuid) {
+  const fresh = records.filter((r) => r && r.id && !riotMatches.has(String(r.id)));
+  fresh.forEach((r) => riotMatches.set(String(r.id), r));
+  if (fresh.length && hasRiotTable) {
+    const rows = fresh.map((r) => ({
+      match_id: String(r.id),
+      anchor_puuid: anchorPuuid || null,
+      game_at: r.gameAt ? new Date(r.gameAt).toISOString() : null,
+      queue_id: r.queueId == null ? null : Number(r.queueId),
+      data: r,
+    }));
+    dbWrite(() => sb.upsert('riot_matches', rows));
+  }
+  return fresh.length;
+}
+function riotMatchCount() { return riotMatches.size; }
+function riotPersisted() { return hasRiotTable; }
+function getRiotSync(puuid) { return riotSync[puuid] || null; }
+function setRiotSync(puuid, info) { riotSync[puuid] = { ...(riotSync[puuid] || {}), ...info }; return riotSync[puuid]; }
 
 /* ── 매치 변경 ── */
 function addUserMatch(match) {
@@ -481,6 +526,7 @@ module.exports = {
   allMatches, stats, findMatch,
   addUserMatch, replaceUserMatch, deleteUserMatch,
   setVote, removeVote,
+  riotMatchIds, riotMatchesWith, addRiotMatches, riotMatchCount, riotPersisted, getRiotSync, setRiotSync,
   getPending, savePending, clearPending,
   getDashConfig, setDashConfig,
   editMember, addMember, removeMember, permanentDeleteMember, restoreMember, nicksPersisted,

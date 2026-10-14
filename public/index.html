@@ -762,6 +762,66 @@
     .mark small{display:none}
     .navlink{padding:0 8px}
   }
+
+  /* ============ 이윤성과의 듀오 (라이엇 실제 경기) ============ */
+  .duo-desc{color:var(--ink-3);font-size:13px;margin:-6px 0 16px;line-height:1.55}
+  .duo-desc b{color:var(--ink-2);font-weight:700}
+  .duo-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
+  .duo-tools .right{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--ink-3);white-space:nowrap}
+  .duo-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+  .duo-kpi{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px 16px;min-width:0}
+  .duo-kpi .k{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+  .duo-kpi .v{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-top:4px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .duo-kpi .v.gold{color:var(--gold-bright)}
+  .duo-kpi .v small{font-size:12px;font-weight:700;color:var(--ink-3);margin-left:4px}
+  .duo-kpi .s{font-size:11.5px;color:var(--ink-3);margin-top:3px;font-weight:600}
+  @media(max-width:900px){ .duo-kpis{grid-template-columns:1fr 1fr} }
+  #duoTable{min-width:1000px}
+  #duoTable tbody tr{cursor:pointer;transition:background .12s}
+  #duoTable tbody tr:hover{background:var(--surface-2)}
+  #duoTable tbody tr[aria-selected="true"]{background:color-mix(in srgb,var(--gold) 12%,transparent)}
+  #duoTable tbody td.l{text-align:left}
+  #duoTable .who{display:flex;align-items:center;gap:8px;min-width:0}
+  #duoTable .who b{font-size:13.5px;white-space:nowrap}
+  #duoTable .kda{font-variant-numeric:tabular-nums;white-space:nowrap}
+  #duoTable .kda b{font-weight:800}
+  #duoTable .kda small{display:block;font-size:10.5px;color:var(--ink-3);font-weight:600}
+  /* 재미용 호칭 배지 (DUO_TITLES) — 이름 왼쪽 위에 살짝 기울여 얹는다 */
+  .titled{position:relative;display:inline-block;padding-top:7px}
+  .duo-title{position:absolute;left:-6px;top:-3px;transform:rotate(-8deg);transform-origin:left bottom;pointer-events:none;
+    font-size:9.5px;font-weight:800;letter-spacing:.02em;padding:1px 5px;border-radius:5px;line-height:1.3;white-space:nowrap;
+    color:#fff;background:var(--red);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  .wl{display:inline-flex;gap:3px;align-items:center}
+  .wl i{display:inline-block;width:9px;height:9px;border-radius:2.5px;background:var(--line)}
+  .wl i.w{background:var(--good)} .wl i.l{background:var(--red)}
+  .champs{display:inline-flex;gap:4px;align-items:center}
+  .ch{width:22px;height:22px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);object-fit:cover;flex:0 0 auto;display:inline-block;vertical-align:middle}
+  .ch.lg{width:34px;height:34px;border-radius:9px}
+  .ch-fb{display:inline-grid;place-items:center;font-size:10px;font-weight:800;color:var(--ink-3)}
+  .duo-games{display:flex;flex-direction:column;gap:8px}
+  .duo-game{display:grid;grid-template-columns:5px 118px 1fr auto;gap:0 14px;align-items:center;
+    border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:10px 14px 10px 0;overflow:hidden}
+  .duo-game .bar{align-self:stretch;border-radius:12px 0 0 12px}
+  .duo-game.win .bar{background:var(--good)} .duo-game.lose .bar{background:var(--red)}
+  .duo-game .meta{min-width:0;font-size:11.5px;color:var(--ink-3);font-weight:600;line-height:1.45}
+  .duo-game .meta b{display:block;font-size:13px;font-weight:800;color:var(--ink)}
+  .duo-game.win .meta b{color:var(--good)} .duo-game.lose .meta b{color:var(--red)}
+  .duo-game .ppl{display:flex;flex-wrap:wrap;gap:6px 18px;min-width:0}
+  .duo-game .pl{display:inline-flex;align-items:center;gap:8px;min-width:0}
+  .duo-game .pl .t{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+  .duo-game .pl .t b{font-size:13px;font-weight:800;white-space:nowrap}
+  .duo-game .pl .t small{font-size:11px;color:var(--ink-3);font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .duo-game .pl.me .t b{color:var(--gold-bright)}
+  .duo-game .pl .t small .kd{color:var(--ink-2);font-weight:800}
+  .duo-game .vs{font-size:11px;color:var(--ink-3);font-weight:700;white-space:nowrap;text-align:right;line-height:1.5}
+  .duo-game .vs span{display:block}
+  .duo-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .duo-foot .err{font-size:11.5px;color:var(--red);font-weight:600}
+  @media(max-width:720px){
+    .duo-game{grid-template-columns:5px 1fr;gap:6px 12px}
+    .duo-game .ppl{grid-column:2} .duo-game .vs{grid-column:2;text-align:left}
+    .duo-game .vs span{display:inline;margin-right:8px}
+  }
 </style>
 </head>
 <body>
@@ -789,6 +849,7 @@
       <button class="tab" role="tab" aria-selected="false" data-view="matches">내전 기록 <span class="c" id="cMatch">0</span></button>
       <button class="tab" role="tab" aria-selected="false" data-view="rank">전적 순위</button>
       <button class="tab" role="tab" aria-selected="false" data-view="synergy">듀오 궁합</button>
+      <button class="tab" role="tab" aria-selected="false" data-view="duo">이윤성 듀오</button>
       <button class="tab tab-add" role="tab" aria-selected="false" data-view="add">＋ 내전 등록</button>
     </nav>
   </div>
@@ -987,6 +1048,32 @@
       </div>
     </div>
     <p style="color:var(--ink-3);font-size:12px;margin-top:12px">※ 용병은 매번 새로 등록되는 임시 선수라 조합 통계에서 제외됩니다.</p>
+
+  </section>
+
+  <!-- DUO (이윤성과의 듀오 · 라이엇 실제 경기) -->
+  <section class="view" id="view-duo" role="tabpanel">
+    <div class="sec-h"><span class="eyebrow">Riot match history</span><h2 style="font-size:22px" id="duoTitle">이윤성과의 듀오</h2><div class="rule"></div></div>
+    <p class="duo-desc" id="duoDesc">라이엇 전적에서 <b>어나니머스#kali</b> 의 최근 경기를 받아, 같은 팀에 있었던 단원별로 승률과 KDA 를 모았습니다. 내전이 아닌 실제 솔랭·자랭·일반·칼바람 기록입니다.</p>
+    <div class="duo-tools">
+      <div class="chips" id="duoGroupChips">
+        <button class="chip duo-group-chip" data-group="all" aria-pressed="true">전체</button>
+        <button class="chip duo-group-chip" data-group="ranked" aria-pressed="false">랭크</button>
+      </div>
+      <div class="right"><span id="duoNote">불러오는 중…</span><button class="soloref" id="duoRefBtn" title="라이엇에서 최근 경기 받아오기" aria-label="라이엇 경기 갱신">⟳</button></div>
+    </div>
+    <div class="duo-kpis" id="duoKpis"></div>
+    <div class="tablewrap"><div class="tscroll"><table id="duoTable"></table></div></div>
+    <div class="panel" style="margin-top:16px">
+      <h3><span class="dot"></span> <span class="htitle" id="duoGamesTitle">최근 듀오 경기</span><span class="panel-note" id="duoGamesNote"></span></h3>
+      <div class="duo-games" id="duoGames"></div>
+      <div class="duo-foot">
+        <button class="morebtn" id="duoMoreBtn" hidden>＋ 더 보기</button>
+        <span class="err" id="duoErr"></span>
+      </div>
+    </div>
+    <p style="color:var(--ink-3);font-size:12px;margin-top:12px">※ 단원 매칭은 명단에 등록된 닉네임#태그(부계정 포함) 또는 티어 조회로 받아둔 PUUID 기준입니다. 명단에 없는 계정으로 뛴 경기는 잡히지 않습니다. 3분 안에 끝난 다시하기 경기는 제외.</p>
+    
   </section>
 
   <!-- UPDATES (업데이트 게시판) -->
@@ -1841,6 +1928,204 @@ function fillSynMembers(){
   if(cur)sel.value=cur;
 }
 
+/* ========== 이윤성과의 듀오 (라이엇 실제 경기) ========== */
+let duoGroup="all", duoPartner=null, duoData=null, duoShown=10, duoAutoSynced=false, duoBusy=false;
+let duoSortKey="games", duoSortDir=-1;   // 단원별 표 정렬 — 기본: 경기 수 많은 순
+const DUO_COLS=[
+  {k:"pos",label:"#",cls:"l",sort:false},
+  {k:"name",label:"단원",cls:"l",sort:true},
+  {k:"games",label:"경기",sort:true},
+  {k:"wins",label:"승",sort:true},
+  {k:"losses",label:"패",sort:true},
+  {k:"winrate",label:"승률",sort:true},
+  {k:"streak",label:"최근",cls:"l",sort:true},
+  {k:"meKda",label:"{me} KDA",sort:true},
+  {k:"partnerKda",label:"단원 KDA",sort:true},
+  {k:"meCs",label:"{me} CS",sort:true},
+  {k:"partnerCs",label:"단원 CS",sort:true},
+  {k:"champs",label:"단원 챔피언",cls:"l",sort:false},
+  {k:"pos2",label:"포지션",cls:"l",sort:false},
+  {k:"lastAt",label:"마지막",sort:true},
+];
+/* 정렬 키 → 비교값 */
+function duoSortVal(r,k){
+  switch(k){
+    case "meKda": return r.me.perfect?Infinity:r.me.ratio;
+    case "partnerKda": return r.partner.perfect?Infinity:r.partner.ratio;
+    case "meCs": return r.me.avgCs||0;
+    case "partnerCs": return r.partner.avgCs||0;
+    case "lastAt": return r.lastAt?new Date(r.lastAt).getTime():0;
+    case "name": return r.name;
+    default: return r[k]==null?0:r[k];
+  }
+}
+function duoSorted(rows){
+  return rows.slice().sort((a,b)=>{
+    const av=duoSortVal(a,duoSortKey),bv=duoSortVal(b,duoSortKey);
+    let c=typeof av==="string"?av.localeCompare(bv,"ko"):(av-bv);
+    if(Number.isNaN(c))c=0;
+    // 동률이면 경기 수 → 승률 → 이름으로 안정 정렬
+    return c*duoSortDir||(b.games-a.games)||(b.winrate-a.winrate)||a.name.localeCompare(b.name,"ko");
+  });
+}
+const DUO_PAGE=10;
+const DUO_GROUP_LABEL={all:'전체',ranked:'랭크',normal:'일반',aram:'칼바람',custom:'사용자 설정',other:'기타'};
+/* 챔피언 아이콘 — CommunityDragon. 못 받으면 글자 두 개로 대신한다 */
+function champImg(name,lg){
+  const n=escHtml(name||'');
+  const cls=`ch${lg?' lg':''}`;
+  if(!n) return `<span class="${cls} ch-fb">?</span>`;
+  return `<img class="${cls}" alt="${n}" title="${n}" loading="lazy" src="https://cdn.communitydragon.org/latest/champion/${encodeURIComponent(name)}/square" data-fb="${n.slice(0,2)}" onerror="duoImgFallback(this)">`;
+}
+function duoImgFallback(img){
+  const sp=document.createElement('span'); sp.className=img.className+' ch-fb'; sp.title=img.title; sp.textContent=img.dataset.fb||'?';
+  img.replaceWith(sp);
+}
+const fmtDur=sec=>{const m=Math.floor((sec||0)/60),s2=(sec||0)%60;return `${m}:${String(s2).padStart(2,'0')}`};
+const fmtGameAt=iso=>{const d=new Date(iso);if(isNaN(d))return '';const now=new Date();const y=d.getFullYear()!==now.getFullYear()?`${d.getFullYear()}.`:'';return `${y}${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`};
+const fmtAgo=iso=>{if(!iso)return '';const ms=Date.now()-new Date(iso).getTime();const d=Math.floor(ms/86400000);if(d>=1)return d>=30?`${Math.floor(d/30)}달 전`:`${d}일 전`;const h=Math.floor(ms/3600000);if(h>=1)return `${h}시간 전`;const m=Math.floor(ms/60000);return m>=1?`${m}분 전`:'방금'};
+const wlDots=arr=>`<span class="wl" title="${(arr||[]).join(' ')}">${(arr||[]).slice(0,10).map(x=>`<i class="${x==='W'?'w':'l'}"></i>`).join('')}</span>`;
+const kdaCell=b=>`<span class="kda"><b style="color:${b.perfect?'var(--gold-bright)':b.ratio>=4?'var(--good)':b.ratio<2?'var(--red)':'var(--ink)'}">${b.perfect?'Perfect':b.ratio.toFixed(2)}</b><small>${b.avgK} / ${b.avgD} / ${b.avgA}</small></span>`;
+const csCell=b=>`<span class="kda"><b>${b.avgCs||0}</b><small>분당 ${(b.csPerMin||0).toFixed(1)}</small></span>`;
+/* 재미 삼아 붙이는 호칭 — 단원 이름 → 호칭. 듀오 페이지에서만 쓴다 */
+const DUO_TITLES={'정기용':'배신자'};
+/* 이름 HTML 을 받아 호칭이 있으면 왼쪽 위에 배지를 얹어 돌려준다 */
+const withTitle=(name,html)=>DUO_TITLES[name]?`<span class="titled"><span class="duo-title">${escHtml(DUO_TITLES[name])}</span>${html}</span>`:html;
+const multiTxt=m=>m==='penta'?'펜타킬':m==='quadra'?'쿼드라킬':m==='triple'?'트리플킬':'';
+
+function duoSetNote(d){
+  const n=$("#duoNote"); const s=(d&&d.sync)||{};
+  if(!d){n.textContent='불러오는 중…';return}
+  const parts=[];
+  if(s.lastAt)parts.push(`갱신 ${fmtFetched(s.lastAt)}`); else if(!d.cached)parts.push('미조회');
+  if(s.remaining)parts.push(`${s.remaining}경기 더 받을 수 있음`);
+  if(!d.persisted)parts.push('(DB 미연결 · 재시작 시 사라짐)');
+  n.textContent=parts.join(' · ');
+}
+function renderDuo(){
+  const d=duoData; if(!d)return;
+  const me=d.anchor?d.anchor.name:'이윤성';
+  $("#duoTitle").textContent=`${me}과의 듀오`;
+  if(d.anchor)$("#duoDesc").innerHTML=`라이엇 전적에서 <b>${escHtml(d.anchor.nick)}</b> 의 최근 경기를 받아, 같은 팀에 있었던 단원별로 승률과 KDA 를 모았습니다. 내전이 아닌 실제 솔랭·자랭·일반·칼바람 기록입니다.`;
+  duoSetNote(d);
+  const sm=d.summary||{};
+  const pct=(w,g)=>g?`${Math.round(w/g*100)}%`:'—';
+  const top=d.partners&&d.partners[0];
+  const best=(d.partners||[]).filter(p=>p.games>=3).sort((a,b)=>b.winrate-a.winrate||b.games-a.games)[0];
+  $("#duoKpis").innerHTML=`
+    <div class="duo-kpi"><div class="k">단원과 함께한 경기</div><div class="v gold">${sm.duoGames||0}<small>${sm.duoWins||0}승 ${(sm.duoGames||0)-(sm.duoWins||0)}패</small></div><div class="s">${duoGroup==='all'?'전체 큐':DUO_GROUP_LABEL[duoGroup]} · ${escHtml(me)} 기준</div></div>
+    <div class="duo-kpi"><div class="k">함께할 때 승률</div><div class="v" style="color:${sm.duoGames?wrCol(sm.duoWinrate):'var(--ink)'}">${pct(sm.duoWins,sm.duoGames)}</div><div class="s">함께한 단원 ${sm.partnersCount||0}명</div></div>
+    <div class="duo-kpi"><div class="k">가장 많이 함께한 단원</div><div class="v">${top?escHtml(top.name):'—'}</div><div class="s">${top?`${top.games}경기 · ${Math.round(top.winrate*100)}%`:'아직 없음'}</div></div>
+    <div class="duo-kpi"><div class="k">찰떡 듀오</div><div class="v">${best?escHtml(best.name):'—'}</div><div class="s">${best?`${best.games}경기 · ${Math.round(best.winrate*100)}% (3경기 이상)`:'3경기 이상 함께한 단원이 없음'}</div></div>`;
+
+  const rows=duoSorted(d.partners||[]);
+  const thead=`<thead><tr>${DUO_COLS.map(c=>{
+    const active=c.k===duoSortKey;
+    const label=c.label.replace('{me}',escHtml(me));
+    return `<th class="${c.cls||''} ${c.sort?'sortable':''}" data-k="${c.k}" ${c.k==='pos'?'style="width:34px"':''} ${active?`aria-sort="${duoSortDir<0?'descending':'ascending'}"`:''}>${label}${c.sort?` <span class="ar">${active?(duoSortDir<0?'▼':'▲'):'▲'}</span>`:''}</th>`;
+  }).join('')}</tr></thead>`;
+  const tbody=`<tbody>${rows.map((r,i)=>`<tr data-pid="${r.id}" aria-selected="${duoPartner===r.id}" title="누르면 이 단원과 함께한 경기만 봅니다">
+    <td class="l" style="color:var(--ink-3);font-weight:800">${i+1}</td>
+    <td class="l"><span class="who">${withTitle(r.name,`<b>${escHtml(r.name)}</b>`)}${tierBadge(r.tier)}${r.streak>=3?`<span class="streak up">${r.streak}연승</span>`:r.streak<=-3?`<span class="streak down">${-r.streak}연패</span>`:''}</span></td>
+    <td><b>${r.games}</b></td><td style="color:var(--good)">${r.wins}</td><td style="color:var(--red)">${r.losses}</td>
+    <td><b style="color:${wrCol(r.winrate)}">${Math.round(r.winrate*100)}%</b></td>
+    <td class="l">${wlDots(r.recent)}</td>
+    <td>${kdaCell(r.me)}</td><td>${kdaCell(r.partner)}</td>
+    <td>${csCell(r.me)}</td><td>${csCell(r.partner)}</td>
+    <td class="l"><span class="champs">${(r.champs||[]).map(c=>champImg(c.name)).join('')}</span></td>
+    <td class="l" style="font-size:12px;color:var(--ink-2)">${(r.pos||[]).map(p=>escHtml(p.name)).join(' · ')||'—'}</td>
+    <td style="font-size:12px;color:var(--ink-3)" title="${r.lastAt?fmtGameAt(r.lastAt):''}">${fmtAgo(r.lastAt)}</td>
+  </tr>`).join('')}</tbody>`;
+  const tbl=$("#duoTable");
+  tbl.innerHTML=rows.length?thead+tbody:`<tbody><tr><td class="l" style="padding:28px;text-align:center;color:var(--ink-3)">${d.cached?'저장된 경기 중 단원과 같은 팀이었던 기록이 없습니다.':'아직 받아온 경기가 없습니다. ⟳ 를 눌러 라이엇에서 불러와 주세요.'}</td></tr></tbody>`;
+  renderDuoGames();
+}
+function renderDuoGames(){
+  const d=duoData; if(!d)return;
+  let list=d.games||[];
+  const partner=duoPartner!=null?(d.partners||[]).find(p=>p.id===duoPartner):null;
+  if(partner)list=list.filter(g=>g.allies.some(a=>a.id===duoPartner));
+  $("#duoGamesTitle").textContent=partner?`${partner.name}와 함께한 경기`:'최근 듀오 경기';
+  $("#duoGamesNote").textContent=list.length?`${list.length}경기${partner?' · 이름을 다시 누르면 전체':''}`:'';
+  const me=d.anchor?d.anchor.name:'이윤성';
+  const shown=list.slice(0,duoShown);
+  const pl=(p,isMe)=>`<span class="pl${isMe?' me':''}">${champImg(p.champ,true)}<span class="t">${isMe?`<b>${escHtml(me)}</b>`:withTitle(p.name,`<b>${escHtml(p.name)}</b>`)}<small><span class="kd">${p.k} / ${p.d} / ${p.a}</span> · ${p.d===0?'Perfect':p.kda.toFixed(2)}${p.pos?` · ${escHtml(p.pos)}`:''} · CS ${p.cs||0}${p.multi?` · ${multiTxt(p.multi)}`:''}</small></span></span>`;
+  $("#duoGames").innerHTML=shown.map(g=>`<div class="duo-game ${g.win?'win':'lose'}">
+    <span class="bar"></span>
+    <div class="meta"><b>${g.win?'승리':'패배'}</b>${escHtml(g.queue)}<br>${fmtGameAt(g.gameAt)} · ${fmtDur(g.dur)}</div>
+    <div class="ppl">${pl(g.me,true)}${g.allies.map(a=>pl(a,false)).join('')}</div>
+    <div class="vs">${g.enemies.length?`<span>상대팀 단원</span>${g.enemies.map(e=>`<span>${escHtml(e.name)} (${escHtml(e.champ)} ${e.k}/${e.d}/${e.a})</span>`).join('')}`:''}</div>
+  </div>`).join('')||`<div class="empty" style="padding:24px;font-size:13px">${d.cached?'해당하는 경기가 없습니다.':'아직 받아온 경기가 없습니다.'}</div>`;
+  const btn=$("#duoMoreBtn");
+  if(list.length<=duoShown){btn.hidden=list.length<=DUO_PAGE;btn.textContent='▲ 접기';btn.dataset.act='less';}
+  else{btn.hidden=false;btn.textContent=`＋ ${Math.min(DUO_PAGE,list.length-duoShown)}경기 더 보기 (${shown.length}/${list.length})`;btn.dataset.act='more';}
+}
+function duoQuery(){return duoGroup&&duoGroup!=='all'?`?group=${encodeURIComponent(duoGroup)}`:''}
+async function loadDuo(){
+  try{
+    const d=await jget(`/api/duo${duoQuery()}`);
+    duoData=d; renderDuo();
+    // 30분 넘게 안 받아왔으면 한 세션에 한 번 자동으로 라이엇을 두드린다
+    if(d.sync&&d.sync.stale&&!d.sync.inProgress&&!duoAutoSynced){duoAutoSynced=true;syncDuo({auto:true});}
+  }catch(ex){
+    console.error(ex);
+    const msg=(ex.payload&&ex.payload.messages&&ex.payload.messages[0])||ex.message;
+    $("#duoNote").textContent='불러오기 실패';
+    $("#duoErr").textContent=msg;
+  }
+}
+async function syncDuo({auto=false}={}){
+  if(duoBusy)return; duoBusy=true;
+  const btn=$("#duoRefBtn"); btn.disabled=true; btn.classList.add("spin");
+  $("#duoErr").textContent='';
+  $("#duoNote").textContent='라이엇에서 경기 받아오는 중…';
+  try{
+    // 한 번에 40경기 — 남은 게 있으면 바로 한 번 더 (2분 100회 앱 한도 안에서 두 번까지만)
+    for(let round=0;round<2;round++){
+      const j=await jsend('POST',`/api/duo/sync${duoQuery()}`);
+      duoData=j; renderDuo();
+      const r=j.result||{};
+      if(r.skipped){ if(!auto)toast(`방금 갱신했어요. ${r.retryAfterSec}초 뒤에 다시 시도해 주세요.`); break; }
+      if(r.stopped){ $("#duoErr").textContent=r.stopped; break; }
+      if(!r.remaining)break;
+      $("#duoNote").textContent=`${r.added}경기 저장 · ${r.remaining}경기 더 받는 중…`;
+    }
+    const s=(duoData&&duoData.sync)||{};
+    if(s.remaining&&!$("#duoErr").textContent)$("#duoErr").textContent=`아직 ${s.remaining}경기가 더 있습니다. 잠시 뒤 ⟳ 를 다시 눌러 이어서 받아 주세요.`;
+  }catch(ex){
+    const msg=(ex.payload&&ex.payload.messages&&ex.payload.messages[0])||ex.message;
+    $("#duoErr").textContent=msg; if(!auto)toast(msg);
+    if(duoData)duoSetNote(duoData); else $("#duoNote").textContent='갱신 실패';
+  }finally{
+    duoBusy=false; btn.disabled=false; btn.classList.remove("spin");
+  }
+}
+$("#duoRefBtn").addEventListener("click",()=>syncDuo());
+$$(".duo-group-chip").forEach(btn=>btn.addEventListener("click",()=>{
+  if(duoGroup===btn.dataset.group)return;
+  duoGroup=btn.dataset.group; duoShown=DUO_PAGE;
+  $$(".duo-group-chip").forEach(c=>c.setAttribute("aria-pressed",String(c===btn)));
+  loadDuo();
+}));
+$("#duoTable").addEventListener("click",e=>{
+  const th=e.target.closest("th.sortable");
+  if(th){
+    const k=th.dataset.k;
+    if(k===duoSortKey)duoSortDir*=-1;else{duoSortKey=k;duoSortDir=k==="name"?1:-1;}
+    renderDuo(); return;
+  }
+  const tr=e.target.closest("tr[data-pid]"); if(!tr)return;
+  const id=+tr.dataset.pid;
+  duoPartner=duoPartner===id?null:id; duoShown=DUO_PAGE;
+  $$("#duoTable tr[data-pid]").forEach(r=>r.setAttribute("aria-selected",String(+r.dataset.pid===duoPartner)));
+  renderDuoGames();
+  if(duoPartner!=null)$("#duoGames").closest(".panel").scrollIntoView({behavior:"smooth",block:"start"});
+});
+$("#duoMoreBtn").addEventListener("click",()=>{
+  duoShown=$("#duoMoreBtn").dataset.act==='less'?DUO_PAGE:duoShown+DUO_PAGE;
+  renderDuoGames();
+});
+
 /* ========== LEADERBOARD ========== */
 let rankMode="전체";
 let rankModeStats=null; // null = use S.stats (전체)
@@ -2203,6 +2488,7 @@ document.addEventListener("click",e=>{
 function switchView(v){
   if(v==="add")ensureAddModeStats();
   if(v==="synergy"){fillSynMembers();renderSynergy();}
+  if(v==="duo")loadDuo();
   if(v==="updates")loadUpdates(true);
   $$(".tab").forEach(t=>t.setAttribute("aria-selected",t.dataset.view===v));
   $$(".view").forEach(s=>s.classList.toggle("on",s.id==="view-"+v));

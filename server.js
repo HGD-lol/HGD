@@ -20,6 +20,7 @@ const auctionRoute = require('./src/routes/auction');
 const synergyRoute = require('./src/routes/synergy');
 const badgesRoute = require('./src/routes/badges');
 const updatesRoute = require('./src/routes/updates');
+const duoRoute = require('./src/routes/duo');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -52,6 +53,8 @@ app.get('/api', (_req, res) => {
       'GET /api/scores': '내전 점수 순위',
       'GET /api/synergy': '듀오/맞대결 조합 통계',
       'GET /api/synergy/:id': '단원별 궁합표',
+      'GET /api/duo': '라이엇 실제 경기 기반 듀오 통계 (기준 단원과 같은 팀이었던 단원별 승률·KDA)',
+      'POST /api/duo/sync': '라이엇에서 기준 단원의 최근 경기 받아오기',
       'GET /api/badges': '기록 배지',
       'GET /api/updates': '업데이트 게시판',
       'POST /api/balance': '팀 밸런서',
@@ -195,6 +198,7 @@ app.use('/api/auction', auctionRoute);
 app.use('/api/synergy', synergyRoute);
 app.use('/api/badges', badgesRoute);
 app.use('/api/updates', updatesRoute);
+app.use('/api/duo', duoRoute);
 
 app.get('/health', (_req, res) => res.json({ ok: true, uptime: process.uptime() }));
 

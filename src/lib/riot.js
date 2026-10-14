@@ -1,12 +1,14 @@
 'use strict';
 
 /*
- * 라이엇 API — 계정(PUUID) 조회와 솔로랭크 티어 조회만 쓴다.
+ * 라이엇 API — 계정(PUUID) 조회, 솔로랭크 티어 조회, 경기 기록(match-v5) 조회를 쓴다.
  *   PUUID 없음  → GET {region}/riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}
  *   티어 조회   → GET {platform}/lol/league/v4/entries/by-puuid/{puuid}  (RANKED_SOLO_5x5 만 사용)
+ *   경기 목록   → GET {region}/lol/match/v5/matches/by-puuid/{puuid}/ids  (최신순, 한 번에 최대 100개)
+ *   경기 상세   → GET {region}/lol/match/v5/matches/{matchId}           (참가자 10명의 KDA·챔피언·팀)
  *
  * 레이트 리밋 — 응답 헤더로 확인한 값:
- *   x-method-rate-limit  account-v1 1000:60 / league-v4 20000:10,1200000:600  (넉넉하다)
+ *   x-method-rate-limit  account-v1 1000:60 / league-v4 20000:10,1200000:600 / match-v5 2000:10  (넉넉하다)
  *   x-app-rate-limit     100:120,20:1                                          (이게 실질 상한)
  * 메서드 한도는 크지만 앱 한도(1초 20회 · 2분 100회)가 모든 호출에 함께 걸린다.
  * 그래서 호출 전에 아래 limiter 가 버킷을 보고 기다린다 — 한도 스펙은 헤더에서 읽어 스스로 맞춘다.
@@ -166,10 +168,27 @@ async function refreshAccounts(accounts) {
   return { accounts: list, errors };
 }
 
+/*
+ * PUUID → 경기 id 목록(최신순). start/count 로 페이지를 넘긴다(count 최대 100).
+ * startTime(초) 을 주면 그 이후 경기만, queue 를 주면 그 큐만 받는다.
+ */
+async function fetchMatchIds(puuid, { start = 0, count = 100, startTime = null, queue = null } = {}) {
+  const q = new URLSearchParams({ start: String(Math.max(0, start)), count: String(Math.min(100, Math.max(1, count))) });
+  if (startTime) q.set('startTime', String(Math.floor(startTime)));
+  if (queue != null) q.set('queue', String(queue));
+  const list = await riotGet(REGION, `/lol/match/v5/matches/by-puuid/${encodeURIComponent(puuid)}/ids?${q}`);
+  return Array.isArray(list) ? list : [];
+}
+
+/* 경기 id → match-v5 원본 (없는 경기면 null) */
+async function fetchMatch(matchId) {
+  return riotGet(REGION, `/lol/match/v5/matches/${encodeURIComponent(matchId)}`);
+}
+
 /* 지금 남은 호출 여유 — 화면에 굳이 쓰진 않지만 진단할 때 본다 */
 function rateStatus() {
   const now = Date.now();
   return buckets.map((b) => ({ limit: b.limit, window: b.window, used: b.hits.filter((t) => now - t < b.window * 1000).length }));
 }
 
-module.exports = { HAS_KEY, PLATFORM, REGION, TIER_KO, parseRiotId, fetchPuuid, fetchSoloRank, refreshAccount, refreshAccounts, rateStatus };
+module.exports = { HAS_KEY, PLATFORM, REGION, TIER_KO, parseRiotId, fetchPuuid, fetchSoloRank, refreshAccount, refreshAccounts, fetchMatchIds, fetchMatch, rateStatus, riotError };

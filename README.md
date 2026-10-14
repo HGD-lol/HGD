@@ -9,7 +9,7 @@
 
 | 페이지 | 경로 | 내용 |
 |---|---|---|
-| 메인 | `/` | 대시보드·명단·기록·순위(점수)·밸런서·내전 등록 |
+| 메인 | `/` | 대시보드·명단·기록·순위(점수)·듀오 궁합·이윤성 듀오·밸런서·내전 등록 |
 | 관리자 | `/admin.html` | 로그인 후 단원 관리 + 내전 기록 수정/삭제/추가 |
 | 팀 경매 | `/auction.html` | 실시간 다기기 경매(방 생성/참여, 입찰) |
 
@@ -26,6 +26,8 @@ npm run dev      # 파일 변경 감지 (node --watch)
 - `ADMIN_PASSWORD` — 관리자 비밀번호 (미설정 시 개발용 기본값 `hyeopgok`)
 - `SESSION_SECRET` — 세션 토큰 서명 키 (운영 시 반드시 설정)
 - `ROSTER_SHEET_ID` / `ROSTER_SHEET_GID` — 로스터 시트 지정
+- `RIOT_API_KEY` — 라이엇 API 키 (티어 조회 · 듀오 섹션 경기 기록)
+- `DUO_ANCHOR` — 듀오 섹션 기준 계정 닉네임 (기본 `어나니머스#kali`, 명단에 있어야 함) · `DUO_ID_PAGES`(기본 5) · `DUO_DETAIL_BUDGET`(기본 40)
 
 ```bash
 # 예 (Windows PowerShell)
@@ -60,6 +62,26 @@ $env:ADMIN_PASSWORD="비밀번호"; $env:SESSION_SECRET="랜덤문자열"; npm s
   - 저장소는 Supabase `mvp_votes` 테이블 — 최초 1회 [`sql/mvp_votes.sql`](sql/mvp_votes.sql) 을 SQL Editor 에서 실행. 테이블이 없으면 부팅 로그에 경고가 뜨고 메모리에서만 동작(재시작하면 표가 사라짐).
   - 신원은 `localStorage` 자기 신고라 남의 이름으로 투표하는 걸 기술적으로 막지는 않는다(동아리 규모 전제). 경기를 삭제하면 그 경기의 표도 같이 지운다.
 
+- **이윤성과의 듀오 (라이엇 실제 경기)**: 헤더의 `이윤성 듀오` 탭(독립 페이지). 내전 기록이 아니라 **라이엇 match-v5 전적**을 받아,
+  기준 계정(`어나니머스#kali`, 환경변수 `DUO_ANCHOR` 로 변경)의 최근 경기에서 **같은 팀에 있었던 단원**을 찾아 단원별 경기수·승/패·승률·
+  최근 10경기 결과·현재 연승/연패·이윤성 KDA·단원 KDA·평균 CS(분당 CS 포함, 양쪽)·단원이 자주 쓴 챔피언·포지션·마지막 경기 시각을 표로 보여준다.
+  열 제목(단원·경기·승·패·승률·최근(연승/연패)·KDA·CS·마지막)을 누르면 그 열로 정렬되고 다시 누르면 방향이 바뀐다(기본: 경기 수 많은 순, Perfect KDA 는 최상위).
+  위에는 단원과 함께한 경기(승/패), 함께할 때 승률·함께한 단원 수, 가장 많이 함께한 단원, 찰떡 듀오(3경기 이상 최고 승률) 타일이 있고(단원 없이 뛴 경기는 화면에 내지 않는다), 표의 이름을 누르면 아래
+  `최근 듀오 경기` 목록이 그 단원과 함께한 경기만으로 걸러진다(챔피언 아이콘·KDA·포지션·멀티킬, 상대팀에 있던 단원도 표시).
+  큐 칩은 `전체`/`랭크`(솔랭+자랭) 두 개만 둔다(API 의 `group` 파라미터는 normal/aram/custom/other 도 그대로 받는다). 3분 안에 끝난 다시하기 경기는 승패에서 뺀다.
+  - 단원 매칭: 참가자 `puuid` 가 명단 계정의 PUUID 와 같거나, `riotIdGameName#riotIdTagline` 이 명단 닉네임(부계정 포함, 대소문자·공백 무시)과 같으면 그 단원.
+    둘 다 아니면 외부인으로 집계에서 빠진다(API 응답의 `frequentOutsiders` 에 2경기 이상 같은 팀이었던 미등록 계정이 남아 있지만 화면에는 표시하지 않는다).
+  - 받아오기: 섹션의 `⟳`(누구나) → `POST /api/duo/sync`. 한 번에 **경기 id 최대 500개(100개씩 5호출) + 경기 상세 40건**만 받고
+    남은 수(`remaining`)를 돌려주므로 화면은 남은 게 있으면 바로 한 번 더(총 2라운드), 그래도 남으면 `⟳ 를 다시 눌러 이어서` 안내를 띄운다.
+    id 목록은 10분간 캐시해 이어받기 라운드는 첫 페이지 1호출만 쓴다. 앱 한도(2분 100회)에 걸리면(429) 그 지점에서 멈추고 받은 것까지 저장한다.
+    새 경기가 없었던 동기화 뒤 2분은 라이엇을 다시 부르지 않는다(관리자 `?force=1`). 마지막 동기화가 30분 넘게 지났으면 탭을 열 때 한 번 자동으로 받아온다.
+    기준 계정에 PUUID 가 없으면 account-v1 로 받아 단원 계정에 저장한다.
+  - 저장소: Supabase `riot_matches` — 최초 1회 [`sql/riot_matches.sql`](sql/riot_matches.sql) 을 SQL Editor 에서 실행.
+    경기 하나를 참가자 10명의 `{puuid, riotId, champ, teamId, win, k, d, a, pos, lvl, cs, gold, dmg, vision, multi}` 로 압축해(≈3KB, 원본 ≈80KB) `data`(jsonb) 에 넣는다.
+    테이블이 없으면 부팅 로그에 경고가 뜨고 메모리에서만 동작(재시작하면 다시 받아야 한다). 레코드는 특정 선수에 묶이지 않아 나중에 다른 단원 기준으로도 재사용할 수 있다.
+  - API: `GET /api/duo?group=ranked|normal|aram|custom|other` → `{ anchor, cached, persisted, sync:{lastAt,inProgress,stale,remaining,error}, summary, partners[], games[], frequentOutsiders[] }`
+    · `POST /api/duo/sync` → 같은 본문 + `result:{skipped, added, remaining, errors[], stopped}`. 코드: `src/lib/duo.js`(압축·집계), `src/routes/duo.js`(동기화·예산), `src/lib/riot.js`(`fetchMatchIds`/`fetchMatch`).
+
 ## 데이터 출처 (라이브)
 
 단원 명단은 서버 부팅 시 **협곡단 티어표 Google Sheets** 에서 CSV 로 직접 가져옵니다.
@@ -77,6 +99,8 @@ $env:ADMIN_PASSWORD="비밀번호"; $env:SESSION_SECRET="랜덤문자열"; npm s
 
 - PUUID 가 없는 계정: `GET {region}/riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}` 로 받아서 저장
 - 티어: `GET {platform}/lol/league/v4/entries/by-puuid/{puuid}` → `RANKED_SOLO_5x5` 만 사용(자유랭크는 버린다). 언랭이면 `tier: '언랭'`
+- 경기 기록(듀오 섹션): `GET {region}/lol/match/v5/matches/by-puuid/{puuid}/ids?start=&count=100` → `GET {region}/lol/match/v5/matches/{matchId}`.
+  메서드 한도 `2000:10` 으로 넉넉하지만 앱 한도(2분 100회)를 같이 쓰므로 `src/routes/duo.js` 가 한 번에 받는 양을 제한한다
 - 라이엇 티어(`DIAMOND`)는 앱 표기(`다이아`)로 변환해서 저장하고, 마스터 이상은 세부 등급을 버린다
 - 레이트 리밋 — 응답 헤더로 확인한 실제 값
   - `x-method-rate-limit`: account-v1 `1000:60`, league-v4 `20000:10,1200000:600` (넉넉함)
@@ -163,6 +187,9 @@ $env:ADMIN_PASSWORD="비밀번호"; $env:SESSION_SECRET="랜덤문자열"; npm s
 | PUT | `/api/matches/:id` | 내전 수정 (관리자) |
 | DELETE | `/api/matches/:id` | 내전 삭제 (관리자) |
 | GET | `/api/stats` | 전적 순위 (`?minGames=3&sort=wr|score|streak&order=`) |
+| GET | `/api/synergy` · `/api/synergy/:id` | 내전 기반 듀오/맞대결 조합 통계 (`?minGames=&mode=&season=`) |
+| GET | `/api/duo` | 라이엇 실제 경기 기반 듀오 통계 — 기준 단원과 같은 팀이었던 단원별 승률·KDA (`?group=ranked|normal|aram|custom|other`) |
+| POST | `/api/duo/sync` | 라이엇에서 기준 단원의 최근 경기 받아오기 (공개, 호출 예산·쿨다운, 관리자 `?force=1`) |
 | GET | `/api/scores` | 단원 자체 점수 순위 |
 | POST | `/api/balance` | 팀 밸런서 |
 | POST | `/api/admin/login` · `logout` · `GET me` | 관리자 인증 |
@@ -225,14 +252,18 @@ src/
     stats.js              전적 집계 + 연승/연패 스트릭
     scoring.js            단원 자체 점수 계산
     balancer.js           팀 밸런싱 알고리즘
+    riot.js               라이엇 API (계정 PUUID · 솔로랭크 · match-v5 경기 기록 · 레이트 리밋)
+    duo.js                라이엇 경기 압축 레코드 + 듀오 집계 (이윤성과의 듀오)
     sample.js             결정론적 샘플 전적 생성
     auth.js               관리자 비밀번호 + HMAC 쿠키 세션
   auction/
     rooms.js              경매방 인메모리 상태·타이머·낙찰 로직
     ws.js                 /ws/auction WebSocket 핸들러
   store.js                매치·오버레이 저장소 (JSON 영속 + 통계 캐시)
-  routes/                 members · matches · stats · scores · balance · dashboard · admin · auction · updates
+  routes/                 members · matches · stats · scores · balance · dashboard · admin · auction · updates · synergy · badges · duo
 sql/updates.sql           업데이트 게시판 테이블 생성 쿼리 (Supabase SQL Editor 에서 1회 실행)
+sql/riot_matches.sql      라이엇 경기 캐시 테이블 (듀오 섹션) — Supabase SQL Editor 에서 1회 실행
+sql/seasons.sql           시즌 테이블 RLS 해제 + 기본 시즌 보강 (부팅 시 `POST seasons: 401` 경고가 나면 1회 실행)
 data/matches.json         사용자 등록 내전 (런타임 생성)
 data/members-override.json 관리자 단원 편집/추가/삭제 (런타임 생성)
 ```
