@@ -786,11 +786,58 @@
   #duoTable .kda{font-variant-numeric:tabular-nums;white-space:nowrap}
   #duoTable .kda b{font-weight:800}
   #duoTable .kda small{display:block;font-size:10.5px;color:var(--ink-3);font-weight:600}
-  /* 재미용 호칭 배지 (DUO_TITLES) — 이름 왼쪽 위에 살짝 기울여 얹는다 */
+  /* 호칭 배지 — 이름 왼쪽 위에 살짝 기울여 얹는다.
+     most: 가장 많이 함께한 단원(천사, 금빛) · best: 찰떡 듀오(영웅, 장밋빛) · fun: 재미용(DUO_TITLES, 빨강) */
   .titled{position:relative;display:inline-block;padding-top:7px}
-  .duo-title{position:absolute;left:-6px;top:-3px;transform:rotate(-8deg);transform-origin:left bottom;pointer-events:none;
+  .titled.hot{padding-top:10px}
+  .duo-titles{position:absolute;left:-8px;top:-6px;display:inline-flex;gap:4px;align-items:center;
+    transform:rotate(-7deg);transform-origin:left bottom;pointer-events:none;z-index:1}
+  .duo-title{position:relative;overflow:hidden;display:inline-block;
     font-size:9.5px;font-weight:800;letter-spacing:.02em;padding:1px 5px;border-radius:5px;line-height:1.3;white-space:nowrap;
     color:#fff;background:var(--red);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  .duo-title.most,.duo-title.best{font-size:10px;padding:2px 7px;border-radius:999px;letter-spacing:.06em;
+    border:1px solid rgba(255,255,255,.55)}
+  .duo-title.most{color:#3B2A08;text-shadow:0 1px 0 rgba(255,255,255,.45);
+    background:linear-gradient(135deg,#FFF3C4 0%,#F2D27C 35%,#C8AA6E 70%,#E8C97E 100%);
+    box-shadow:0 0 0 1px rgba(148,116,58,.55),0 2px 6px rgba(0,0,0,.28),0 0 10px rgba(240,224,184,.55);
+    animation:duoglow-gold 2.6s ease-in-out infinite}
+  .duo-title.best{color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.2);
+    background:linear-gradient(135deg,#FFB3D1 0%,#FF5C9A 40%,#E0247A 75%,#FF7FB0 100%);
+    box-shadow:0 0 0 1px rgba(200,40,106,.6),0 2px 6px rgba(0,0,0,.28),0 0 10px rgba(255,92,154,.6);
+    animation:duoglow-rose 2.6s ease-in-out infinite}
+  /* 한 번씩 지나가는 광택 */
+  .duo-title.most::after,.duo-title.best::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.75) 50%,transparent 70%);
+    transform:translateX(-100%);animation:champshine 3.2s ease-in-out .6s infinite}
+  .duo-title.best::after{animation-delay:1.4s}
+  /* 반짝이 — 배지 모서리에서 깜빡인다 */
+  .duo-titles .spark{position:absolute;pointer-events:none;font-size:9px;line-height:1;font-style:normal;animation:duotwinkle 1.8s ease-in-out infinite}
+  .duo-titles .spark.a{left:-9px;top:-7px;color:#FFE9A8}
+  .duo-titles .spark.b{right:-8px;top:-8px;color:#FFC2DB;animation-delay:.6s}
+  .duo-titles .spark.c{right:-4px;bottom:-7px;color:#FFF3C4;font-size:7px;animation-delay:1.1s}
+  /* 호칭 주인의 이름은 살짝 빛나게 */
+  .titled.hot>b{text-shadow:0 0 10px color-mix(in srgb,var(--gold-bright) 55%,transparent)}
+  .titled.hot.rose>b{text-shadow:0 0 10px rgba(255,92,154,.55)}
+  @keyframes duoglow-gold{0%,100%{box-shadow:0 0 0 1px rgba(148,116,58,.55),0 2px 6px rgba(0,0,0,.28),0 0 8px rgba(240,224,184,.45)}
+    50%{box-shadow:0 0 0 1px rgba(148,116,58,.7),0 2px 8px rgba(0,0,0,.3),0 0 16px rgba(255,230,160,.9)}}
+  @keyframes duoglow-rose{0%,100%{box-shadow:0 0 0 1px rgba(200,40,106,.6),0 2px 6px rgba(0,0,0,.28),0 0 8px rgba(255,92,154,.5)}
+    50%{box-shadow:0 0 0 1px rgba(200,40,106,.8),0 2px 8px rgba(0,0,0,.3),0 0 16px rgba(255,92,154,.95)}}
+  @keyframes duotwinkle{0%,100%{opacity:0;transform:scale(.5) rotate(0)}50%{opacity:1;transform:scale(1.15) rotate(25deg)}}
+  @media (prefers-reduced-motion:reduce){
+    .duo-title.most,.duo-title.best,.duo-titles .spark{animation:none}
+    .duo-title.most::after,.duo-title.best::after{display:none} .duo-titles .spark{opacity:.9}
+  }
+  /* KPI 카드의 이름에도 같은 색을 */
+  .duo-kpi .v.most{background:linear-gradient(135deg,#FFF3C4,#E8C97E 60%,#C8AA6E);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .duo-kpi .v.best{background:linear-gradient(135deg,#FFB3D1,#FF5C9A 55%,#E0247A);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .duo-kpi .v.most small,.duo-kpi .v.best small{-webkit-text-fill-color:var(--ink-3)}
+  /* 라이트 테마 — 밝은 바탕에서는 더 진한 금빛·장밋빛으로 */
+  :root[data-theme="light"] .duo-kpi .v.most{background:linear-gradient(135deg,#B8902E,#94743A 60%,#6E5218);-webkit-background-clip:text;background-clip:text}
+  :root[data-theme="light"] .duo-kpi .v.best{background:linear-gradient(135deg,#FF4F8B,#D81B6A 55%,#A8124F);-webkit-background-clip:text;background-clip:text}
+  @media (prefers-color-scheme:light){
+    :root:not([data-theme="dark"]) .duo-kpi .v.most{background:linear-gradient(135deg,#B8902E,#94743A 60%,#6E5218);-webkit-background-clip:text;background-clip:text}
+    :root:not([data-theme="dark"]) .duo-kpi .v.best{background:linear-gradient(135deg,#FF4F8B,#D81B6A 55%,#A8124F);-webkit-background-clip:text;background-clip:text}
+  }
   .wl{display:inline-flex;gap:3px;align-items:center}
   .wl i{display:inline-block;width:9px;height:9px;border-radius:2.5px;background:var(--line)}
   .wl i.w{background:var(--good)} .wl i.l{background:var(--red)}
@@ -1989,8 +2036,26 @@ const kdaCell=b=>`<span class="kda"><b style="color:${b.perfect?'var(--gold-brig
 const csCell=b=>`<span class="kda"><b>${b.avgCs||0}</b><small>분당 ${(b.csPerMin||0).toFixed(1)}</small></span>`;
 /* 재미 삼아 붙이는 호칭 — 단원 이름 → 호칭. 듀오 페이지에서만 쓴다 */
 const DUO_TITLES={'정기용':'배신자'};
-/* 이름 HTML 을 받아 호칭이 있으면 왼쪽 위에 배지를 얹어 돌려준다 */
-const withTitle=(name,html)=>DUO_TITLES[name]?`<span class="titled"><span class="duo-title">${escHtml(DUO_TITLES[name])}</span>${html}</span>`:html;
+/* 집계로 정해지는 호칭 — 가장 많이 함께한 단원은 '천사', 찰떡 듀오(3경기 이상 최고 승률)는 '영웅'.
+   단원 id → [{cls,text,tip}]. renderDuo 가 집계할 때마다 다시 채운다 */
+let duoDynTitles={};
+function setDuoDynTitles(me,top,best){
+  duoDynTitles={};
+  const add=(p,t)=>{ if(!p)return; (duoDynTitles[p.id]=duoDynTitles[p.id]||[]).push(t); };
+  add(top,{cls:'most',text:'천사',tip:`${me}과 가장 많이 함께한 단원 · ${top?top.games:0}경기`});
+  add(best,{cls:'best',text:'영웅',tip:`${me}과 찰떡 듀오 · ${best?best.games:0}경기 ${best?Math.round(best.winrate*100):0}% (3경기 이상 최고 승률)`});
+}
+/* 이름 HTML 을 받아 호칭이 있으면 왼쪽 위에 배지를 얹어 돌려준다 (id 가 있으면 집계 호칭도 붙는다) */
+const withTitle=(name,html,id)=>{
+  const list=[...(id!=null&&duoDynTitles[id]||[])];
+  if(DUO_TITLES[name])list.push({cls:'fun',text:DUO_TITLES[name]});
+  if(!list.length)return html;
+  const hot=list.some(t=>t.cls==='most'||t.cls==='best');
+  const rose=list.some(t=>t.cls==='best')&&!list.some(t=>t.cls==='most');
+  const badges=list.map(t=>`<span class="duo-title ${t.cls}" title="${escHtml(t.tip||'')}">${escHtml(t.text)}</span>`).join('');
+  const sparks=hot?'<i class="spark a">✦</i><i class="spark b">✦</i><i class="spark c">✧</i>':'';
+  return `<span class="titled${hot?' hot':''}${rose?' rose':''}"><span class="duo-titles">${badges}${sparks}</span>${html}</span>`;
+};
 const multiTxt=m=>m==='penta'?'펜타킬':m==='quadra'?'쿼드라킬':m==='triple'?'트리플킬':'';
 
 function duoSetNote(d){
@@ -2012,11 +2077,12 @@ function renderDuo(){
   const pct=(w,g)=>g?`${Math.round(w/g*100)}%`:'—';
   const top=d.partners&&d.partners[0];
   const best=(d.partners||[]).filter(p=>p.games>=3).sort((a,b)=>b.winrate-a.winrate||b.games-a.games)[0];
+  setDuoDynTitles(me,top,best);
   $("#duoKpis").innerHTML=`
     <div class="duo-kpi"><div class="k">단원과 함께한 경기</div><div class="v gold">${sm.duoGames||0}<small>${sm.duoWins||0}승 ${(sm.duoGames||0)-(sm.duoWins||0)}패</small></div><div class="s">${duoGroup==='all'?'전체 큐':DUO_GROUP_LABEL[duoGroup]} · ${escHtml(me)} 기준</div></div>
     <div class="duo-kpi"><div class="k">함께할 때 승률</div><div class="v" style="color:${sm.duoGames?wrCol(sm.duoWinrate):'var(--ink)'}">${pct(sm.duoWins,sm.duoGames)}</div><div class="s">함께한 단원 ${sm.partnersCount||0}명</div></div>
-    <div class="duo-kpi"><div class="k">가장 많이 함께한 단원</div><div class="v">${top?escHtml(top.name):'—'}</div><div class="s">${top?`${top.games}경기 · ${Math.round(top.winrate*100)}%`:'아직 없음'}</div></div>
-    <div class="duo-kpi"><div class="k">찰떡 듀오</div><div class="v">${best?escHtml(best.name):'—'}</div><div class="s">${best?`${best.games}경기 · ${Math.round(best.winrate*100)}% (3경기 이상)`:'3경기 이상 함께한 단원이 없음'}</div></div>`;
+    <div class="duo-kpi"><div class="k">가장 많이 함께한 단원</div><div class="v${top?' most':''}">${top?escHtml(top.name):'—'}${top?'<small>천사</small>':''}</div><div class="s">${top?`${top.games}경기 · ${Math.round(top.winrate*100)}%`:'아직 없음'}</div></div>
+    <div class="duo-kpi"><div class="k">찰떡 듀오</div><div class="v${best?' best':''}">${best?escHtml(best.name):'—'}${best?'<small>영웅</small>':''}</div><div class="s">${best?`${best.games}경기 · ${Math.round(best.winrate*100)}% (3경기 이상)`:'3경기 이상 함께한 단원이 없음'}</div></div>`;
 
   const rows=duoSorted(d.partners||[]);
   const thead=`<thead><tr>${DUO_COLS.map(c=>{
@@ -2026,7 +2092,7 @@ function renderDuo(){
   }).join('')}</tr></thead>`;
   const tbody=`<tbody>${rows.map((r,i)=>`<tr data-pid="${r.id}" aria-selected="${duoPartner===r.id}" title="누르면 이 단원과 함께한 경기만 봅니다">
     <td class="l" style="color:var(--ink-3);font-weight:800">${i+1}</td>
-    <td class="l"><span class="who">${withTitle(r.name,`<b>${escHtml(r.name)}</b>`)}${tierBadge(r.tier)}${r.streak>=3?`<span class="streak up">${r.streak}연승</span>`:r.streak<=-3?`<span class="streak down">${-r.streak}연패</span>`:''}</span></td>
+    <td class="l"><span class="who">${withTitle(r.name,`<b>${escHtml(r.name)}</b>`,r.id)}${tierBadge(r.tier)}${r.streak>=3?`<span class="streak up">${r.streak}연승</span>`:r.streak<=-3?`<span class="streak down">${-r.streak}연패</span>`:''}</span></td>
     <td><b>${r.games}</b></td><td style="color:var(--good)">${r.wins}</td><td style="color:var(--red)">${r.losses}</td>
     <td><b style="color:${wrCol(r.winrate)}">${Math.round(r.winrate*100)}%</b></td>
     <td class="l">${wlDots(r.recent)}</td>
@@ -2049,7 +2115,7 @@ function renderDuoGames(){
   $("#duoGamesNote").textContent=list.length?`${list.length}경기${partner?' · 이름을 다시 누르면 전체':''}`:'';
   const me=d.anchor?d.anchor.name:'이윤성';
   const shown=list.slice(0,duoShown);
-  const pl=(p,isMe)=>`<span class="pl${isMe?' me':''}">${champImg(p.champ,true)}<span class="t">${isMe?`<b>${escHtml(me)}</b>`:withTitle(p.name,`<b>${escHtml(p.name)}</b>`)}<small><span class="kd">${p.k} / ${p.d} / ${p.a}</span> · ${p.d===0?'Perfect':p.kda.toFixed(2)}${p.pos?` · ${escHtml(p.pos)}`:''} · CS ${p.cs||0}${p.multi?` · ${multiTxt(p.multi)}`:''}</small></span></span>`;
+  const pl=(p,isMe)=>`<span class="pl${isMe?' me':''}">${champImg(p.champ,true)}<span class="t">${isMe?`<b>${escHtml(me)}</b>`:withTitle(p.name,`<b>${escHtml(p.name)}</b>`,p.id)}<small><span class="kd">${p.k} / ${p.d} / ${p.a}</span> · ${p.d===0?'Perfect':p.kda.toFixed(2)}${p.pos?` · ${escHtml(p.pos)}`:''} · CS ${p.cs||0}${p.multi?` · ${multiTxt(p.multi)}`:''}</small></span></span>`;
   $("#duoGames").innerHTML=shown.map(g=>`<div class="duo-game ${g.win?'win':'lose'}">
     <span class="bar"></span>
     <div class="meta"><b>${g.win?'승리':'패배'}</b>${escHtml(g.queue)}<br>${fmtGameAt(g.gameAt)} · ${fmtDur(g.dur)}</div>
