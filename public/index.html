@@ -2035,7 +2035,7 @@ const wlDots=arr=>`<span class="wl" title="${(arr||[]).join(' ')}">${(arr||[]).s
 const kdaCell=b=>`<span class="kda"><b style="color:${b.perfect?'var(--gold-bright)':b.ratio>=4?'var(--good)':b.ratio<2?'var(--red)':'var(--ink)'}">${b.perfect?'Perfect':b.ratio.toFixed(2)}</b><small>${b.avgK} / ${b.avgD} / ${b.avgA}</small></span>`;
 const csCell=b=>`<span class="kda"><b>${b.avgCs||0}</b><small>분당 ${(b.csPerMin||0).toFixed(1)}</small></span>`;
 /* 재미 삼아 붙이는 호칭 — 단원 이름 → 호칭. 듀오 페이지에서만 쓴다 */
-const DUO_TITLES={'정기용':'배신자'};
+const DUO_TITLES={'정기용':'배신자','김한솔':'건달'};
 /* 집계로 정해지는 호칭 — 가장 많이 함께한 단원은 '천사', 찰떡 듀오(3경기 이상 최고 승률)는 '영웅'.
    단원 id → [{cls,text,tip}]. renderDuo 가 집계할 때마다 다시 채운다 */
 let duoDynTitles={};
