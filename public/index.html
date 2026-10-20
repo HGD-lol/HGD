@@ -783,6 +783,7 @@
   #duoTable tbody td.l{text-align:left}
   #duoTable .who{display:flex;align-items:center;gap:8px;min-width:0}
   #duoTable .who b{font-size:13.5px;white-space:nowrap}
+  #duoTable .who .streak{white-space:nowrap}
   #duoTable .kda{font-variant-numeric:tabular-nums;white-space:nowrap}
   #duoTable .kda b{font-weight:800}
   #duoTable .kda small{display:block;font-size:10.5px;color:var(--ink-3);font-weight:600}
@@ -816,8 +817,24 @@
   .duo-titles .spark.b{right:-8px;top:-8px;color:#FFC2DB;animation-delay:.6s}
   .duo-titles .spark.c{right:-4px;bottom:-7px;color:#FFF3C4;font-size:7px;animation-delay:1.1s}
   /* 호칭 주인의 이름은 살짝 빛나게 */
-  .titled.hot>b{text-shadow:0 0 10px color-mix(in srgb,var(--gold-bright) 55%,transparent)}
-  .titled.hot.rose>b{text-shadow:0 0 10px rgba(255,92,154,.55)}
+  .titled.hot>b,.titled.hot>.mp-name{text-shadow:0 0 10px color-mix(in srgb,var(--gold-bright) 55%,transparent)}
+  .titled.hot.rose>b,.titled.hot.rose>.mp-name{text-shadow:0 0 10px rgba(255,92,154,.55)}
+  /* 다른 페이지의 이름 자리에 맞춘 보정 — 호칭 배지는 사이트 전체(대시보드·명단·순위·내전 기록·궁합)에 붙는다 */
+  .nm .nmline .titled,.plcard .h .titled{min-width:0;max-width:100%}
+  /* 명단 카드·순위표 — 이름이 한 줄을 차지해야 나이·티어가 아래로 간다 */
+  .card .who .titled,.pl-cell .info .titled{display:block}
+  /* 듀오 궁합 — 이름이 <b> 안에 있어 overflow:hidden 에 배지가 잘린다. 호칭이 있을 때만 풀어 준다 */
+  .rankmini .nm>b:has(.titled){overflow:visible}
+  .rankmini .nm>b .titled{padding-top:8px}
+  /* 내전 기록의 선수 칩 — 칸이 좁아 배지를 작게(왼쪽 위 기준으로 줄여 이름을 가리지 않게) */
+  .m-p .titled{display:block;flex:1 1 auto;min-width:0;padding-top:8px}
+  .m-p .titled.hot{padding-top:9px}
+  .m-p .duo-titles{left:-4px;top:-6px;transform:rotate(-6deg) scale(.82);transform-origin:left top}
+  .m-p .duo-titles .spark{display:none}
+  /* 솔랭 1위 카드 — SOLO RANK No.1 라벨 아래, 이름 위에 끼워 넣는다 */
+  .solo-champ .who .lab{display:block}
+  .solo-champ .who .titled{display:block;padding-top:16px}
+  .solo-champ .who .duo-titles{top:-1px}
   @keyframes duoglow-gold{0%,100%{box-shadow:0 0 0 1px rgba(148,116,58,.55),0 2px 6px rgba(0,0,0,.28),0 0 8px rgba(240,224,184,.45)}
     50%{box-shadow:0 0 0 1px rgba(148,116,58,.7),0 2px 8px rgba(0,0,0,.3),0 0 16px rgba(255,230,160,.9)}}
   @keyframes duoglow-rose{0%,100%{box-shadow:0 0 0 1px rgba(200,40,106,.6),0 2px 6px rgba(0,0,0,.28),0 0 8px rgba(255,92,154,.5)}
@@ -1409,7 +1426,7 @@ function paintTopScores(){
       : '협곡 기록 없음';
     return `<div class="r">
       <span class="pos num">${i+1}</span>
-      <span class="nm"><span class="nmline"><b>${m.name}</b>${badgeIcons(s.id,'rbadges',true)}</span><small>${tierBadgeTxt(m.tier)}</small></span>
+      <span class="nm"><span class="nmline">${withTitle(m.name,`<b>${escHtml(m.name)}</b>`,m.id)}${badgeIcons(s.id,'rbadges',true)}</span><small>${tierBadgeTxt(m.tier)}</small></span>
       <span class="wr"><b style="color:var(--gold-bright)">${s.score}점</b><small class="num">${rec}</small></span>
     </div>`;
   }).join("")||`<div class="empty">협곡 내전 ${MIN_SCORE_GAMES}판 이상인 단원이 아직 없습니다.</div>`;
@@ -1441,7 +1458,7 @@ async function renderTopPlayers(){
     const m=memberById(s.id);
     return `<div class="r">
       <span class="pos num">${i+1}</span>
-      <span class="nm"><span class="nmline"><b>${m.name}</b>${badgeIcons(s.id,'rbadges',true)}</span><small>${tierBadgeTxt(m.tier)} · ${m.lines.slice(0,2).join("/")||"—"}</small></span>
+      <span class="nm"><span class="nmline">${withTitle(m.name,`<b>${escHtml(m.name)}</b>`,m.id)}${badgeIcons(s.id,'rbadges',true)}</span><small>${tierBadgeTxt(m.tier)} · ${m.lines.slice(0,2).join("/")||"—"}</small></span>
       <span class="wr"><b style="color:${s.wr>=.5?'var(--good)':'var(--ink)'}">${Math.round(s.wr*100)}%</b><small class="num">${s.w}승 ${s.l}패</small></span>
     </div>`;
   }).join("")||`<div class="empty">${MIN_WR_GAMES}경기 이상 뛴 단원이 아직 없습니다.</div>`;
@@ -1479,12 +1496,12 @@ function paintTopSolo(){
     const lp=m.soloLp!=null?m.soloLp+' LP':'—';
     if(i===0) return `<div class="solo-champ" style="--tc:${TIER_COLOR[m.soloTier]||'var(--gold-bright)'}">
       <span class="crown">👑<i>1</i></span>
-      <span class="who"><span class="lab">SOLO RANK No.1</span><b>${escHtml(m.name)}</b><small title="${escHtml(m.soloNick||'')} 계정 기준">${nickTxt}</small></span>
+      <span class="who"><span class="lab">SOLO RANK No.1</span>${withTitle(m.name,`<b>${escHtml(m.name)}</b>`,m.id)}<small title="${escHtml(m.soloNick||'')} 계정 기준">${nickTxt}</small></span>
       <span class="tv"><b>${tierTxt}</b><small class="num">${lp}</small></span>
     </div>`;
     return `<div class="r">
       <span class="pos num">${i+1}</span>
-      <span class="nm"><span class="nmline"><b>${escHtml(m.name)}</b></span><small title="${escHtml(m.soloNick||'')} 계정 기준">${nickTxt}</small></span>
+      <span class="nm"><span class="nmline">${withTitle(m.name,`<b>${escHtml(m.name)}</b>`,m.id)}</span><small title="${escHtml(m.soloNick||'')} 계정 기준">${nickTxt}</small></span>
       <span class="wr"><b style="color:${TIER_COLOR[m.soloTier]||'var(--ink)'}">${tierTxt}</b><small class="num">${lp}</small></span>
     </div>`;
   }).join("")||`<div class="empty">솔로랭크가 조회된 단원이 아직 없습니다. ⟳ 로 불러와 주세요.</div>`;
@@ -1604,7 +1621,7 @@ function playerChip(p,q,votes,focusId){
   const key=p.mercenary?`data-merc="${escHtml(p.name)}" data-tier="${escHtml(p.tier)}"`:`data-pid="${p.id}"${gone}`;
   const focus=focusId!=null&&!p.mercenary&&p.id===focusId?" focus":"";
   return `<div class="m-p${p.mvp?' top':''}${focus}" ${key}><div class="b">${mvpHtml}${vcHtml}</div>
-    <div class="n"><span class="mp-name">${hlName(p.name,q)}</span>${badgeTags}</div>
+    <div class="n">${p.mercenary?`<span class="mp-name">${hlName(p.name,q)}</span>`:withTitle(p.name,`<span class="mp-name">${hlName(p.name,q)}</span>`,p.id)}${badgeTags}</div>
     <div class="s"><span class="k">${nick?hlName(nick,q):''}</span><span class="t" style="--tc:${TIER_COLOR[p.tier]}">${p.tier}</span></div>
   </div>`;
 }
@@ -1670,7 +1687,7 @@ function plCardHtml(chip){
   const wrCol=st.g?(st.wr>=.55?'var(--good)':st.wr>=.45?'var(--ink)':'var(--red)'):'var(--ink-3)';
   const streak=st.streak>0?`${st.streak}연승`:st.streak<0?`${-st.streak}연패`:'—';
   return `
-    <div class="h"><b>${escHtml(m.name)}</b>${tierBadgeOf(m.tier)}</div>
+    <div class="h">${withTitle(m.name,`<b>${escHtml(m.name)}</b>`,m.id)}${tierBadgeOf(m.tier)}</div>
     <div class="sub">${ROLE_LABEL[m.role]||m.role}${m.nick?' · '+escHtml(m.nick):''}</div>
     <hr>
     <div class="kv"><span>주라인</span><b>${escHtml(main)}</b></div>
@@ -1857,7 +1874,7 @@ function renderRoster(){
     return `<div class="card" data-pid="${m.id}" role="button" tabindex="0" title="${escHtml(m.name)} 단원의 내전 전적 보기">
       <div class="tierstripe" style="background:${TIER_COLOR[m.tier]}"></div>
       <div class="card-top">
-        <div class="who"><b>${m.name}</b><small>${m.age}세</small></div>
+        <div class="who">${withTitle(m.name,`<b>${escHtml(m.name)}</b>`,m.id)}<small>${m.age}세</small></div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">${tierBadge(m.tier)}<span class="score-chip">${s.score}점</span></div>
       </div>
       <div class="nick" title="${escHtml((m.nicks||[]).join(' / '))}">${m.nick}${(m.nicks||[]).length>1?`<span class="nick-more">+${m.nicks.length-1}</span>`:""}</div>
@@ -1945,16 +1962,17 @@ async function renderSynergy(){
   try{
     if(!synMemberId){
       const res=await jget(`/api/synergy?${synParams()}&limit=5`);
-      const duoRows=(list)=>list.map((r,i)=>synRow(i,`${r.a.name} + ${r.b.name}`,`${Math.round(r.winrate*100)}%`,`${r.games}전 ${r.wins}승 ${r.losses}패`,wrCol(r.winrate))).join("")||empty;
+      const pair=(r,sep)=>`${withTitle(r.a.name,escHtml(r.a.name),r.a.id)} ${sep} ${withTitle(r.b.name,escHtml(r.b.name),r.b.id)}`;
+      const duoRows=(list)=>list.map((r,i)=>synRow(i,pair(r,'+'),`${Math.round(r.winrate*100)}%`,`${r.games}전 ${r.wins}승 ${r.losses}패`,wrCol(r.winrate))).join("")||empty;
       $("#synBest").innerHTML=duoRows(res.bestDuos||[]);
       $("#synWorst").innerHTML=duoRows(res.worstDuos||[]);
-      $("#synMost").innerHTML=(res.mostPlayed||[]).map((r,i)=>synRow(i,`${r.a.name} + ${r.b.name}`,`${r.games}전`,`${r.wins}승 ${r.losses}패 · ${Math.round(r.winrate*100)}%`,'var(--gold-bright)')).join("")||empty;
-      $("#synRival").innerHTML=(res.topRivalries||[]).map((r,i)=>synRow(i,`${r.a.name} vs ${r.b.name}`,`${r.aWins} : ${r.bWins}`,`${r.games}전 맞대결`,'var(--ink)')).join("")||empty;
+      $("#synMost").innerHTML=(res.mostPlayed||[]).map((r,i)=>synRow(i,pair(r,'+'),`${r.games}전`,`${r.wins}승 ${r.losses}패 · ${Math.round(r.winrate*100)}%`,'var(--gold-bright)')).join("")||empty;
+      $("#synRival").innerHTML=(res.topRivalries||[]).map((r,i)=>synRow(i,pair(r,'vs'),`${r.aWins} : ${r.bWins}`,`${r.games}전 맞대결`,'var(--ink)')).join("")||empty;
     }else{
       const res=await jget(`/api/synergy/${encodeURIComponent(synMemberId)}?${synParams()}`);
       const me=res.member.name;
-      $("#synMemDuo").innerHTML=(res.duos||[]).map((r,i)=>synRow(i,r.name,`${Math.round(r.winrate*100)}%`,`${r.games}전 ${r.wins}승 ${r.losses}패`,wrCol(r.winrate))).join("")||empty;
-      $("#synMemRival").innerHTML=(res.rivals||[]).map((r,i)=>synRow(i,r.name,`${r.wins} : ${r.losses}`,`${me} 기준 ${r.games}전`,wrCol(r.winrate))).join("")||empty;
+      $("#synMemDuo").innerHTML=(res.duos||[]).map((r,i)=>synRow(i,withTitle(r.name,escHtml(r.name),r.id),`${Math.round(r.winrate*100)}%`,`${r.games}전 ${r.wins}승 ${r.losses}패`,wrCol(r.winrate))).join("")||empty;
+      $("#synMemRival").innerHTML=(res.rivals||[]).map((r,i)=>synRow(i,withTitle(r.name,escHtml(r.name),r.id),`${r.wins} : ${r.losses}`,`${me} 기준 ${r.games}전`,wrCol(r.winrate))).join("")||empty;
     }
   }catch(ex){
     console.error(ex);
@@ -2035,19 +2053,37 @@ const wlDots=arr=>`<span class="wl" title="${(arr||[]).join(' ')}">${(arr||[]).s
 const kdaCell=b=>`<span class="kda"><b style="color:${b.perfect?'var(--gold-bright)':b.ratio>=4?'var(--good)':b.ratio<2?'var(--red)':'var(--ink)'}">${b.perfect?'Perfect':b.ratio.toFixed(2)}</b><small>${b.avgK} / ${b.avgD} / ${b.avgA}</small></span>`;
 const csCell=b=>`<span class="kda"><b>${b.avgCs||0}</b><small>분당 ${(b.csPerMin||0).toFixed(1)}</small></span>`;
 /* 재미 삼아 붙이는 호칭 — 단원 이름 → 호칭. 듀오 페이지에서만 쓴다 */
-const DUO_TITLES={'정기용':'배신자','김한솔':'건달'};
+const DUO_TITLES={'정기용':'관심병사','김한솔':'건달'};
 /* 집계로 정해지는 호칭 — 가장 많이 함께한 단원은 '천사', 찰떡 듀오(3경기 이상 최고 승률)는 '영웅'.
-   단원 id → [{cls,text,tip}]. renderDuo 가 집계할 때마다 다시 채운다 */
-let duoDynTitles={};
-function setDuoDynTitles(me,top,best){
-  duoDynTitles={};
-  const add=(p,t)=>{ if(!p)return; (duoDynTitles[p.id]=duoDynTitles[p.id]||[]).push(t); };
+   duoDynTitles : 사이트 전체(대시보드·명단·순위·내전 기록·궁합)에서 쓰는 호칭 — 전체 큐 기준, 첫 로딩 때 /api/duo 로 받는다
+   duoPageTitles: 듀오 탭 전용 — 현재 큐 필터 기준으로 renderDuo 가 매번 다시 계산한다
+   형태는 단원 id → [{cls,text,tip}] */
+let duoDynTitles={}, duoPageTitles=null;
+function buildDynTitles(me,top,best){
+  const out={};
+  const add=(p,t)=>{ if(!p)return; (out[p.id]=out[p.id]||[]).push(t); };
   add(top,{cls:'most',text:'천사',tip:`${me}과 가장 많이 함께한 단원 · ${top?top.games:0}경기`});
   add(best,{cls:'best',text:'영웅',tip:`${me}과 찰떡 듀오 · ${best?best.games:0}경기 ${best?Math.round(best.winrate*100):0}% (3경기 이상 최고 승률)`});
+  return out;
+}
+/* 집계 결과에서 호칭 주인 고르기 — 최다 경기 1위, 3경기 이상 중 최고 승률 */
+function pickDuoTopBest(partners){
+  const list=partners||[];
+  const top=list[0]||null;
+  const best=list.filter(p=>p.games>=3).sort((a,b)=>b.winrate-a.winrate||b.games-a.games)[0]||null;
+  return {top,best};
+}
+/* 첫 로딩 때 한 번 — 캐시된 집계만 읽는다(라이엇 호출 없음). 실패해도 재미용 호칭은 그대로 붙는다 */
+async function loadDuoTitles(){
+  try{
+    const d=await jget('/api/duo');
+    const {top,best}=pickDuoTopBest(d.partners);
+    duoDynTitles=buildDynTitles(d.anchor?d.anchor.name:'이윤성',top,best);
+  }catch(ex){ console.warn('듀오 호칭 불러오기 실패',ex); }
 }
 /* 이름 HTML 을 받아 호칭이 있으면 왼쪽 위에 배지를 얹어 돌려준다 (id 가 있으면 집계 호칭도 붙는다) */
-const withTitle=(name,html,id)=>{
-  const list=[...(id!=null&&duoDynTitles[id]||[])];
+const withTitle=(name,html,id,dyn=duoDynTitles)=>{
+  const list=[...(id!=null&&dyn&&dyn[id]||[])];
   if(DUO_TITLES[name])list.push({cls:'fun',text:DUO_TITLES[name]});
   if(!list.length)return html;
   const hot=list.some(t=>t.cls==='most'||t.cls==='best');
@@ -2075,9 +2111,9 @@ function renderDuo(){
   duoSetNote(d);
   const sm=d.summary||{};
   const pct=(w,g)=>g?`${Math.round(w/g*100)}%`:'—';
-  const top=d.partners&&d.partners[0];
-  const best=(d.partners||[]).filter(p=>p.games>=3).sort((a,b)=>b.winrate-a.winrate||b.games-a.games)[0];
-  setDuoDynTitles(me,top,best);
+  const {top,best}=pickDuoTopBest(d.partners);
+  duoPageTitles=buildDynTitles(me,top,best);
+  if(duoGroup==='all')duoDynTitles=duoPageTitles;   // 전체 큐 집계는 사이트 전역 호칭과 같다
   $("#duoKpis").innerHTML=`
     <div class="duo-kpi"><div class="k">단원과 함께한 경기</div><div class="v gold">${sm.duoGames||0}<small>${sm.duoWins||0}승 ${(sm.duoGames||0)-(sm.duoWins||0)}패</small></div><div class="s">${duoGroup==='all'?'전체 큐':DUO_GROUP_LABEL[duoGroup]} · ${escHtml(me)} 기준</div></div>
     <div class="duo-kpi"><div class="k">함께할 때 승률</div><div class="v" style="color:${sm.duoGames?wrCol(sm.duoWinrate):'var(--ink)'}">${pct(sm.duoWins,sm.duoGames)}</div><div class="s">함께한 단원 ${sm.partnersCount||0}명</div></div>
@@ -2092,7 +2128,7 @@ function renderDuo(){
   }).join('')}</tr></thead>`;
   const tbody=`<tbody>${rows.map((r,i)=>`<tr data-pid="${r.id}" aria-selected="${duoPartner===r.id}" title="누르면 이 단원과 함께한 경기만 봅니다">
     <td class="l" style="color:var(--ink-3);font-weight:800">${i+1}</td>
-    <td class="l"><span class="who">${withTitle(r.name,`<b>${escHtml(r.name)}</b>`,r.id)}${tierBadge(r.tier)}${r.streak>=3?`<span class="streak up">${r.streak}연승</span>`:r.streak<=-3?`<span class="streak down">${-r.streak}연패</span>`:''}</span></td>
+    <td class="l"><span class="who">${withTitle(r.name,`<b>${escHtml(r.name)}</b>`,r.id,duoPageTitles)}${tierBadge(r.tier)}${r.streak>=3?`<span class="streak up">${r.streak}연승</span>`:r.streak<=-3?`<span class="streak down">${-r.streak}연패</span>`:''}</span></td>
     <td><b>${r.games}</b></td><td style="color:var(--good)">${r.wins}</td><td style="color:var(--red)">${r.losses}</td>
     <td><b style="color:${wrCol(r.winrate)}">${Math.round(r.winrate*100)}%</b></td>
     <td class="l">${wlDots(r.recent)}</td>
@@ -2115,7 +2151,7 @@ function renderDuoGames(){
   $("#duoGamesNote").textContent=list.length?`${list.length}경기${partner?' · 이름을 다시 누르면 전체':''}`:'';
   const me=d.anchor?d.anchor.name:'이윤성';
   const shown=list.slice(0,duoShown);
-  const pl=(p,isMe)=>`<span class="pl${isMe?' me':''}">${champImg(p.champ,true)}<span class="t">${isMe?`<b>${escHtml(me)}</b>`:withTitle(p.name,`<b>${escHtml(p.name)}</b>`,p.id)}<small><span class="kd">${p.k} / ${p.d} / ${p.a}</span> · ${p.d===0?'Perfect':p.kda.toFixed(2)}${p.pos?` · ${escHtml(p.pos)}`:''} · CS ${p.cs||0}${p.multi?` · ${multiTxt(p.multi)}`:''}</small></span></span>`;
+  const pl=(p,isMe)=>`<span class="pl${isMe?' me':''}">${champImg(p.champ,true)}<span class="t">${isMe?`<b>${escHtml(me)}</b>`:withTitle(p.name,`<b>${escHtml(p.name)}</b>`,p.id,duoPageTitles)}<small><span class="kd">${p.k} / ${p.d} / ${p.a}</span> · ${p.d===0?'Perfect':p.kda.toFixed(2)}${p.pos?` · ${escHtml(p.pos)}`:''} · CS ${p.cs||0}${p.multi?` · ${multiTxt(p.multi)}`:''}</small></span></span>`;
   $("#duoGames").innerHTML=shown.map(g=>`<div class="duo-game ${g.win?'win':'lose'}">
     <span class="bar"></span>
     <div class="meta"><b>${g.win?'승리':'패배'}</b>${escHtml(g.queue)}<br>${fmtGameAt(g.gameAt)} · ${fmtDur(g.dur)}</div>
@@ -2241,7 +2277,7 @@ function renderRank(){
     const lastD=s.lastMatch?new Date(s.lastMatch).toLocaleDateString('ko',{month:'short',day:'numeric'}):'—';
     return `<tr>
       <td class="l"><span class="medal num">${medal}</span></td>
-      <td class="l"><div class="pl-cell"><div class="info"><b>${m.name}</b><small>${m.tier}</small></div></div></td>
+      <td class="l"><div class="pl-cell"><div class="info">${withTitle(m.name,`<b>${escHtml(m.name)}</b>`,m.id)}<small>${m.tier}</small></div></div></td>
       <td class="num">${s.g}</td>
       <td class="num" style="color:var(--good)">${s.w}</td>
       <td class="num" style="color:var(--ink-3)">${s.l}</td>
@@ -2475,7 +2511,7 @@ function renderMeCard(){
     lastTxt=`${fmtDate(last.date)} ${won?'승':'패'}${last.mvpId===m.id?' · 👑 MVP':''}`;
   }
   box.innerHTML=`
-    <div class="who"><b>${escHtml(m.name)}</b><small>${m.tier}</small></div>
+    <div class="who">${withTitle(m.name,`<b>${escHtml(m.name)}</b>`,m.id)}<small>${m.tier}</small></div>
     <div class="kv"><span>점수 · 순위</span><b>${st.score}점 · ${rankTxt}</b></div>
     ${gapTxt?`<div class="kv"><span>다음 순위까지</span><b>${gapTxt}</b></div>`:''}
     <div class="kv"><span>시즌 전적</span><b>${st.g?`${st.w}승 ${st.l}패 · ${Math.round(st.wr*100)}% · MVP ${st.mvp}회`:'없음'} ${streak}</b></div>
@@ -2986,6 +3022,7 @@ function toast(msg){
     await loadSeasons();
     await refreshData();
     await loadDashConfig();
+    await loadDuoTitles();
     renderChips();renderAddPicker();renderAll();
     window.__calReady=true; renderCalendar();
     await loadPending();
