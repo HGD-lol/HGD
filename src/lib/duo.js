@@ -41,6 +41,21 @@ const POS_KO = { TOP: '탑', JUNGLE: '정글', MIDDLE: '미드', BOTTOM: '원딜
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
+/*
+ * 무효 경기(다시하기) 판정.
+ *   - 라이엇이 다시하기로 표시한 경기(gameEndedInEarlySurrender) 는 무조건 무효.
+ *   - 그 밖에 VOID_SEC(6분) 안에 끝난 경기도 무효. 정상 항복은 이보다 이른 시간에 불가능하므로
+ *     이 안에 끝났다면 탈주자 때문에 조기 항복한 경기(라이엇은 '항복'으로만 표시하고 패배로 센다)거나
+ *     서버 문제로 끊긴 경기다. 예: 3분 20초에 팀원이 1레벨인 채 항복 → 라이엇은 패배, 여기서는 무효.
+ *   옛 레코드에는 end 가 없으므로 dur 만으로도 판정되게 둔다.
+ */
+const VOID_SEC = 360;
+function isVoidGame(r) {
+  if (!r) return false;
+  if (r.end === 'remake') return true;
+  return r.dur > 0 && r.dur < VOID_SEC;
+}
+
 /* match-v5 원본 → 압축 레코드 */
 function compactMatch(raw) {
   if (!raw || !raw.metadata || !raw.info) return null;
@@ -60,6 +75,9 @@ function compactMatch(raw) {
     vision: num(p.visionScore),
     multi: num(p.pentaKills) ? 'penta' : (num(p.quadraKills) ? 'quadra' : (num(p.tripleKills) ? 'triple' : null)),
   }));
+  const ps = info.participants || [];
+  // 종료 사유 — remake(다시하기) · surrender(항복) · complete(넥서스 파괴)
+  const end = ps.some((p) => p.gameEndedInEarlySurrender) ? 'remake' : (ps.some((p) => p.gameEndedInSurrender) ? 'surrender' : 'complete');
   return {
     id: raw.metadata.matchId,
     gameAt: num(info.gameCreation) || null,                  // ms
@@ -68,6 +86,7 @@ function compactMatch(raw) {
     queueId: num(info.queueId),
     gameMode: info.gameMode || null,
     result: info.endOfGameResult || null,
+    end,
     participants,
   };
 }
@@ -120,9 +139,8 @@ function computeDuo(records, anchorPuuid, resolve, anchorId, opts = {}) {
     const me = (r.participants || []).find((p) => p.puuid === anchorPuuid);
     if (!me) return;
     if (group && queueGroup(r.queueId) !== group) return;
-    // 다시하기(리메이크) — 3분 안에 끝난 경기는 승패로 세지 않는다
-    const remake = r.dur > 0 && r.dur < 180;
-    if (remake) return;
+    // 다시하기·탈주자 조기 항복 등 무효 경기는 승패로 세지 않는다 (isVoidGame)
+    if (isVoidGame(r)) return;
     anchorAll.games++; if (me.win) anchorAll.wins++;
     queueCounts[r.queueId] = (queueCounts[r.queueId] || 0) + 1;
 
@@ -230,4 +248,4 @@ function computeDuo(records, anchorPuuid, resolve, anchorId, opts = {}) {
   };
 }
 
-module.exports = { compactMatch, computeDuo, queueLabel, queueGroup, QUEUE_LABEL, QUEUE_GROUP, POS_KO };
+module.exports = { compactMatch, computeDuo, isVoidGame, VOID_SEC, queueLabel, queueGroup, QUEUE_LABEL, QUEUE_GROUP, POS_KO };
