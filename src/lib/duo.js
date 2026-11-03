@@ -271,6 +271,11 @@ function parseMatchForImport(raw) {
     : (ps.some((p) => p.gameEndedInSurrender) ? 'surrender' : 'complete');
   const dur = num(info.gameDuration);
 
+  // 팀별 밴 (championId 배열)
+  const teams = info.teams || [];
+  const blueBansRaw = (teams.find(t => t.teamId === 100) || {}).bans || [];
+  const redBansRaw = (teams.find(t => t.teamId === 200) || {}).bans || [];
+
   const meta = {
     riotMatchId: raw.metadata.matchId,
     gameAt: num(info.gameCreation) || null,
@@ -278,6 +283,8 @@ function parseMatchForImport(raw) {
     queueId: num(info.queueId),
     gameMode: info.gameMode || null,
     endType: end,
+    blueBans: blueBansRaw.map(b => num(b.championId)).filter(id => id > 0),
+    redBans: redBansRaw.map(b => num(b.championId)).filter(id => id > 0),
   };
 
   const participants = ps.map((p) => {

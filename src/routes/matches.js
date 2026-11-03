@@ -259,13 +259,21 @@ router.get('/series/:seriesId', (req, res) => {
     const serialized = serializeMatch(m);
     if (details) {
       const enrich = (p) => {
-        const member = p.memberId ? displayMember(p.memberId) : null;
+        let member = p.memberId ? displayMember(p.memberId) : null;
+        // memberId 없으면 riotId/puuid 로 재매핑 시도
+        if (!member && p.puuid) member = memberByPuuid(p.puuid);
+        if (!member && p.riotId) {
+          member = memberByNick(p.riotId);
+          if (!member) { const h = p.riotId.lastIndexOf('#'); if (h > 0) member = memberByNick(p.riotId.slice(0, h)); }
+        }
         return { ...p, memberName: member ? member.name : null, memberTier: member ? member.tier : null };
       };
       serialized._details = {
         riotMatchId: details.riotMatchId,
         dur: details.dur,
         endType: details.endType,
+        blueBans: details.blueBans || [],
+        redBans: details.redBans || [],
         blue: details.participants.filter(p => p.teamId === 100).map(enrich),
         red: details.participants.filter(p => p.teamId === 200).map(enrich),
       };
@@ -291,7 +299,12 @@ router.get('/:id/details', (req, res) => {
 
   // 참가자를 팀별로 나누고 단원 이름 붙이기
   const enrich = (p) => {
-    const member = p.memberId ? displayMember(p.memberId) : null;
+    let member = p.memberId ? displayMember(p.memberId) : null;
+    if (!member && p.puuid) member = memberByPuuid(p.puuid);
+    if (!member && p.riotId) {
+      member = memberByNick(p.riotId);
+      if (!member) { const h = p.riotId.lastIndexOf('#'); if (h > 0) member = memberByNick(p.riotId.slice(0, h)); }
+    }
     return {
       ...p,
       memberName: member ? member.name : null,
@@ -309,6 +322,8 @@ router.get('/:id/details', (req, res) => {
     queueId: details.queueId,
     gameMode: details.gameMode,
     endType: details.endType,
+    blueBans: details.blueBans || [],
+    redBans: details.redBans || [],
     blue: blueParticipants,
     red: redParticipants,
   });

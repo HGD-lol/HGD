@@ -666,6 +666,12 @@
     border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
   .sg-team-block.blue .sg-team-label{background:color-mix(in srgb,var(--blue) 6%,transparent)}
   .sg-team-block.red .sg-team-label{background:color-mix(in srgb,var(--red) 5%,transparent)}
+  .sg-team-bans{display:flex;align-items:center;gap:3px;margin-left:auto}
+  .sg-team-bans .ban-label{font-size:9px;font-weight:700;color:var(--ink-3);margin-right:2px}
+  .sg-ban{width:22px;height:22px;border-radius:5px;border:1px solid var(--line);position:relative;overflow:hidden;flex-shrink:0}
+  .sg-ban img{width:100%;height:100%;display:block;filter:grayscale(.7) brightness(.75)}
+  .sg-ban::after{content:'';position:absolute;inset:0;
+    background:linear-gradient(to top right,transparent 42%,var(--red) 42%,var(--red) 58%,transparent 58%);opacity:.7}
   .sg-team-label em{font-style:normal;font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px}
   .sg-team-label em.win{background:color-mix(in srgb,var(--good) 16%,transparent);color:var(--good)}
   .sg-team-label em.lose{background:color-mix(in srgb,var(--red) 12%,transparent);color:var(--red)}
@@ -3464,8 +3470,15 @@ function renderDetailPanel(det){
 /* ── 시리즈 뷰 ── */
 const seriesCache=new Map();
 let DD_VER='https://ddragon.leagueoflegends.com/cdn/16.21.1';
-fetch('https://ddragon.leagueoflegends.com/api/versions.json').then(r=>r.json()).then(v=>{if(v&&v[0])DD_VER='https://ddragon.leagueoflegends.com/cdn/'+v[0]}).catch(()=>{});
+const _champById={};
+fetch('https://ddragon.leagueoflegends.com/api/versions.json').then(r=>r.json()).then(v=>{
+  if(v&&v[0]) DD_VER='https://ddragon.leagueoflegends.com/cdn/'+v[0];
+  return fetch(`${DD_VER}/data/ko_KR/champion.json`);
+}).then(r=>r.json()).then(d=>{
+  Object.values(d.data).forEach(c=>{_champById[c.key]=c.id});
+}).catch(()=>{});
 const ddChamp=n=>`${DD_VER}/img/champion/${encodeURIComponent(n)}.png`;
+const ddChampById=id=>{const name=_champById[id];return name?ddChamp(name):''};
 const ddItem=id=>id?`${DD_VER}/img/item/${id}.png`:'';
 const SPELL_MAP={1:'SummonerBoost',3:'SummonerExhaust',4:'SummonerFlash',6:'SummonerHaste',7:'SummonerHeal',
   11:'SummonerSmite',12:'SummonerTeleport',13:'SummonerMana',14:'SummonerDot',21:'SummonerBarrier',32:'SummonerSnowball',
@@ -3499,13 +3512,22 @@ async function openSeriesView(seriesId){
         <b>${esc(mvp.memberName||mvp.riotId)}</b>
         <span>${mvp.kills}/${mvp.deaths}/${mvp.assists} (${mvpKda===Infinity?'Perfect':mvpKda.toFixed(1)} KDA)</span>
       </div></div>`:'';
-    const dots=data.games.map((g,i)=>`<div class="sh-game-dot ${g.blueWin?'blue':'red'}"><span class="sh-gn">${i+1}</span></div>`).join('');
+    const dots=data.games.map((g,i)=>`<div class="sh-game-dot ${g.blueWin?'blue':'red'}" data-gi="${i}" style="cursor:pointer"><span class="sh-gn">${i+1}</span></div>`).join('');
     header.innerHTML=`<div class="series-header">
       <div class="sh-main">
         <div class="s-score"><span class="blue">${bw}</span><span class="vs">:</span><span class="red">${rw}</span></div>
         <div class="sh-text"><span class="s-winner" style="color:var(--${winCls})">${winner} 시리즈 승</span>
           <span class="s-meta">${data.total}판 시리즈 · ${date} · 총 ${Math.floor(totalDur/60)}분 · ${totalKills}킬</span></div>
       </div>${mvpHtml}<div class="sh-dots-bar">${dots}</div></div>`;
+    // 상단 경기 dot 클릭 → 해당 경기로 전환
+    $$(".sh-game-dot",header).forEach(dot=>{
+      dot.addEventListener("click",()=>{
+        const idx=+dot.dataset.gi;
+        // 탭 바도 동기화
+        $$(".sg-tab",tabBar).forEach((b,i)=>{b.classList.toggle("active",i===idx)});
+        showSeriesGame(idx);
+      });
+    });
 
     // 탭 바
     tabBar.innerHTML=data.games.map((g,i)=>{
@@ -3615,10 +3637,18 @@ function renderGameDetail(d, gameDur){
     </div>`;
   };
 
-  const teamBlock=(team,teamTotal,side,isWin,label,color,kills,gold,dmg)=>`
+  const banHtml=(bans)=>{
+    if(!bans||!bans.length)return '';
+    return `<div class="sg-team-bans"><span class="ban-label">BAN</span>${bans.map(id=>{
+      const src=ddChampById(id);
+      return src?`<span class="sg-ban"><img src="${src}" onerror="this.parentElement.style.display='none'"></span>`:'';
+    }).join('')}</div>`;
+  };
+
+  const teamBlock=(team,teamTotal,side,isWin,label,color,kills,gold,dmg,bans)=>`
     <div class="sg-team-block ${side}">
       <div class="sg-team-label"><span style="color:var(--${color})">${label}</span><em class="${isWin?'win':'lose'}">${isWin?'승리':'패배'}</em>
-        <span class="sg-team-sum">${kills}킬 · ${fmtK(gold)}g · ${fmtK(dmg)} 딜</span></div>
+        <span class="sg-team-sum">${kills}킬 · ${fmtK(gold)}g · ${fmtK(dmg)} 딜</span>${banHtml(bans)}</div>
       <div class="sg-players">${team.map(p=>pRow(p,teamTotal,side,p===ace,p===aceL)).join('')}</div>
     </div>`;
 
@@ -3626,8 +3656,8 @@ function renderGameDetail(d, gameDur){
 
   return `${cmpHtml}
     <div class="sg-teams-row">
-      ${teamBlock(d.blue,bDmg,'blue',bWin,'블루팀','blue',bKills,bGold,bDmg)}
-      ${teamBlock(d.red,rDmg,'red',!bWin,'레드팀','red',rKills,rGold,rDmg)}
+      ${teamBlock(d.blue,bDmg,'blue',bWin,'블루팀','blue',bKills,bGold,bDmg,d.blueBans)}
+      ${teamBlock(d.red,rDmg,'red',!bWin,'레드팀','red',rKills,rGold,rDmg,d.redBans)}
     </div>
     ${leaderHtml}`;
 }
