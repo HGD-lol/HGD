@@ -11,6 +11,8 @@ let hasVoteTable = true;
 let riotMatches = new Map();   // matchId → 압축 경기 레코드 (src/lib/duo.js compactMatch) — riot_matches 테이블
 let hasRiotTable = true;
 let riotSync = {};             // puuid → { lastAt, lastNew, error } — 마지막 동기화 결과(메모리)
+let matchDetails = new Map();  // matchId → { riotMatchId, participants[] } — 내전 import 상세 데이터 (match_details + match_participants)
+let hasDetailsTable = true;
 let pendingDraft = null;   // 내전 등록 화면에서 선택 중인 초안 (pending 테이블 1행)
 let seasons = [];
 let dashConfig = { title: '협곡단 내전 기록실', description: '단원 명단과 티어, 내전 전적을 한곳에서.', season: '2026 Split 2', matchRegistrationEnabled: true };
@@ -49,10 +51,12 @@ function toDbMatch(m) {
     blue: m.blue.map(dbPlayer),
     red: m.red.map(dbPlayer),
     season_id: m.seasonId || null,
+    series_id: m.seriesId || null,
+    game_num: m.gameNum || null,
   };
 }
 function fromDbMatch(row) {
-  return { id: row.id, date: new Date(row.date), dur: row.dur, mode: row.mode, blueWin: row.blue_win, mvpId: row.mvp_id, blue: row.blue, red: row.red, seasonId: row.season_id || null };
+  return { id: row.id, date: new Date(row.date), dur: row.dur, mode: row.mode, blueWin: row.blue_win, mvpId: row.mvp_id, blue: row.blue, red: row.red, seasonId: row.season_id || null, seriesId: row.series_id || null, gameNum: row.game_num || null };
 }
 function toDbPending(p) {
   return {
@@ -78,6 +82,92 @@ function toDbSeason(s) {
 }
 function fromDbSeason(row) {
   return { id: row.id, name: row.name, isCurrent: !!row.is_current, createdAt: row.created_at };
+}
+function toDbMatchDetail(matchId, meta) {
+  return {
+    match_id: matchId,
+    riot_match_id: meta.riotMatchId,
+    game_at: meta.gameAt ? new Date(meta.gameAt).toISOString() : null,
+    dur: meta.dur || null,
+    queue_id: meta.queueId == null ? null : Number(meta.queueId),
+    game_mode: meta.gameMode || null,
+    end_type: meta.endType || null,
+  };
+}
+function toDbParticipant(matchId, p) {
+  return {
+    match_id: matchId,
+    member_id: p.memberId || null,
+    puuid: p.puuid || null,
+    riot_id: p.riotId || null,
+    team_id: p.teamId,
+    win: p.win,
+    champion: p.champion,
+    position: p.position || null,
+    kills: p.kills, deaths: p.deaths, assists: p.assists,
+    kda: p.kda,
+    level: p.level,
+    cs: p.cs,
+    cs_per_min: p.csPerMin,
+    gold: p.gold,
+    damage: p.damage,
+    damage_taken: p.damageTaken,
+    damage_mitigated: p.damageMitigated,
+    heal: p.heal,
+    shield: p.shield,
+    vision: p.vision,
+    wards_placed: p.wardsPlaced,
+    wards_killed: p.wardsKilled,
+    control_wards: p.controlWards,
+    kill_participation: p.killParticipation,
+    double_kills: p.doubleKills,
+    triple_kills: p.tripleKills,
+    quadra_kills: p.quadraKills,
+    penta_kills: p.pentaKills,
+    first_blood: p.firstBlood,
+    turret_kills: p.turretKills,
+    inhibitor_kills: p.inhibitorKills,
+    items: p.items || [],
+    spells: p.spells || [],
+    cc_time: p.ccTime || 0,
+  };
+}
+function fromDbParticipant(row) {
+  return {
+    memberId: row.member_id,
+    puuid: row.puuid,
+    riotId: row.riot_id,
+    teamId: row.team_id,
+    win: row.win,
+    champion: row.champion,
+    position: row.position,
+    kills: row.kills, deaths: row.deaths, assists: row.assists,
+    kda: Number(row.kda),
+    level: row.level,
+    cs: row.cs,
+    csPerMin: Number(row.cs_per_min),
+    gold: row.gold,
+    damage: row.damage,
+    damageTaken: row.damage_taken,
+    damageMitigated: row.damage_mitigated,
+    heal: row.heal,
+    shield: row.shield,
+    vision: row.vision,
+    wardsPlaced: row.wards_placed,
+    wardsKilled: row.wards_killed,
+    controlWards: row.control_wards,
+    killParticipation: row.kill_participation,
+    doubleKills: row.double_kills,
+    tripleKills: row.triple_kills,
+    quadraKills: row.quadra_kills,
+    pentaKills: row.penta_kills,
+    firstBlood: row.first_blood,
+    turretKills: row.turret_kills,
+    inhibitorKills: row.inhibitor_kills,
+    items: row.items || [],
+    spells: row.spells || [],
+    ccTime: row.cc_time || 0,
+  };
 }
 
 /* ── Google Sheets → 가져오기 ── */
@@ -170,6 +260,32 @@ async function init() {
     console.warn('    ' + e.message);
   }
 
+  // 내전 import 상세 데이터 — match_details + match_participants
+  try {
+    const detailRows = await sb.select('match_details', '', '*');
+    const partRows = await sb.select('match_participants', '', '*', 'id.asc');
+    matchDetails = new Map();
+    for (const d of detailRows || []) {
+      matchDetails.set(d.match_id, {
+        riotMatchId: d.riot_match_id,
+        gameAt: d.game_at,
+        dur: d.dur,
+        queueId: d.queue_id,
+        gameMode: d.game_mode,
+        endType: d.end_type,
+        participants: [],
+      });
+    }
+    for (const p of partRows || []) {
+      const entry = matchDetails.get(p.match_id);
+      if (entry) entry.participants.push(fromDbParticipant(p));
+    }
+  } catch (e) {
+    hasDetailsTable = false;
+    console.warn('  ⚠ match_details/match_participants 테이블을 읽지 못해 내전 import 상세 데이터가 저장되지 않습니다. Supabase 에서 sql/match_details.sql 을 실행하세요.');
+    console.warn('    ' + e.message);
+  }
+
   // 대기 내전 — 선택 중인 초안 1건 (예전 데이터가 여러 건이면 최신 것만 쓴다)
   if (sbPending && sbPending.length > 0) {
     pendingDraft = fromDbPending(sbPending[0]);
@@ -257,6 +373,10 @@ function stats(mode, seasonId) {
   return computeStats(allMatches(), mode);
 }
 function findMatch(id) { return allMatches().find(m => String(m.id) === String(id)) || null; }
+function findSeries(seriesId) {
+  if (!seriesId) return [];
+  return allMatches().filter(m => m.seriesId === seriesId).sort((a, b) => (a.gameNum || 0) - (b.gameNum || 0));
+}
 
 /* ── MVP 투표 ──
    표가 하나라도 있으면 최다 득표자가 그 경기의 MVP 가 된다(동률이면 MVP 없음).
@@ -338,6 +458,31 @@ function riotMatchCount() { return riotMatches.size; }
 function riotPersisted() { return hasRiotTable; }
 function getRiotSync(puuid) { return riotSync[puuid] || null; }
 function setRiotSync(puuid, info) { riotSync[puuid] = { ...(riotSync[puuid] || {}), ...info }; return riotSync[puuid]; }
+
+/* ── 내전 import 상세 데이터 ──
+   match_details(경기 메타) + match_participants(참가자별 스탯) 을 정규화된 테이블에 저장한다.
+   나중에 평균 대비 개인 지표 등 SQL 집계를 직접 돌리기 위해 jsonb 가 아닌 컬럼으로 보관. */
+function getMatchDetails(matchId) { return matchDetails.get(String(matchId)) || null; }
+function hasRiotMatchImported(riotMatchId) {
+  for (const d of matchDetails.values()) {
+    if (d.riotMatchId === riotMatchId) return true;
+  }
+  return false;
+}
+function saveMatchDetails(matchId, meta, participants) {
+  const entry = { ...meta, participants };
+  matchDetails.set(String(matchId), entry);
+  if (hasDetailsTable) {
+    dbWrite(async () => {
+      await sb.upsert('match_details', toDbMatchDetail(matchId, meta));
+      // 참가자는 개별 행으로 insert (upsert 는 identity PK 라 insert 만)
+      const rows = participants.map(p => toDbParticipant(matchId, p));
+      if (rows.length) await sb.insert('match_participants', rows);
+    });
+  }
+  return entry;
+}
+function detailsPersisted() { return hasDetailsTable; }
 
 /* ── 매치 변경 ── */
 function addUserMatch(match) {
@@ -523,10 +668,11 @@ function roster() { return rosterInfo; }
 
 module.exports = {
   init, importFromSheet,
-  allMatches, stats, findMatch,
+  allMatches, stats, findMatch, findSeries,
   addUserMatch, replaceUserMatch, deleteUserMatch,
   setVote, removeVote,
   riotMatchIds, riotMatchesWith, addRiotMatches, riotMatchCount, riotPersisted, getRiotSync, setRiotSync,
+  getMatchDetails, hasRiotMatchImported, saveMatchDetails, detailsPersisted,
   getPending, savePending, clearPending,
   getDashConfig, setDashConfig,
   editMember, addMember, removeMember, permanentDeleteMember, restoreMember, nicksPersisted,

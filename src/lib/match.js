@@ -2,7 +2,7 @@
 
 const { displayMember } = require('./members');
 
-function buildMatch({ id, date, dur, blueWin, blue, red, mvpId, mode, seasonId }) {
+function buildMatch({ id, date, dur, blueWin, blue, red, mvpId, mode, seasonId, seriesId, gameNum }) {
   const mvpNum = mvpId == null ? null : Number(mvpId);
   const norm = (arr) =>
     arr.map((p) => {
@@ -40,6 +40,8 @@ function buildMatch({ id, date, dur, blueWin, blue, red, mvpId, mode, seasonId }
     red: R,
     mvpId: hasMvp ? mvpNum : null,
     seasonId: seasonId || null,
+    seriesId: seriesId || null,
+    gameNum: gameNum != null ? Number(gameNum) : null,
   };
 }
 
@@ -57,6 +59,8 @@ function serializeMatch(m) {
     blue: m.blue.map(serializePlayer),
     red: m.red.map(serializePlayer),
     seasonId: m.seasonId || null,
+    seriesId: m.seriesId || null,
+    gameNum: m.gameNum || null,
   };
 }
 
@@ -82,6 +86,8 @@ function toStored(m) {
     blue: m.blue.map(storePlayer),
     red: m.red.map(storePlayer),
     seasonId: m.seasonId || null,
+    seriesId: m.seriesId || null,
+    gameNum: m.gameNum || null,
   };
 }
 

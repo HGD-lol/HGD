@@ -46,6 +46,8 @@ app.get('/api', (_req, res) => {
       'GET /api/members': '단원 명단',
       'GET /api/matches': '내전 기록',
       'POST /api/matches': '내전 등록',
+      'POST /api/matches/import': '라이엇 match ID 로 내전 가져오기',
+      'GET /api/matches/:id/details': '가져온 내전의 상세 스탯',
       'GET /api/pending': '선택 중인 선수 (새로고침 복원)',
       'PUT /api/pending': '선택 상태 저장 (선택할 때마다)',
       'DELETE /api/pending': '선택 초기화',

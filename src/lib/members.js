@@ -148,6 +148,12 @@ function loadMembers(memberList) {
     m.accounts.forEach(a => {
       const k = normNick(a.nick);
       if (!byNick.has(k)) byNick.set(k, m);
+      // 태그 없이 게임네임만으로도 매칭되게 (예: '청호한#999' → '청호한' 으로도 찾을 수 있다)
+      const hashIdx = k.lastIndexOf('#');
+      if (hashIdx > 0) {
+        const nameOnly = k.slice(0, hashIdx);
+        if (!byNick.has(nameOnly)) byNick.set(nameOnly, m);
+      }
       if (a.puuid && !byPuuid.has(a.puuid)) byPuuid.set(a.puuid, m);
     });
     if (!m.hidden && m.role !== '예비') pool.push(m);

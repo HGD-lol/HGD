@@ -2,9 +2,11 @@
 
 const express = require('express');
 const store = require('../store');
-const { memberById, displayMember } = require('../lib/members');
+const { memberById, memberByPuuid, memberByNick, displayMember } = require('../lib/members');
 const { buildMatch, serializeMatch } = require('../lib/match');
 const { requireAdmin } = require('../lib/auth');
+const riot = require('../lib/riot');
+const { parseMatchForImport, POS_KO } = require('../lib/duo');
 
 const router = express.Router();
 
@@ -106,6 +108,210 @@ router.get('/calendar', (req, res) => {
   const activeDays = Object.keys(days).length;
   const total = Object.values(days).reduce((a, c) => a + c.count, 0);
   res.json({ from, to: today, total, activeDays, days });
+});
+
+/*
+ * POST /api/matches/import — 라이엇 match ID 로 내전 기록 가져오기.
+ * Body: { matchId: "KR_...", seriesId?: string, gameNum?: number }
+ *   seriesId / gameNum — 프론트가 여러 판을 묶어 보낼 때 세트 정보를 함께 전달한다.
+ *
+ * 1. Riot match-v5 API 에서 경기 데이터를 받아옴
+ * 2. 참가자 10명을 단원 명단과 매칭 (PUUID → 닉네임#태그 순)
+ * 3. 내전 기록(matches) 생성 + 상세 스탯(match_details/match_participants) 저장
+ */
+router.post('/import', async (req, res, next) => {
+  try {
+    const { matchId, seriesId, gameNum } = req.body || {};
+    if (!matchId || typeof matchId !== 'string') {
+      return res.status(400).json({ error: 'validation_failed', messages: ['matchId 를 입력하세요. (예: KR_1234567890)'] });
+    }
+    const riotMatchId = matchId.trim();
+
+    // 중복 체크
+    if (store.hasRiotMatchImported(riotMatchId)) {
+      return res.status(409).json({ error: 'already_imported', messages: ['이미 가져온 경기입니다.'], riotMatchId });
+    }
+
+    // 관리자가 등록을 꺼둔 상태
+    if (store.getDashConfig().matchRegistrationEnabled === false) {
+      return res.status(403).json({ error: 'registration_disabled', messages: ['내전 등록이 비활성화되었습니다.'] });
+    }
+
+    if (!riot.HAS_KEY) {
+      return res.status(400).json({ error: 'no_riot_key', messages: ['라이엇 API 키가 설정되지 않았습니다.'] });
+    }
+
+    // Riot API 에서 경기 데이터 가져오기
+    const raw = await riot.fetchMatch(riotMatchId);
+    if (!raw) {
+      return res.status(404).json({ error: 'riot_match_not_found', messages: [`경기 '${riotMatchId}' 를 라이엇에서 찾지 못했습니다.`] });
+    }
+
+    // 파싱
+    const parsed = parseMatchForImport(raw);
+    if (!parsed) {
+      return res.status(400).json({ error: 'parse_failed', messages: ['경기 데이터를 파싱할 수 없습니다.'] });
+    }
+
+    const { meta, participants } = parsed;
+
+    // 5v5 검증
+    const blue = participants.filter(p => p.teamId === 100);
+    const red = participants.filter(p => p.teamId === 200);
+    if (blue.length !== 5 || red.length !== 5) {
+      return res.status(400).json({ error: 'not_5v5', messages: ['5v5 경기만 가져올 수 있습니다.'] });
+    }
+
+    // 참가자 → 단원 매칭 (PUUID → riotId 전체 → 게임네임만)
+    const resolve = (p) => {
+      let m = (p.puuid && memberByPuuid(p.puuid)) || (p.riotId && memberByNick(p.riotId)) || null;
+      // 전체 riotId 로 못 찾으면 태그 빼고 게임네임만으로 재시도
+      if (!m && p.riotId) {
+        const h = p.riotId.lastIndexOf('#');
+        if (h > 0) m = memberByNick(p.riotId.slice(0, h));
+      }
+      if (!m || m.hidden) return null;
+      return m;
+    };
+
+    const blueWin = blue[0].win;
+
+    // 내전 기록용 팀 배열 만들기
+    const buildSide = (side) => side.map(p => {
+      const m = resolve(p);
+      if (m) {
+        return { id: m.id, lane: p.position || null };
+      }
+      // 매칭 안 된 참가자 → 용병 처리
+      return {
+        id: -(Date.now() + Math.floor(Math.random() * 10000)),
+        lane: p.position || null,
+        name: p.riotId || p.champion,
+        tier: '언랭',
+        mercenary: true,
+      };
+    });
+
+    // 내전 기록 생성
+    const internalId = 'r' + Date.now();
+    const matchDate = meta.gameAt ? new Date(meta.gameAt) : new Date();
+    const match = buildMatch({
+      id: internalId,
+      date: matchDate,
+      dur: meta.dur || null,
+      blueWin,
+      blue: buildSide(blue),
+      red: buildSide(red),
+      mvpId: null,
+      mode: meta.gameMode === 'ARAM' ? '칼바람' : '협곡',
+      seriesId: seriesId || null,
+      gameNum: gameNum != null ? Number(gameNum) : null,
+    });
+    store.addUserMatch(match);
+    store.clearPending();
+
+    // 예비 단원 → 단원 자동 전환
+    const allPlayerIds = [...match.blue, ...match.red].filter(p => !p.mercenary).map(p => p.id);
+    allPlayerIds.forEach(id => {
+      const m = memberById(id);
+      if (m && m.role === '예비') store.editMember(id, { role: '단원' });
+    });
+
+    // 참가자에 memberId 매핑 추가
+    const enriched = participants.map(p => {
+      const m = resolve(p);
+      return { ...p, memberId: m ? m.id : null };
+    });
+
+    // 상세 데이터 저장
+    store.saveMatchDetails(internalId, meta, enriched);
+
+    // 응답: 내전 기록 + 매칭 결과 요약
+    const matched = enriched.filter(p => p.memberId != null).length;
+    const unmatched = enriched.filter(p => p.memberId == null).map(p => p.riotId);
+
+    res.status(201).json({
+      match: serializeMatch(match),
+      import: {
+        riotMatchId,
+        matched,
+        unmatched,
+        gameAt: meta.gameAt ? new Date(meta.gameAt).toISOString() : null,
+        dur: meta.dur,
+        endType: meta.endType,
+        hasDetails: true,
+      },
+    });
+  } catch (e) {
+    if (e.code) return res.status(e.code === 'rate_limited' ? 429 : 400).json({ error: e.code, messages: [e.message] });
+    next(e);
+  }
+});
+
+/* GET /api/matches/series/:seriesId — 시리즈(세트) 전체 경기 + 각 경기 상세 */
+router.get('/series/:seriesId', (req, res) => {
+  const list = store.findSeries(req.params.seriesId);
+  if (!list.length) return res.status(404).json({ error: 'series_not_found', seriesId: req.params.seriesId });
+  let blueWins = 0, redWins = 0;
+  const games = list.map(m => {
+    if (m.blueWin) blueWins++; else redWins++;
+    const details = store.getMatchDetails(m.id);
+    const serialized = serializeMatch(m);
+    if (details) {
+      const enrich = (p) => {
+        const member = p.memberId ? displayMember(p.memberId) : null;
+        return { ...p, memberName: member ? member.name : null, memberTier: member ? member.tier : null };
+      };
+      serialized._details = {
+        riotMatchId: details.riotMatchId,
+        dur: details.dur,
+        endType: details.endType,
+        blue: details.participants.filter(p => p.teamId === 100).map(enrich),
+        red: details.participants.filter(p => p.teamId === 200).map(enrich),
+      };
+    }
+    return serialized;
+  });
+  res.json({
+    seriesId: req.params.seriesId,
+    total: games.length,
+    blueWins,
+    redWins,
+    seriesWinner: blueWins > redWins ? 'blue' : (redWins > blueWins ? 'red' : 'tie'),
+    games,
+  });
+});
+
+/* GET /api/matches/:id/details — 내전 import 상세 데이터 (참가자별 스탯) */
+router.get('/:id/details', (req, res) => {
+  const m = store.findMatch(req.params.id);
+  if (!m) return res.status(404).json({ error: 'match_not_found', id: req.params.id });
+  const details = store.getMatchDetails(req.params.id);
+  if (!details) return res.status(404).json({ error: 'no_details', message: '이 경기는 라이엇에서 가져온 기록이 아닙니다.' });
+
+  // 참가자를 팀별로 나누고 단원 이름 붙이기
+  const enrich = (p) => {
+    const member = p.memberId ? displayMember(p.memberId) : null;
+    return {
+      ...p,
+      memberName: member ? member.name : null,
+      memberTier: member ? member.tier : null,
+    };
+  };
+  const blueParticipants = details.participants.filter(p => p.teamId === 100).map(enrich);
+  const redParticipants = details.participants.filter(p => p.teamId === 200).map(enrich);
+
+  res.json({
+    match: serializeMatch(m),
+    riotMatchId: details.riotMatchId,
+    gameAt: details.gameAt ? new Date(details.gameAt).toISOString() : null,
+    dur: details.dur,
+    queueId: details.queueId,
+    gameMode: details.gameMode,
+    endType: details.endType,
+    blue: blueParticipants,
+    red: redParticipants,
+  });
 });
 
 /* GET /api/matches/:id — 단일 매치 */

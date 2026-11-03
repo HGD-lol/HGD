@@ -248,4 +248,80 @@ function computeDuo(records, anchorPuuid, resolve, anchorId, opts = {}) {
   };
 }
 
-module.exports = { compactMatch, computeDuo, isVoidGame, VOID_SEC, queueLabel, queueGroup, QUEUE_LABEL, QUEUE_GROUP, POS_KO };
+/*
+ * match-v5 원본 → 상세 파싱 (내전 import 용).
+ * compactMatch 보다 훨씬 많은 스탯을 개별 필드로 뽑아 match_participants 테이블에 넣을 수 있게 한다.
+ * 반환: { meta, participants[] }
+ *   meta       — match_details 행에 들어갈 경기 메타
+ *   participants — match_participants 행에 들어갈 참가자 10명
+ */
+function parseMatchForImport(raw) {
+  if (!raw || !raw.metadata || !raw.info) return null;
+  const info = raw.info;
+  const ps = info.participants || [];
+
+  // 팀별 총 킬 (킬관여율 계산용)
+  const teamKills = {};
+  for (const p of ps) {
+    const tid = num(p.teamId);
+    teamKills[tid] = (teamKills[tid] || 0) + num(p.kills);
+  }
+
+  const end = ps.some((p) => p.gameEndedInEarlySurrender) ? 'remake'
+    : (ps.some((p) => p.gameEndedInSurrender) ? 'surrender' : 'complete');
+  const dur = num(info.gameDuration);
+
+  const meta = {
+    riotMatchId: raw.metadata.matchId,
+    gameAt: num(info.gameCreation) || null,
+    dur,
+    queueId: num(info.queueId),
+    gameMode: info.gameMode || null,
+    endType: end,
+  };
+
+  const participants = ps.map((p) => {
+    const tid = num(p.teamId);
+    const k = num(p.kills), d = num(p.deaths), a = num(p.assists);
+    const cs = num(p.totalMinionsKilled) + num(p.neutralMinionsKilled);
+    const tk = teamKills[tid] || 1;
+    return {
+      puuid: p.puuid || null,
+      riotId: p.riotIdGameName ? `${p.riotIdGameName}#${p.riotIdTagline || ''}` : (p.summonerName || ''),
+      teamId: tid,
+      win: !!p.win,
+      champion: p.championName || '',
+      position: POS_KO[p.teamPosition] || POS_KO[p.individualPosition] || null,
+      kills: k, deaths: d, assists: a,
+      kda: d > 0 ? round2((k + a) / d) : round2(k + a),
+      level: num(p.champLevel),
+      cs,
+      csPerMin: dur > 0 ? round2(cs / (dur / 60)) : 0,
+      gold: num(p.goldEarned),
+      damage: num(p.totalDamageDealtToChampions),
+      damageTaken: num(p.totalDamageTaken),
+      damageMitigated: num(p.damageSelfMitigated),
+      heal: num(p.totalHeal) + num(p.totalHealsOnTeammates),
+      shield: num(p.totalDamageShieldedOnTeammates),
+      vision: num(p.visionScore),
+      wardsPlaced: num(p.wardsPlaced),
+      wardsKilled: num(p.wardsKilled),
+      controlWards: num(p.detectorWardsPlaced),
+      killParticipation: Math.round(((k + a) / Math.max(1, tk)) * 100),
+      doubleKills: num(p.doubleKills),
+      tripleKills: num(p.tripleKills),
+      quadraKills: num(p.quadraKills),
+      pentaKills: num(p.pentaKills),
+      firstBlood: !!p.firstBloodKill,
+      turretKills: num(p.turretKills),
+      inhibitorKills: num(p.inhibitorKills),
+      items: [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5, p.item6].map(i => num(i)),
+      spells: [num(p.summoner1Id), num(p.summoner2Id)],
+      ccTime: num(p.timeCCingOthers),
+    };
+  });
+
+  return { meta, participants };
+}
+
+module.exports = { compactMatch, computeDuo, isVoidGame, VOID_SEC, queueLabel, queueGroup, QUEUE_LABEL, QUEUE_GROUP, POS_KO, parseMatchForImport };
