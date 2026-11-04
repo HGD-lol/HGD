@@ -252,9 +252,15 @@ router.post('/import', async (req, res, next) => {
 router.get('/series/:seriesId', (req, res) => {
   const list = store.findSeries(req.params.seriesId);
   if (!list.length) return res.status(404).json({ error: 'series_not_found', seriesId: req.params.seriesId });
-  let blueWins = 0, redWins = 0;
+  // 1경기 블루팀 = A팀으로 고정, 각 경기에서 선수 매칭으로 A팀 사이드 판별
+  const teamAIds = new Set(list[0].blue.filter(p => !p.mercenary).map(p => p.id));
+  let teamAWins = 0, teamBWins = 0;
   const games = list.map(m => {
-    if (m.blueWin) blueWins++; else redWins++;
+    const aOnBlue = m.blue.filter(p => !p.mercenary && teamAIds.has(p.id)).length;
+    const aOnRed = m.red.filter(p => !p.mercenary && teamAIds.has(p.id)).length;
+    const teamASide = aOnBlue >= aOnRed ? 'blue' : 'red';
+    const teamAWon = (teamASide === 'blue') === m.blueWin;
+    if (teamAWon) teamAWins++; else teamBWins++;
     const details = store.getMatchDetails(m.id);
     const serialized = serializeMatch(m);
     if (details) {
@@ -278,14 +284,15 @@ router.get('/series/:seriesId', (req, res) => {
         red: details.participants.filter(p => p.teamId === 200).map(enrich),
       };
     }
+    serialized.teamASide = teamASide;
     return serialized;
   });
   res.json({
     seriesId: req.params.seriesId,
     total: games.length,
-    blueWins,
-    redWins,
-    seriesWinner: blueWins > redWins ? 'blue' : (redWins > blueWins ? 'red' : 'tie'),
+    teamAWins,
+    teamBWins,
+    seriesWinner: teamAWins > teamBWins ? 'teamA' : (teamBWins > teamAWins ? 'teamB' : 'tie'),
     games,
   });
 });

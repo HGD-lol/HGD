@@ -375,7 +375,8 @@ function stats(mode, seasonId) {
 function findMatch(id) { return allMatches().find(m => String(m.id) === String(id)) || null; }
 function findSeries(seriesId) {
   if (!seriesId) return [];
-  return allMatches().filter(m => m.seriesId === seriesId).sort((a, b) => (a.gameNum || 0) - (b.gameNum || 0));
+  const endTime = (m) => m.date.getTime() + (m.dur || 0) * 1000;
+  return allMatches().filter(m => m.seriesId === seriesId).sort((a, b) => endTime(a) - endTime(b));
 }
 
 /* ── MVP 투표 ──
@@ -458,6 +459,46 @@ function riotMatchCount() { return riotMatches.size; }
 function riotPersisted() { return hasRiotTable; }
 function getRiotSync(puuid) { return riotSync[puuid] || null; }
 function setRiotSync(puuid, info) { riotSync[puuid] = { ...(riotSync[puuid] || {}), ...info }; return riotSync[puuid]; }
+
+/* ── 멤버 프로필 상세 지표 ──
+   matchDetails 에서 특정 멤버(또는 전원)의 참가자 스탯을 수집 · 집계한다.
+   시즌 필터는 매치 목록을 먼저 걸러서 해당 matchId 만 대상으로 삼는다.          */
+function memberProfile(memberId, seasonId) {
+  // 해당 시즌 매치 ID 셋
+  const seasonMatches = allMatches(seasonId || undefined);
+  const matchIdSet = new Set(seasonMatches.map(m => String(m.id)));
+  // matchDetails 에서 해당 멤버의 참가 기록 수집
+  const rows = [];
+  for (const [mid, d] of matchDetails.entries()) {
+    if (!matchIdSet.has(mid)) continue;
+    const match = seasonMatches.find(m => String(m.id) === mid);
+    if (!match) continue;
+    for (const p of d.participants) {
+      if (p.memberId !== memberId) continue;
+      rows.push({ ...p, matchId: mid, matchDate: match.date, dur: d.dur || match.dur || 0, mode: match.mode, seriesId: match.seriesId || null, gameAt: d.gameAt || null });
+    }
+  }
+  // 최신순 정렬
+  rows.sort((a, b) => (b.gameAt || b.matchDate || 0) - (a.gameAt || a.matchDate || 0));
+  return rows;
+}
+/* 전체 단원의 평균 지표 — 백분위 순위 계산용 */
+function allMemberProfiles(seasonId) {
+  const seasonMatches = allMatches(seasonId || undefined);
+  const matchIdSet = new Set(seasonMatches.map(m => String(m.id)));
+  const byMember = {};
+  for (const [mid, d] of matchDetails.entries()) {
+    if (!matchIdSet.has(mid)) continue;
+    const match = seasonMatches.find(m => String(m.id) === mid);
+    if (!match) continue;
+    for (const p of d.participants) {
+      if (!p.memberId) continue;
+      if (!byMember[p.memberId]) byMember[p.memberId] = [];
+      byMember[p.memberId].push({ ...p, matchId: mid, dur: d.dur || match.dur || 0, mode: match.mode });
+    }
+  }
+  return byMember;
+}
 
 /* ── 내전 import 상세 데이터 ──
    match_details(경기 메타) + match_participants(참가자별 스탯) 을 정규화된 테이블에 저장한다.
@@ -672,7 +713,7 @@ module.exports = {
   addUserMatch, replaceUserMatch, deleteUserMatch,
   setVote, removeVote,
   riotMatchIds, riotMatchesWith, addRiotMatches, riotMatchCount, riotPersisted, getRiotSync, setRiotSync,
-  getMatchDetails, hasRiotMatchImported, saveMatchDetails, detailsPersisted,
+  getMatchDetails, hasRiotMatchImported, saveMatchDetails, detailsPersisted, memberProfile, allMemberProfiles,
   getPending, savePending, clearPending,
   getDashConfig, setDashConfig,
   editMember, addMember, removeMember, permanentDeleteMember, restoreMember, nicksPersisted,

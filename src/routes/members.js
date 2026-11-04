@@ -89,6 +89,332 @@ router.get('/:id', (req, res) => {
   res.json(decorate(m));
 });
 
+/* GET /api/members/:id/profile — 단원 상세 프로필 (5각형 지표 + 순위) */
+router.get('/:id/profile', (req, res) => {
+  const id = Number(req.params.id);
+  const m = memberById(id);
+  if (!m) return res.status(404).json({ error: 'member_not_found', id: req.params.id });
+  const seasonId = req.query.seasonId || undefined;
+
+  const rows = store.memberProfile(id, seasonId);
+  if (!rows.length) return res.json({ member: decorate(m), games: 0, stats: null, radar: null, ranks: null });
+
+  // 개인 집계
+  const agg = aggregate(rows);
+
+  // 전원 집계 → 순위
+  const all = store.allMemberProfiles(seasonId);
+  const MIN_GAMES = 3;
+  const allAggs = {};
+  for (const [mid, prows] of Object.entries(all)) {
+    if (prows.length >= MIN_GAMES) allAggs[mid] = aggregate(prows);
+  }
+  const totalMembers = Object.keys(allAggs).length;
+
+  // 5축 레이더 점수 (0~100 백분위)
+  const axes = [
+    { key: 'combat', label: '전투', metric: a => a.kda * 0.4 + a.killParticipation * 0.4 + a.damagePerMin * 0.002 },
+    { key: 'survival', label: '생존', metric: a => 1 / (1 + a.deathsPerMin) },
+    { key: 'vision', label: '시야', metric: a => a.visionPerMin },
+    { key: 'growth', label: '성장', metric: a => a.csPerMin * 0.5 + a.goldPerMin * 0.001 },
+    { key: 'damage', label: '딜량', metric: a => a.damagePerMin },
+  ];
+
+  const radar = {};
+  const ranks = {};
+  for (const ax of axes) {
+    const myVal = ax.metric(agg);
+    const vals = Object.entries(allAggs).map(([mid, a]) => ({ mid: +mid, v: ax.metric(a) }));
+    vals.sort((a, b) => b.v - a.v);
+    const rank = vals.findIndex(v => v.mid === id) + 1;
+    const pct = totalMembers > 1 ? Math.round(((totalMembers - rank) / (totalMembers - 1)) * 100) : 50;
+    radar[ax.key] = pct;
+    ranks[ax.key] = { rank, total: totalMembers, value: +myVal.toFixed(2) };
+  }
+
+  // 시리즈 승패 vs 매치 승패 구분
+  const record = computeRecord(id, seasonId, store);
+
+  // 최근 10경기
+  const recentMatches = rows.slice(0, 10).map(r => ({
+    matchId: r.matchId, champion: r.champion, position: r.position,
+    win: r.win, kills: r.kills, deaths: r.deaths, assists: r.assists,
+    kda: r.deaths > 0 ? +((r.kills + r.assists) / r.deaths).toFixed(2) : r.kills + r.assists,
+    damage: r.damage, gold: r.gold, cs: r.cs, items: r.items || [],
+    dur: r.dur, date: r.gameAt || (r.matchDate ? new Date(r.matchDate).toISOString() : null),
+    seriesId: r.seriesId,
+  }));
+
+  // 하이라이트 (개인 최고 기록)
+  const highlights = computeHighlights(rows);
+
+  // 블루/레드 사이드 전적
+  const blueSide = rows.filter(r => r.teamId === 100);
+  const redSide = rows.filter(r => r.teamId === 200);
+  const sideRecord = {
+    blue: { games: blueSide.length, wins: blueSide.filter(r => r.win).length },
+    red: { games: redSide.length, wins: redSide.filter(r => r.win).length },
+  };
+  sideRecord.blue.winrate = sideRecord.blue.games ? +(sideRecord.blue.wins / sideRecord.blue.games).toFixed(4) : 0;
+  sideRecord.red.winrate = sideRecord.red.games ? +(sideRecord.red.wins / sideRecord.red.games).toFixed(4) : 0;
+
+  // 모드별 전적 (협곡 vs 칼바람)
+  const modeBreakdown = {};
+  rows.forEach(r => {
+    const mode = r.mode || '협곡';
+    if (!modeBreakdown[mode]) modeBreakdown[mode] = { games: 0, wins: 0 };
+    modeBreakdown[mode].games++; if (r.win) modeBreakdown[mode].wins++;
+  });
+
+  // 최근 폼 (last 5, last 10, last 20)
+  const recentForm = {};
+  [5, 10, 20].forEach(n => {
+    const slice = rows.slice(0, Math.min(n, rows.length));
+    const w = slice.filter(r => r.win).length;
+    recentForm['last' + n] = { games: slice.length, wins: w, winrate: slice.length ? +(w / slice.length).toFixed(4) : 0 };
+  });
+
+  // 승리/패배 평균 시간
+  const winRows = rows.filter(r => r.win), loseRows = rows.filter(r => !r.win);
+  const avgDur = arr => arr.length ? +(arr.reduce((s, r) => s + (r.dur || 0), 0) / arr.length / 60).toFixed(1) : 0;
+  const durationStats = { avgWinMin: avgDur(winRows), avgLossMin: avgDur(loseRows), avgAllMin: avgDur(rows) };
+
+  // 함께한 단원 (같은 팀) TOP 5
+  const teammates = computeTeammates(id, seasonId, store);
+
+  // 상대한 단원 (적 팀) TOP 5
+  const rivals = computeRivals(id, seasonId, store);
+
+  // 승리 시 vs 패배 시 평균 스탯 비교
+  const winAgg = winRows.length >= 2 ? aggregate(winRows) : null;
+  const loseAgg = loseRows.length >= 2 ? aggregate(loseRows) : null;
+  const winLoseCompare = winAgg && loseAgg ? {
+    win: { kda: winAgg.kda, damagePerMin: winAgg.damagePerMin, goldPerMin: winAgg.goldPerMin, csPerMin: winAgg.csPerMin, visionPerMin: winAgg.visionPerMin, killParticipation: winAgg.killParticipation },
+    lose: { kda: loseAgg.kda, damagePerMin: loseAgg.damagePerMin, goldPerMin: loseAgg.goldPerMin, csPerMin: loseAgg.csPerMin, visionPerMin: loseAgg.visionPerMin, killParticipation: loseAgg.killParticipation },
+  } : null;
+
+  // 포지션별 KDA
+  const posKda = {};
+  rows.forEach(r => {
+    const p = r.position || '없음';
+    if (!posKda[p]) posKda[p] = { kills: 0, deaths: 0, assists: 0, games: 0 };
+    posKda[p].kills += r.kills; posKda[p].deaths += r.deaths; posKda[p].assists += r.assists; posKda[p].games++;
+  });
+  const positionKda = Object.entries(posKda).map(([pos, v]) => ({
+    position: pos, games: v.games,
+    kda: v.deaths > 0 ? +((v.kills + v.assists) / v.deaths).toFixed(2) : v.kills + v.assists,
+  })).sort((a, b) => b.games - a.games);
+
+  res.json({
+    member: decorate(m),
+    games: rows.length,
+    stats: agg,
+    radar,
+    ranks,
+    record,
+    recentChampions: topChampions(rows, 5),
+    allChampions: topChampions(rows, 999),
+    positionStats: positionBreakdown(rows),
+    recentMatches,
+    highlights,
+    sideRecord,
+    modeBreakdown,
+    recentForm,
+    durationStats,
+    teammates,
+    rivals,
+    winLoseCompare,
+    positionKda,
+  });
+});
+
+/* 시리즈 승패 vs 매치(단판) 승패 구분 집계 */
+function computeRecord(memberId, seasonId, store) {
+  const matches = store.allMatches(seasonId || undefined);
+  // 이 단원이 참여한 매치만
+  const mine = matches.filter(m => [...m.blue, ...m.red].some(p => !p.mercenary && p.id === memberId));
+
+  let matchWins = 0, matchLosses = 0, seriesWins = 0, seriesLosses = 0;
+  const seriesSeen = new Set();
+
+  mine.forEach(m => {
+    const onBlue = m.blue.some(p => !p.mercenary && p.id === memberId);
+    const won = onBlue === m.blueWin;
+
+    if (m.seriesId) {
+      if (!seriesSeen.has(m.seriesId)) {
+        seriesSeen.add(m.seriesId);
+        // 시리즈 전체 결과 판정 — 1경기 블루팀=A팀, 선수 매칭
+        const seriesGames = matches.filter(g => g.seriesId === m.seriesId);
+        const endTime = g => g.date.getTime() + (g.dur || 0) * 1000;
+        seriesGames.sort((a, b) => endTime(a) - endTime(b));
+        const first = seriesGames[0];
+        const teamAIds = new Set(first.blue.filter(p => !p.mercenary).map(p => p.id));
+        let aW = 0, bW = 0;
+        seriesGames.forEach(g => {
+          const aOnBlue = g.blue.filter(p => !p.mercenary && teamAIds.has(p.id)).length;
+          const aOnRed = g.red.filter(p => !p.mercenary && teamAIds.has(p.id)).length;
+          const teamAIsBlue = aOnBlue >= aOnRed;
+          if (teamAIsBlue === g.blueWin) aW++; else bW++;
+        });
+        // 이 단원이 A팀인지 B팀인지
+        const memberIsTeamA = teamAIds.has(memberId);
+        const memberTeamWon = memberIsTeamA ? (aW > bW) : (bW > aW);
+        if (memberTeamWon) seriesWins++; else seriesLosses++;
+      }
+    } else {
+      // 단판
+      if (won) matchWins++; else matchLosses++;
+    }
+  });
+
+  const totalW = matchWins + seriesWins, totalL = matchLosses + seriesLosses;
+  return {
+    total: { wins: totalW, losses: totalL, games: totalW + totalL, winrate: (totalW + totalL) > 0 ? +((totalW / (totalW + totalL))).toFixed(4) : 0 },
+    match: { wins: matchWins, losses: matchLosses, games: matchWins + matchLosses },
+    series: { wins: seriesWins, losses: seriesLosses, games: seriesWins + seriesLosses },
+  };
+}
+
+function computeHighlights(rows) {
+  let bestKda = null, highestDamage = null, maxKills = null;
+  let maxWin = 0, maxLose = 0, curW = 0, curL = 0;
+
+  // 오래된 순으로 연승/연패 계산
+  const chrono = [...rows].reverse();
+  chrono.forEach(r => {
+    if (r.win) { curW++; curL = 0; } else { curL++; curW = 0; }
+    if (curW > maxWin) maxWin = curW;
+    if (curL > maxLose) maxLose = curL;
+  });
+
+  rows.forEach(r => {
+    const kda = r.deaths > 0 ? (r.kills + r.assists) / r.deaths : r.kills + r.assists;
+    if (!bestKda || kda > bestKda.kda) bestKda = { kda: +kda.toFixed(2), champion: r.champion, kills: r.kills, deaths: r.deaths, assists: r.assists };
+    if (!highestDamage || r.damage > highestDamage.damage) highestDamage = { damage: r.damage, champion: r.champion };
+    if (!maxKills || r.kills > maxKills.kills) maxKills = { kills: r.kills, champion: r.champion, deaths: r.deaths, assists: r.assists };
+  });
+
+  return { bestKda, highestDamage, maxKills, maxWinStreak: maxWin, maxLoseStreak: maxLose };
+}
+
+/* 함께한 단원 (같은 팀) TOP 5 */
+function computeTeammates(memberId, seasonId, store) {
+  const matches = store.allMatches(seasonId || undefined);
+  const mates = {};
+  matches.forEach(m => {
+    const inBlue = m.blue.some(p => !p.mercenary && p.id === memberId);
+    const inRed = m.red.some(p => !p.mercenary && p.id === memberId);
+    if (!inBlue && !inRed) return;
+    const team = inBlue ? m.blue : m.red;
+    const won = inBlue === m.blueWin;
+    team.forEach(p => {
+      if (p.mercenary || p.id === memberId) return;
+      if (!mates[p.id]) mates[p.id] = { id: p.id, name: p.name, games: 0, wins: 0 };
+      mates[p.id].games++; if (won) mates[p.id].wins++;
+    });
+  });
+  return Object.values(mates).sort((a, b) => b.games - a.games).slice(0, 5)
+    .map(t => ({ ...t, winrate: +(t.wins / t.games).toFixed(4) }));
+}
+
+/* 상대한 단원 (적 팀) TOP 5 */
+function computeRivals(memberId, seasonId, store) {
+  const matches = store.allMatches(seasonId || undefined);
+  const enemies = {};
+  matches.forEach(m => {
+    const inBlue = m.blue.some(p => !p.mercenary && p.id === memberId);
+    const inRed = m.red.some(p => !p.mercenary && p.id === memberId);
+    if (!inBlue && !inRed) return;
+    const enemy = inBlue ? m.red : m.blue;
+    const won = inBlue === m.blueWin;
+    enemy.forEach(p => {
+      if (p.mercenary) return;
+      if (!enemies[p.id]) enemies[p.id] = { id: p.id, name: p.name, games: 0, wins: 0 };
+      enemies[p.id].games++; if (won) enemies[p.id].wins++;
+    });
+  });
+  return Object.values(enemies).sort((a, b) => b.games - a.games).slice(0, 5)
+    .map(t => ({ ...t, winrate: +(t.wins / t.games).toFixed(4) }));
+}
+
+function aggregate(rows) {
+  let kills = 0, deaths = 0, assists = 0, gold = 0, cs = 0, damage = 0, damageTaken = 0,
+      damageMitigated = 0, vision = 0, wardsPlaced = 0, wardsKilled = 0, controlWards = 0,
+      kp = 0, wins = 0, totalDur = 0, heal = 0, shield = 0, ccTime = 0,
+      doubles = 0, triples = 0, quadras = 0, pentas = 0, firstBloods = 0,
+      turrets = 0, inhibitors = 0;
+  rows.forEach(r => {
+    kills += r.kills; deaths += r.deaths; assists += r.assists;
+    gold += r.gold; cs += r.cs; damage += r.damage;
+    damageTaken += r.damageTaken || 0; damageMitigated += r.damageMitigated || 0;
+    vision += r.vision; wardsPlaced += r.wardsPlaced || 0;
+    wardsKilled += r.wardsKilled || 0; controlWards += r.controlWards || 0;
+    kp += r.killParticipation || 0;
+    if (r.win) wins++;
+    totalDur += r.dur || 0;
+    heal += r.heal || 0; shield += r.shield || 0; ccTime += r.ccTime || 0;
+    doubles += r.doubleKills || 0; triples += r.tripleKills || 0;
+    quadras += r.quadraKills || 0; pentas += r.pentaKills || 0;
+    if (r.firstBlood) firstBloods++;
+    turrets += r.turretKills || 0; inhibitors += r.inhibitorKills || 0;
+  });
+  const g = rows.length;
+  const mins = totalDur / 60;
+  return {
+    games: g, wins, losses: g - wins, winrate: +(wins / g).toFixed(4),
+    kills: +(kills / g).toFixed(1), deaths: +(deaths / g).toFixed(1), assists: +(assists / g).toFixed(1),
+    kda: deaths > 0 ? +((kills + assists) / deaths).toFixed(2) : kills + assists,
+    killParticipation: +(kp / g).toFixed(1),
+    goldPerMin: mins > 0 ? +(gold / mins).toFixed(0) : 0,
+    csPerMin: mins > 0 ? +(cs / mins).toFixed(1) : 0,
+    damagePerMin: mins > 0 ? +(damage / mins).toFixed(0) : 0,
+    damageTakenPerMin: mins > 0 ? +(damageTaken / mins).toFixed(0) : 0,
+    damageMitigatedPerMin: mins > 0 ? +(damageMitigated / mins).toFixed(0) : 0,
+    visionPerMin: mins > 0 ? +(vision / mins).toFixed(2) : 0,
+    wardsPlacedPerGame: +(wardsPlaced / g).toFixed(1),
+    wardsKilledPerGame: +(wardsKilled / g).toFixed(1),
+    controlWardsPerGame: +(controlWards / g).toFixed(1),
+    deathsPerMin: mins > 0 ? +(deaths / mins).toFixed(3) : 0,
+    healPerGame: +(heal / g).toFixed(0), shieldPerGame: +(shield / g).toFixed(0),
+    ccTimePerGame: +(ccTime / g).toFixed(1),
+    doubleKills: doubles, tripleKills: triples, quadraKills: quadras, pentaKills: pentas,
+    firstBloods, turretKills: turrets, inhibitorKills: inhibitors,
+    avgGold: +(gold / g).toFixed(0), avgDamage: +(damage / g).toFixed(0),
+    avgCS: +(cs / g).toFixed(0), avgVision: +(vision / g).toFixed(1),
+  };
+}
+
+function topChampions(rows, limit) {
+  const champs = {};
+  rows.forEach(r => {
+    if (!r.champion) return;
+    if (!champs[r.champion]) champs[r.champion] = { champion: r.champion, games: 0, wins: 0, kills: 0, deaths: 0, assists: 0 };
+    const c = champs[r.champion];
+    c.games++; if (r.win) c.wins++;
+    c.kills += r.kills; c.deaths += r.deaths; c.assists += r.assists;
+  });
+  return Object.values(champs)
+    .sort((a, b) => b.games - a.games)
+    .slice(0, limit)
+    .map(c => ({
+      ...c,
+      winrate: +(c.wins / c.games).toFixed(4),
+      kda: c.deaths > 0 ? +((c.kills + c.assists) / c.deaths).toFixed(2) : c.kills + c.assists,
+    }));
+}
+
+function positionBreakdown(rows) {
+  const pos = {};
+  rows.forEach(r => {
+    const p = r.position || '없음';
+    if (!pos[p]) pos[p] = { position: p, games: 0, wins: 0 };
+    pos[p].games++; if (r.win) pos[p].wins++;
+  });
+  return Object.values(pos).sort((a, b) => b.games - a.games)
+    .map(p => ({ ...p, winrate: +(p.wins / p.games).toFixed(4) }));
+}
+
 /*
  * POST /api/members/:id/riot-refresh — 한 단원의 계정 솔로랭크를 라이엇에서 다시 받아온다.
  * 로그인 없이 쓸 수 있고, 5분 안에 이미 갱신된 단원은 호출 없이 그대로 돌려준다.
