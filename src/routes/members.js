@@ -193,6 +193,9 @@ router.get('/:id/profile', (req, res) => {
     lose: { kda: loseAgg.kda, damagePerMin: loseAgg.damagePerMin, goldPerMin: loseAgg.goldPerMin, csPerMin: loseAgg.csPerMin, visionPerMin: loseAgg.visionPerMin, killParticipation: loseAgg.killParticipation },
   } : null;
 
+  // 상세 스탯 백분위 순위 (your.gg 스타일)
+  const statRanks = computeStatRanks(id, agg, allAggs, totalMembers);
+
   // 포지션별 KDA
   const posKda = {};
   rows.forEach(r => {
@@ -225,6 +228,7 @@ router.get('/:id/profile', (req, res) => {
     rivals,
     winLoseCompare,
     positionKda,
+    statRanks,
   });
 });
 
@@ -296,6 +300,73 @@ function computeHighlights(rows) {
   });
 
   return { bestKda, highestDamage, maxKills, maxWinStreak: maxWin, maxLoseStreak: maxLose };
+}
+
+/* 상세 스탯 백분위 순위 — your.gg 스타일 등급 */
+function computeStatRanks(memberId, myAgg, allAggs, totalMembers) {
+  // 높을수록 좋은 지표 vs 낮을수록 좋은 지표
+  const metrics = [
+    // 전투
+    { key: 'kda', label: 'KDA', cat: '전투', get: a => a.kda, fmt: v => v.toFixed(2) },
+    { key: 'kills', label: '킬', cat: '전투', get: a => a.kills, fmt: v => v.toFixed(1) },
+    { key: 'assists', label: '어시스트', cat: '전투', get: a => a.assists, fmt: v => v.toFixed(1) },
+    { key: 'deaths', label: '데스', cat: '전투', get: a => a.deaths, fmt: v => v.toFixed(1), asc: true },
+    { key: 'killParticipation', label: '킬 관여율', cat: '전투', get: a => a.killParticipation, fmt: v => v.toFixed(0) + '%' },
+    { key: 'firstBloods', label: '퍼스트블러드', cat: '전투', get: a => a.firstBloods / a.games, fmt: v => v.toFixed(2) },
+    // 성장
+    { key: 'csPerMin', label: '분당 CS', cat: '성장', get: a => a.csPerMin, fmt: v => v.toFixed(1) },
+    { key: 'goldPerMin', label: '분당 골드', cat: '성장', get: a => a.goldPerMin, fmt: v => String(v) },
+    // 딜량
+    { key: 'damagePerMin', label: '분당 딜량', cat: '딜량', get: a => a.damagePerMin, fmt: v => String(v) },
+    { key: 'damageTakenPerMin', label: '분당 받은 딜량', cat: '딜량', get: a => a.damageTakenPerMin, fmt: v => String(v) },
+    { key: 'damagePerGold', label: '골드당 딜량', cat: '딜량', get: a => a.avgDamage / Math.max(a.avgGold, 1), fmt: v => v.toFixed(2) },
+    { key: 'damagePerDeath', label: '데스당 딜량', cat: '딜량', get: a => a.avgDamage / Math.max(a.deaths, 0.5), fmt: v => Math.round(v).toLocaleString() },
+    { key: 'takenPerDeath', label: '데스당 받은 딜량', cat: '딜량', get: a => (a.damageTakenPerMin * 60) / Math.max(a.deaths, 0.5), fmt: v => Math.round(v).toLocaleString() },
+    // 시야
+    { key: 'visionPerMin', label: '분당 시야 점수', cat: '시야', get: a => a.visionPerMin, fmt: v => v.toFixed(2) },
+    { key: 'controlWardsPerGame', label: '제어 와드', cat: '시야', get: a => a.controlWardsPerGame, fmt: v => v.toFixed(1) },
+    { key: 'wardsPlacedPerGame', label: '와드 설치', cat: '시야', get: a => a.wardsPlacedPerGame, fmt: v => v.toFixed(1) },
+    { key: 'wardsKilledPerGame', label: '와드 제거', cat: '시야', get: a => a.wardsKilledPerGame, fmt: v => v.toFixed(1) },
+    // 유틸
+    { key: 'ccTimePerGame', label: 'CC 시간', cat: '유틸', get: a => a.ccTimePerGame, fmt: v => v.toFixed(1) + '초' },
+    { key: 'healPerGame', label: '힐량', cat: '유틸', get: a => a.healPerGame, fmt: v => Number(v).toLocaleString() },
+    { key: 'shieldPerGame', label: '보호막', cat: '유틸', get: a => a.shieldPerGame, fmt: v => Number(v).toLocaleString() },
+  ];
+
+  const results = [];
+  for (const m of metrics) {
+    const myVal = m.get(myAgg);
+    const vals = Object.entries(allAggs).map(([mid, a]) => ({ mid: +mid, v: m.get(a) }));
+    // asc = 낮을수록 좋음 (데스 등)
+    if (m.asc) vals.sort((a, b) => a.v - b.v);
+    else vals.sort((a, b) => b.v - a.v);
+    const rank = vals.findIndex(v => v.mid === memberId) + 1;
+    const pct = totalMembers > 1 ? +((rank / totalMembers) * 100).toFixed(1) : 50;
+    const grade = pctToGrade(pct);
+    results.push({
+      key: m.key, label: m.label, cat: m.cat,
+      value: m.fmt(myVal), rank, total: totalMembers,
+      percentile: pct, grade,
+    });
+  }
+  return results;
+}
+
+function pctToGrade(pct) {
+  if (pct <= 0.5) return 'SSS';
+  if (pct <= 1) return 'SS';
+  if (pct <= 3) return 'S+';
+  if (pct <= 5) return 'S';
+  if (pct <= 10) return 'A+';
+  if (pct <= 15) return 'A';
+  if (pct <= 25) return 'A-';
+  if (pct <= 35) return 'B+';
+  if (pct <= 50) return 'B';
+  if (pct <= 65) return 'B-';
+  if (pct <= 75) return 'C+';
+  if (pct <= 85) return 'C';
+  if (pct <= 95) return 'C-';
+  return 'D';
 }
 
 /* 함께한 단원 (같은 팀) TOP 5 */

@@ -1190,6 +1190,30 @@
   .mp-mode-chip .mrec{color:var(--ink-3);font-size:11.5px}
   .mp-mode-chip .mwr{font-weight:800;font-variant-numeric:tabular-nums}
 
+  /* Stat ranks grid (your.gg style) */
+  .mp-sr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px}
+  .mp-sr{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface);display:flex;align-items:center;gap:10px;transition:.14s}
+  .mp-sr:hover{border-color:var(--gold-deep);transform:translateY(-1px)}
+  .mp-sr .grade{font-size:15px;font-weight:900;width:36px;height:36px;display:grid;place-items:center;border-radius:8px;flex-shrink:0;letter-spacing:-.02em}
+  .mp-sr .grade.sss{background:linear-gradient(135deg,#FFD700,#FFA500);color:#1a0a00;font-size:12px}
+  .mp-sr .grade.ss{background:linear-gradient(135deg,#FF6B6B,#EE5A24);color:#fff;font-size:13px}
+  .mp-sr .grade.sp{background:#C56CF0;color:#fff;font-size:12px}
+  .mp-sr .grade.s{background:#7C4DFF;color:#fff}
+  .mp-sr .grade.ap{background:#1E9DE3;color:#fff;font-size:13px}
+  .mp-sr .grade.a{background:#0AC8B9;color:#0a1428}
+  .mp-sr .grade.am{background:#2ECC8F;color:#0a1428;font-size:13px}
+  .mp-sr .grade.bp{background:#7A8AA6;color:#fff;font-size:13px}
+  .mp-sr .grade.b{background:#5A6A80;color:#fff}
+  .mp-sr .grade.bm{background:#4A5568;color:#ccc;font-size:13px}
+  .mp-sr .grade.cp,.mp-sr .grade.c,.mp-sr .grade.cm{background:#3A4455;color:#8A8AA6}
+  .mp-sr .grade.d{background:#2A2A3A;color:#666}
+  .mp-sr .sr-info{flex:1;min-width:0}
+  .mp-sr .sr-label{font-size:10px;color:var(--ink-3);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mp-sr .sr-val{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:1px}
+  .mp-sr .sr-pct{font-size:9.5px;color:var(--ink-3);margin-top:1px}
+  .mp-sr-cat{font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.08em;margin:14px 0 6px;padding-left:2px}
+  .mp-sr-cat:first-child{margin-top:0}
+
   /* All champions grid */
   .mp-allchamps{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
   .mp-ac{position:relative;width:42px;height:42px;border-radius:8px;overflow:hidden;border:1.5px solid var(--line);transition:.14s;cursor:default}
@@ -1644,6 +1668,7 @@
       <div id="mpExtra1" class="mp-3col"></div>
       <div id="mpExtra2" class="mp-2col"></div>
       <div id="mpWinLose" class="mp-panel"></div>
+      <div id="mpStatRanks" class="mp-panel"></div>
       <div id="mpAllChamps" class="mp-panel"></div>
       <div id="mpDetailStats"></div>
       <div id="mpRecent" class="mp-panel"></div>
@@ -4107,8 +4132,8 @@ function openMemberProfile(id){
 async function loadMemberProfile(id, seasonId){
   const hero=$("#mpHero"),kpis=$("#mpKpis"),ch=$("#mpChampions"),ps=$("#mpPositions"),ds=$("#mpDetailStats"),rr=$("#radarRanks"),rc=$("#mpRecent");
   hero.innerHTML='';kpis.innerHTML='';ch.innerHTML='';ps.innerHTML='';ds.innerHTML='';rr.innerHTML='';rc.innerHTML='';
-  const ex1=$("#mpExtra1"),ex2=$("#mpExtra2"),wlc=$("#mpWinLose");
-  ex1.innerHTML='';ex2.innerHTML='';wlc.innerHTML='';
+  const ex1=$("#mpExtra1"),ex2=$("#mpExtra2"),wlc=$("#mpWinLose"),srk=$("#mpStatRanks");
+  ex1.innerHTML='';ex2.innerHTML='';wlc.innerHTML='';srk.innerHTML='';
   const canvas=$("#radarCanvas"),ctx=canvas.getContext("2d");
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
@@ -4364,6 +4389,32 @@ async function loadMemberProfile(id, seasonId){
             <div class="cbar"><i style="width:${lPct}%;background:var(--red)"></i></div>
             <span></span>
           </div>`}).join('')}`;
+    }
+
+    // ── STAT RANKS (your.gg 스타일) ──
+    if(data.statRanks&&data.statRanks.length){
+      const gradeClass=g=>{
+        const lc=g.toLowerCase().replace('+','p').replace('-','m');
+        return lc;
+      };
+      let lastCat='';
+      let html='<h3>상세 지표 순위</h3>';
+      const cats=[...new Set(data.statRanks.map(s=>s.cat))];
+      cats.forEach(cat=>{
+        html+=`<div class="mp-sr-cat">${cat}</div><div class="mp-sr-grid">`;
+        data.statRanks.filter(s=>s.cat===cat).forEach(s=>{
+          html+=`<div class="mp-sr">
+            <div class="grade ${gradeClass(s.grade)}">${s.grade}</div>
+            <div class="sr-info">
+              <div class="sr-label">${s.label}</div>
+              <div class="sr-val">${s.value}</div>
+              <div class="sr-pct">상위 ${s.percentile}% · ${s.rank}/${s.total}</div>
+            </div>
+          </div>`;
+        });
+        html+=`</div>`;
+      });
+      srk.innerHTML=html;
     }
 
     // ── DETAILED STATS (탭) ──
