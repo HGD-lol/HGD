@@ -53,6 +53,20 @@ async function select(table, filter = '', sel = '*', orderBy = '') {
   return query(table, { filter: f, select: sel });
 }
 
+/* 전체 행 조회 — PostgREST 는 한 번에 최대 1000행만 돌려주므로 offset 으로 끝까지 나눠 받는다.
+   orderBy 는 페이지가 겹치거나 빠지지 않도록 반드시 유일한 컬럼(PK) 기준이어야 한다. */
+const PAGE_SIZE = 1000;
+async function selectAll(table, orderBy, sel = '*') {
+  const out = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const f = `order=${orderBy}&limit=${PAGE_SIZE}&offset=${offset}`;
+    const rows = (await query(table, { filter: f, select: sel })) || [];
+    out.push(...rows);
+    if (rows.length < PAGE_SIZE) break;
+  }
+  return out;
+}
+
 async function update(table, filter, data) {
   return query(table, { method: 'PATCH', filter, body: data });
 }
@@ -61,4 +75,4 @@ async function del(table, filter) {
   return query(table, { method: 'DELETE', filter });
 }
 
-module.exports = { insert, upsert, select, update, del, SUPABASE_URL };
+module.exports = { insert, upsert, select, selectAll, update, del, SUPABASE_URL };

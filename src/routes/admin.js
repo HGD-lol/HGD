@@ -73,24 +73,41 @@ router.post('/seasons', requireAdmin, (req, res) => {
 });
 
 /* ── 데이터 백업 ── */
+/* 백업 대상 — Supabase 의 모든 테이블. orderBy 는 페이지네이션이 어긋나지 않도록 PK 기준.
+   테이블을 새로 추가하면 여기에도 넣어야 백업에 포함된다. */
+const BACKUP_TABLES = [
+  { key: 'members',            table: 'members',            orderBy: 'id.asc' },
+  { key: 'matches',            table: 'matches',            orderBy: 'id.asc' },
+  { key: 'pending',            table: 'pending',            orderBy: 'id.asc' },
+  { key: 'seasons',            table: 'seasons',            orderBy: 'id.asc' },
+  { key: 'dashboard_config',   table: 'dashboard_config',   orderBy: 'id.asc' },
+  { key: 'match_details',      table: 'match_details',      orderBy: 'match_id.asc' },
+  { key: 'match_participants', table: 'match_participants', orderBy: 'id.asc' },
+  { key: 'mvp_votes',          table: 'mvp_votes',          orderBy: 'match_id.asc,voter_id.asc' },
+  { key: 'riot_matches',       table: 'riot_matches',       orderBy: 'match_id.asc' },
+  { key: 'updates',            table: 'updates',            orderBy: 'id.asc' },
+  { key: 'suggestions',        table: 'suggestions',        orderBy: 'id.asc' },
+];
+
 router.get('/backup', requireAdmin, async (req, res) => {
   try {
     const sb = require('../lib/supabase');
-    const [members, matches, pending, seasons, config] = await Promise.all([
-      sb.select('members', '', '*', 'id.asc'),
-      sb.select('matches', '', '*', 'date.desc'),
-      sb.select('pending', '', '*', 'date.desc'),
-      sb.select('seasons', '', '*', 'created_at.asc'),
-      sb.select('dashboard_config', 'id=eq.1'),
-    ]);
-    const backup = {
-      exportedAt: new Date().toISOString(),
-      members: members || [],
-      matches: matches || [],
-      pending: pending || [],
-      seasons: seasons || [],
-      dashboardConfig: (config && config[0]) || {},
-    };
+    const backup = { exportedAt: new Date().toISOString(), counts: {}, errors: {} };
+    // 테이블 하나가 없거나 실패해도 나머지는 받아지도록 개별로 감싼다
+    await Promise.all(BACKUP_TABLES.map(async ({ key, table, orderBy }) => {
+      try {
+        const rows = await sb.selectAll(table, orderBy);
+        backup[key] = rows;
+        backup.counts[key] = rows.length;
+      } catch (e) {
+        backup[key] = [];
+        backup.counts[key] = 0;
+        backup.errors[key] = e.message;
+      }
+    }));
+    // 예전 백업 파일과 같은 키도 유지한다
+    backup.dashboardConfig = backup.dashboard_config[0] || {};
+    if (!Object.keys(backup.errors).length) delete backup.errors;
     const filename = `hgd-backup-${new Date().toISOString().slice(0, 10)}.json`;
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
