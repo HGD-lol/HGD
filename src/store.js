@@ -550,7 +550,16 @@ function deleteUserMatch(id) {
   if (userMatches.length === before) return false;
   dbWrite(() => sb.del('matches', `id=eq.${id}`));
   clearVotesFor(id);   // 경기가 사라지면 그 경기의 표도 같이 지운다
+  deleteMatchDetails(id);   // 상세 데이터도 지워야 같은 라이엇 경기를 다시 가져올 수 있다
   invalidate();
+  return true;
+}
+/* 내전 import 상세 데이터 삭제 — match_participants 는 FK on delete cascade 라 match_details 만 지우면 된다 */
+function deleteMatchDetails(matchId) {
+  const key = String(matchId);
+  if (!matchDetails.has(key)) return false;
+  matchDetails.delete(key);
+  if (hasDetailsTable) dbWrite(() => sb.del('match_details', `match_id=eq.${key}`));
   return true;
 }
 
