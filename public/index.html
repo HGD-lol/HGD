@@ -607,8 +607,17 @@
   .sh-mvp{display:flex;align-items:center;gap:10px;margin-top:14px;padding:10px 14px;
     border:1px solid var(--gold-deep);border-radius:10px;
     background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 10%,var(--surface)) 0%,var(--surface) 70%)}
+  .sh-mvp{flex-wrap:wrap}
+  .sh-mvp-champs{display:flex;gap:4px}
   .sh-mvp-img{width:40px;height:40px;border-radius:8px;border:2px solid var(--gold)}
-  .sh-mvp-info{display:flex;flex-direction:column;gap:1px}
+  .sh-mvp-champs .sh-mvp-img:not(:first-child){width:28px;height:28px;border-width:1.5px;align-self:flex-end;opacity:.9}
+  .sh-mvp-info{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
+  .sh-mvp-score{display:flex;flex-direction:column;align-items:flex-end;margin-left:auto;padding-left:10px}
+  .sh-mvp-score .num{font-size:22px;font-weight:900;color:var(--gold-bright);font-variant-numeric:tabular-nums;line-height:1}
+  .sh-mvp-score .lbl{font-size:10px;color:var(--ink-3);font-weight:700;margin-top:3px}
+  .sh-mvp-runners{flex-basis:100%;display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--ink-3);margin-top:4px;padding-top:8px;border-top:1px dashed color-mix(in srgb,var(--gold-deep) 50%,transparent)}
+  .sh-mvp-runners em{font-style:normal;font-weight:800;color:var(--ink-3);margin-right:2px}
+  .sh-mvp-runners b{color:var(--ink-2);font-variant-numeric:tabular-nums}
   .sh-mvp-label{font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--gold-bright);text-transform:uppercase}
   .sh-mvp-info b{font-size:14px;font-weight:800}
   .sh-mvp-info span:last-child{font-size:12px;color:var(--ink-2)}
@@ -1170,14 +1179,21 @@
   .mp-people-row .pgames{color:var(--ink-3);font-size:11px;font-weight:600}
   .mp-people-row .pwr{font-weight:800;font-variant-numeric:tabular-nums;min-width:40px;text-align:right}
   /* Win/Lose compare bars */
-  .mp-compare-row{display:grid;grid-template-columns:80px 1fr 50px 1fr 50px;align-items:center;gap:6px;padding:7px 0;font-size:12px;border-bottom:1px solid color-mix(in srgb,var(--line) 40%,transparent)}
+  .mp-compare-head,.mp-compare-row{display:grid;grid-template-columns:72px 52px minmax(0,1fr) 24px minmax(0,1fr) 52px;align-items:center;gap:6px}
+  .mp-compare-head{font-size:11px;font-weight:700;padding:0 0 6px;color:var(--ink-3)}
+  .mp-compare-head .hwin{color:var(--good);grid-column:2/4;text-align:left}
+  .mp-compare-head .hlose{color:var(--red);grid-column:5/7;text-align:right}
+  .mp-compare-row{padding:7px 0;font-size:12px;border-bottom:1px solid color-mix(in srgb,var(--line) 40%,transparent)}
   .mp-compare-row:last-child{border-bottom:none}
-  .mp-compare-row .clabel{color:var(--ink-3);font-weight:600;font-size:11px}
-  .mp-compare-row .cbar{height:6px;border-radius:3px;overflow:hidden;background:var(--surface-2)}
+  .mp-compare-row .clabel{color:var(--ink-3);font-weight:600;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mp-compare-row .cvs{text-align:center;color:var(--ink-3);font-size:10px}
+  .mp-compare-row .cbar{height:6px;border-radius:3px;overflow:hidden;background:var(--surface-2);display:flex;min-width:0}
+  .mp-compare-row .cbar.win{justify-content:flex-end}
   .mp-compare-row .cbar i{display:block;height:100%;border-radius:3px}
-  .mp-compare-row .cval{font-weight:700;font-variant-numeric:tabular-nums;font-size:12px}
-  .mp-compare-row .cval.win{color:var(--good)}
-  .mp-compare-row .cval.lose{color:var(--red)}
+  .mp-compare-row .cval{font-weight:700;font-variant-numeric:tabular-nums;font-size:12px;white-space:nowrap}
+  .mp-compare-row .cval.win{color:var(--good);text-align:right}
+  .mp-compare-row .cval.lose{color:var(--red);text-align:left}
+  .mp-compare-row .cval.better{text-decoration:underline;text-underline-offset:3px}
   /* Recent form pills */
   .mp-form-row{display:flex;gap:12px;flex-wrap:wrap}
   .mp-form-pill{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-size:12.5px}
@@ -1249,7 +1265,7 @@
     .mp-match-row .mr-dmg{display:none}
     .mp-3col{grid-template-columns:1fr}
     .mp-4col{grid-template-columns:1fr 1fr}
-    .mp-compare-row{grid-template-columns:60px 1fr 40px 1fr 40px}
+    .mp-compare-head,.mp-compare-row{grid-template-columns:56px 44px minmax(0,1fr) 20px minmax(0,1fr) 44px;gap:4px}
   }
 
   /* ============ 이윤성과의 듀오 (라이엇 실제 경기) ============ */
@@ -3796,6 +3812,100 @@ const SPELL_MAP={1:'SummonerBoost',3:'SummonerExhaust',4:'SummonerFlash',6:'Summ
   39:'SummonerSnowURFSnowball_Mark',54:'Placeholder',55:'SummonerSmitePlayerGanker'};
 const ddSpell=id=>{const n=SPELL_MAP[id];return n?`${DD_VER}/img/spell/${n}.png`:''};
 
+/* ── LCK 스타일 시리즈 MVP ──
+   후보: 시리즈 승리 팀 선수(무승부면 전원) 중 상세 데이터가 있는 경기의 과반 이상 출전자.
+   경기마다 10명을 기준으로 각 지표를 그 경기 최고값 대비 0~1 로 정규화한 뒤 가중합(경기당 최대 100점 + 멀티킬 보너스).
+   이긴 경기는 1.0, 진 경기는 0.6 가중으로 시리즈 합산 → 최고점이 MVP. 동점이면 POG 횟수 → 통합 KDA 순.
+   POG(Player of the Game)는 각 경기 승리 팀에서 그 경기 점수가 가장 높은 선수. */
+const SERIES_MVP_W={kda:20,kp:20,dmg:20,tank:8,util:7,vision:8,gold:7,obj:5};
+const SERIES_MVP_LOSS_W=0.6;
+function seriesGameScores(d){
+  const all=[...d.blue,...d.red];
+  if(!all.length)return [];
+  const sum=(arr,f)=>arr.reduce((s,p)=>s+(f(p)||0),0);
+  const raw=all.map(p=>{
+    const team=p.teamId===100?d.blue:d.red;
+    const tk=sum(team,x=>x.kills)||1, td=sum(team,x=>x.damage)||1, tg=sum(team,x=>x.gold)||1;
+    return {p,
+      kda:Math.min(10,p.deaths>0?(p.kills+p.assists)/p.deaths:(p.kills+p.assists)),   // 퍼펙트 독주 방지 상한 10
+      kp:(p.kills+p.assists)/tk,                                                      // 팀 킬 대비 관여
+      dmg:p.damage/td,                                                                // 팀 딜 비중
+      tank:(p.damageTaken||0)+(p.damageMitigated||0),                                 // 탱킹
+      util:(p.heal||0)+(p.shield||0)+(p.ccTime||0)*50,                                // 힐·실드·CC
+      vision:p.vision||0,
+      gold:p.gold/tg,
+      obj:(p.turretKills||0)+(p.inhibitorKills||0)*1.5+(p.firstBlood?1:0),
+      multi:(p.tripleKills||0)*2+(p.quadraKills||0)*4+(p.pentaKills||0)*6,
+    };
+  });
+  const keys=Object.keys(SERIES_MVP_W), max={};
+  keys.forEach(k=>{max[k]=Math.max(...raw.map(r=>r[k]))||1});
+  return raw.map(r=>{
+    let score=0; keys.forEach(k=>{score+=r[k]/max[k]*SERIES_MVP_W[k]});
+    return {p:r.p,score:score+Math.min(r.multi,8),parts:r};
+  });
+}
+function computeSeriesMvp(data){
+  if(!data||!data.games)return null;
+  const winnerIsA=data.seriesWinner==='teamA', tie=data.seriesWinner==='tie';
+  const map={}; let played=0;
+  data.games.forEach((g,gi)=>{
+    if(!g._details)return;
+    const scores=seriesGameScores(g._details);
+    if(!scores.length)return;
+    played++;
+    const aIsBlue=g.teamASide==='blue';
+    const winners=scores.filter(s=>s.p.win);
+    const pog=(winners.length?winners:scores).reduce((b,s)=>!b||s.score>b.score?s:b,null);
+    scores.forEach(s=>{
+      const p=s.p;
+      const key=p.memberId?('m'+p.memberId):(p.puuid||p.riotId||('x'+p.champion+gi));
+      const onA=(p.teamId===100)===aIsBlue;
+      const e=map[key]||(map[key]={key,name:p.memberName||p.riotId||'—',memberId:p.memberId||null,onA,
+        games:0,wins:0,score:0,pog:0,kills:0,deaths:0,assists:0,kp:0,dmg:0,champs:[],lastChamp:p.champion,perGame:[]});
+      e.games++; e.onA=onA;
+      if(p.win)e.wins++;
+      e.score+=s.score*(p.win?1:SERIES_MVP_LOSS_W);
+      if(pog&&pog.p===p)e.pog++;
+      e.perGame.push({gi,score:s.score,win:!!p.win,champion:p.champion,pog:!!(pog&&pog.p===p)});
+      e.kills+=p.kills; e.deaths+=p.deaths; e.assists+=p.assists;
+      e.kp+=s.parts.kp; e.dmg+=s.parts.dmg;
+      if(!e.champs.includes(p.champion))e.champs.push(p.champion);
+      e.lastChamp=p.champion;
+    });
+  });
+  if(!played)return null;
+  let pool=Object.values(map);
+  if(!tie)pool=pool.filter(e=>e.onA===winnerIsA);
+  const eligible=pool.filter(e=>e.games>=Math.ceil(played/2));
+  if(eligible.length)pool=eligible;
+  pool.forEach(e=>{
+    e.kda=e.deaths>0?(e.kills+e.assists)/e.deaths:Infinity;
+    e.avgKp=e.kp/e.games; e.avgDmg=e.dmg/e.games; e.avgScore=e.score/e.games;
+  });
+  const kdaN=v=>v===Infinity?1e9:v;
+  pool.sort((a,b)=>b.score-a.score||b.pog-a.pog||kdaN(b.kda)-kdaN(a.kda));
+  return {mvp:pool[0]||null,ranking:pool,played,tie};
+}
+function renderSeriesMvpCard(r){
+  const m=r.mvp;
+  const champs=m.champs.map(c=>`<img class="sh-mvp-img" src="${ddChamp(c)}" title="${esc(c)}">`).join('');
+  const kda=m.kda===Infinity?'Perfect':m.kda.toFixed(1);
+  const name=m.memberId?`<b class="sh-mvp-name" data-mpid="${m.memberId}" style="cursor:pointer">${esc(m.name)}</b>`:`<b class="sh-mvp-name">${esc(m.name)}</b>`;
+  const perGame=m.perGame.map(g=>`${g.gi+1}경기 ${g.score.toFixed(0)}점${g.win?'':' (패)'}${g.pog?' · POG':''}`).join('\n');
+  const runners=r.ranking.slice(1,3).map((e,i)=>`<span><em>${i+2}위</em> ${esc(e.name)} <b>${e.avgScore.toFixed(1)}</b></span>`).join('');
+  return `<div class="sh-mvp" title="${esc(perGame)}">
+    <div class="sh-mvp-champs">${champs}</div>
+    <div class="sh-mvp-info">
+      <span class="sh-mvp-label">시리즈 MVP${r.tie?' · 무승부(전원 후보)':''}</span>
+      ${name}
+      <span>${m.kills}/${m.deaths}/${m.assists} (${kda} KDA) · 킬관여 ${Math.round(m.avgKp*100)}% · 딜 비중 ${Math.round(m.avgDmg*100)}%${m.pog?` · POG ${m.pog}회`:''}</span>
+    </div>
+    <div class="sh-mvp-score"><span class="num">${m.avgScore.toFixed(1)}</span><span class="lbl">경기당 평점</span></div>
+    ${runners?`<div class="sh-mvp-runners">${runners}</div>`:''}
+  </div>`;
+}
+
 $("#seriesBack").addEventListener("click",()=>switchView("matches"));
 let _seriesData=null;
 async function openSeriesView(seriesId){
@@ -3815,14 +3925,8 @@ async function openSeriesView(seriesId){
     const allP=data.games.flatMap(g=>(g._details?[...g._details.blue,...g._details.red]:[]));
     let totalKills=0,totalDur=0;
     data.games.forEach(g=>{totalDur+=(g.dur||0)});allP.forEach(p=>totalKills+=p.kills);
-    let mvp=null,mvpKda=-1;
-    allP.forEach(p=>{const r=p.deaths>0?(p.kills+p.assists)/p.deaths:(p.kills+p.assists);if(r>mvpKda){mvpKda=r;mvp=p}});
-    const mvpHtml=mvp?`<div class="sh-mvp">
-      <img class="sh-mvp-img" src="${ddChamp(mvp.champion)}"><div class="sh-mvp-info">
-        <span class="sh-mvp-label">시리즈 MVP</span>
-        <b>${esc(mvp.memberName||mvp.riotId)}</b>
-        <span>${mvp.kills}/${mvp.deaths}/${mvp.assists} (${mvpKda===Infinity?'Perfect':mvpKda.toFixed(1)} KDA)</span>
-      </div></div>`:'';
+    const smvp=computeSeriesMvp(data);
+    const mvpHtml=smvp&&smvp.mvp?renderSeriesMvpCard(smvp):'';
     const dots=data.games.map((g,i)=>{const aWon=(g.teamASide==='blue')===g.blueWin;return `<div class="sh-game-dot ${aWon?'blue':'red'}" data-gi="${i}" style="cursor:pointer"><span class="sh-gn">${i+1}</span></div>`}).join('');
     header.innerHTML=`<div class="series-header">
       <div class="sh-main">
@@ -3830,6 +3934,8 @@ async function openSeriesView(seriesId){
         <div class="sh-text"><span class="s-winner" style="color:var(--${winCls})">${winner} 시리즈 승</span>
           <span class="s-meta">${data.total}판 시리즈 · ${date} · 총 ${Math.floor(totalDur/60)}분 · ${totalKills}킬</span></div>
       </div>${mvpHtml}<div class="sh-dots-bar">${dots}</div></div>`;
+    // MVP 카드 이름 클릭 → 프로필
+    $$("[data-mpid]",header).forEach(el=>el.addEventListener("click",()=>openMemberProfile(+el.dataset.mpid)));
     // 상단 경기 dot 클릭 → 해당 경기로 전환
     $$(".sh-game-dot",header).forEach(dot=>{
       dot.addEventListener("click",()=>{
@@ -4364,30 +4470,29 @@ async function loadMemberProfile(id, seasonId){
     // ── 승리 시 vs 패배 시 비교 ──
     if(data.winLoseCompare){
       const w=data.winLoseCompare.win, l=data.winLoseCompare.lose;
+      const fmt1=v=>Number(v).toFixed(1), fmt2=v=>Number(v).toFixed(2), fmt0=v=>Math.round(v).toLocaleString();
       const metrics=[
-        {label:'KDA', wv:w.kda, lv:l.kda},
-        {label:'분당 딜량', wv:w.damagePerMin, lv:l.damagePerMin},
-        {label:'분당 골드', wv:w.goldPerMin, lv:l.goldPerMin},
-        {label:'분당 CS', wv:w.csPerMin, lv:l.csPerMin},
-        {label:'분당 시야', wv:w.visionPerMin, lv:l.visionPerMin},
-        {label:'킬관여율', wv:w.killParticipation, lv:l.killParticipation},
+        {label:'KDA', wv:w.kda, lv:l.kda, fmt:fmt2},
+        {label:'분당 딜량', wv:w.damagePerMin, lv:l.damagePerMin, fmt:fmt0},
+        {label:'분당 골드', wv:w.goldPerMin, lv:l.goldPerMin, fmt:fmt0},
+        {label:'분당 CS', wv:w.csPerMin, lv:l.csPerMin, fmt:fmt1},
+        {label:'분당 시야', wv:w.visionPerMin, lv:l.visionPerMin, fmt:fmt2},
+        {label:'킬관여율', wv:w.killParticipation, lv:l.killParticipation, fmt:v=>fmt1(v)+'%'},
       ];
-      const maxVal=Math.max(...metrics.map(m=>Math.max(m.wv,m.lv)));
       wlc.innerHTML=`<h3>승리 vs 패배 비교</h3>
-        <div style="display:grid;grid-template-columns:80px auto 50px 12px 50px auto 80px;align-items:center;gap:0;font-size:12px;color:var(--ink-2);margin-bottom:8px;padding:0 2px">
-          <span></span><span></span><span style="text-align:right;font-weight:700;color:var(--good)">승리</span><span></span><span style="font-weight:700;color:var(--red)">패배</span><span></span><span></span>
-        </div>
+        <div class="mp-compare-head"><span></span><span class="hwin">승리 시</span><span></span><span class="hlose">패배 시</span></div>
         ${metrics.map(m=>{
-          const wPct=maxVal>0?(m.wv/maxVal*100).toFixed(0):0;
-          const lPct=maxVal>0?(m.lv/maxVal*100).toFixed(0):0;
+          // 지표마다 단위가 다르므로(시야 ~1, 딜량 ~1000) 각 행의 최대값 기준으로 스케일
+          const rowMax=Math.max(m.wv,m.lv);
+          const wPct=rowMax>0?(m.wv/rowMax*100).toFixed(0):0;
+          const lPct=rowMax>0?(m.lv/rowMax*100).toFixed(0):0;
           return `<div class="mp-compare-row">
             <span class="clabel">${m.label}</span>
-            <div class="cbar"><i style="width:${wPct}%;background:var(--good)"></i></div>
-            <span class="cval win">${m.wv}</span>
-            <span style="text-align:center;color:var(--ink-3);font-size:10px">vs</span>
-            <span class="cval lose">${m.lv}</span>
-            <div class="cbar"><i style="width:${lPct}%;background:var(--red)"></i></div>
-            <span></span>
+            <span class="cval win${m.wv>m.lv?' better':''}">${m.fmt(m.wv)}</span>
+            <div class="cbar win"><i style="width:${wPct}%;background:var(--good)"></i></div>
+            <span class="cvs">vs</span>
+            <div class="cbar lose"><i style="width:${lPct}%;background:var(--red)"></i></div>
+            <span class="cval lose${m.lv>m.wv?' better':''}">${m.fmt(m.lv)}</span>
           </div>`}).join('')}`;
     }
 
