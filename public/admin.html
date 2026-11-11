@@ -226,6 +226,7 @@
         <div class="ck-bar" style="margin-top:14px">
           <label class="fld">대회 이름<input id="ck_name" maxlength="60" style="width:230px" placeholder="협곡단 CK 4회"></label>
           <label class="fld" style="flex:1;min-width:220px">한 줄 설명<input id="ck_sub" maxlength="200" style="width:100%" placeholder="예: 11월 22일(토) 20시 · 4팀 토너먼트"></label>
+          <label class="fld" style="flex:1;min-width:220px">팀원 경매 링크 (유튜브 등)<input id="ck_auction" maxlength="300" style="width:100%" placeholder="https://youtu.be/…"></label>
           <label class="fld">상태<select id="ck_status"></select></label>
           <label class="chk"><input type="checkbox" id="ck_visible"> 메인 노출</label>
         </div>
@@ -846,7 +847,7 @@ function ckSelect(doc){
   $("#ckSel").innerHTML=CKS.map(x=>`<option value="${esc(x.doc.id)}">${esc(x.doc.name)}${x.doc.visible===false?' (숨김)':''}</option>`).join('');
   if(!ckDoc) return;
   $("#ckSel").value=ckDoc.id;
-  $("#ck_name").value=ckDoc.name; $("#ck_sub").value=ckDoc.subtitle||'';
+  $("#ck_name").value=ckDoc.name; $("#ck_sub").value=ckDoc.subtitle||''; $("#ck_auction").value=ckDoc.auctionUrl||'';
   fillSelect($("#ck_status"),ckMeta.statuses,ckDoc.status);
   $("#ck_visible").checked=ckDoc.visible!==false;
   $("#ckErr").textContent=''; ckSetDirty(false);
@@ -859,6 +860,7 @@ $("#ckSel").addEventListener("change",e=>{
 });
 $("#ck_name").addEventListener("input",e=>{ ckDoc.name=e.target.value; ckSetDirty(true); });
 $("#ck_sub").addEventListener("input",e=>{ ckDoc.subtitle=e.target.value; ckSetDirty(true); });
+$("#ck_auction").addEventListener("input",e=>{ ckDoc.auctionUrl=e.target.value.trim(); ckSetDirty(true); });
 $("#ck_status").addEventListener("change",e=>{ ckDoc.status=e.target.value; ckSetDirty(true); });
 $("#ck_visible").addEventListener("change",e=>{ ckDoc.visible=e.target.checked; ckSetDirty(true); });
 

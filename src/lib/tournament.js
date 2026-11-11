@@ -25,6 +25,8 @@ const MAX_GAMES = 7;
 const ID_RE = /^[A-Za-z0-9_-]{1,24}$/;
 const WHEN_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;   // datetime-local 값 그대로 (KST 로 본다)
 
+const CK4_AUCTION_URL = 'https://youtu.be/EbZk1Nrpq28?si=pcsGKQctk62tbbHb';   // CK 4회 팀원 경매 영상
+
 let list = null;        // 대회 문서 배열 (만든 순)
 let persisted = true;   // tournaments 테이블을 쓸 수 있는지
 let loading = null;
@@ -34,6 +36,7 @@ function defaultDoc() {
     id: 'ck4',
     name: '협곡단 CK 4회',
     subtitle: '',
+    auctionUrl: CK4_AUCTION_URL,
     status: '예정',
     visible: true,
     teams: [1, 2, 3, 4].map((n, i) => ({ id: 't' + n, name: `${n}팀`, color: TEAM_COLORS[i], players: [] })),
@@ -59,6 +62,8 @@ async function load() {
         console.warn('    ' + e.message);
       }
       list = rows.filter((r) => r.data && typeof r.data === 'object').map((r) => ({ ...r.data, id: r.id }));
+      // 경매 링크 칸이 생기기 전에 저장된 CK 4회에는 링크를 채워 준다 (관리자가 비우면 '' 로 저장되어 다시 채우지 않는다)
+      list.forEach((d) => { if (d.id === 'ck4' && d.auctionUrl === undefined) d.auctionUrl = CK4_AUCTION_URL; });
       // 처음에는 4팀 · 예선 2경기 · 결승 틀을 하나 만들어 둔다 (관리자 화면에서 바로 고칠 수 있게)
       if (!list.length) {
         const d = defaultDoc();
@@ -95,6 +100,8 @@ function sanitize(body, id, createdAt) {
 
   const name = str(b.name, 60);
   if (!name) errors.push('대회 이름을 입력하세요.');
+  const auctionUrl = str(b.auctionUrl, 300);
+  if (auctionUrl && !/^https?:\/\/\S+$/i.test(auctionUrl)) errors.push('경매 링크는 http:// 또는 https:// 로 시작하는 주소여야 합니다.');
 
   // 팀
   const rawTeams = Array.isArray(b.teams) ? b.teams.slice(0, MAX_TEAMS) : [];
@@ -183,6 +190,7 @@ function sanitize(body, id, createdAt) {
       id,
       name,
       subtitle: str(b.subtitle, 200),
+      auctionUrl,
       status: STATUSES.includes(b.status) ? b.status : '예정',
       visible: b.visible !== false,
       teams,
@@ -297,6 +305,7 @@ function view(doc) {
     id: doc.id,
     name: doc.name,
     subtitle: doc.subtitle || '',
+    auctionUrl: doc.auctionUrl || '',
     status: doc.status,
     visible: doc.visible !== false,
     teams: doc.teams.map((t) => ({
