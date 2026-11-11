@@ -21,6 +21,7 @@ const synergyRoute = require('./src/routes/synergy');
 const badgesRoute = require('./src/routes/badges');
 const updatesRoute = require('./src/routes/updates');
 const duoRoute = require('./src/routes/duo');
+const tournamentRoute = require('./src/routes/tournament');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -59,6 +60,7 @@ app.get('/api', (_req, res) => {
       'POST /api/duo/sync': '라이엇에서 기준 단원의 최근 경기 받아오기',
       'GET /api/badges': '기록 배지',
       'GET /api/updates': '업데이트 게시판',
+      'GET /api/tournament': '대회(CK) — 팀·대진표·결과',
       'POST /api/balance': '팀 밸런서',
       'GET /api/meta': '스케일 상수',
     },
@@ -201,6 +203,7 @@ app.use('/api/synergy', synergyRoute);
 app.use('/api/badges', badgesRoute);
 app.use('/api/updates', updatesRoute);
 app.use('/api/duo', duoRoute);
+app.use('/api/tournament', tournamentRoute);
 
 app.get('/health', (_req, res) => res.json({ ok: true, uptime: process.uptime() }));
 

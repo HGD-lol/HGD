@@ -150,6 +150,35 @@
   .upd-item .meta{font-size:11.5px;color:var(--ink-3);margin-top:2px}
   .upd-item .preview{font-size:12.5px;color:var(--ink-2);margin-top:6px;white-space:pre-wrap;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-clamp:2}
   .upd-item .acts{display:flex;gap:6px;flex-shrink:0}
+  /* CK 대회 */
+  .ck-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .ck-bar .chk{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);font-weight:700;cursor:pointer;padding-bottom:8px}
+  .ck-bar .chk input{width:auto;accent-color:var(--gold)}
+  .ck-dirty{font-size:12px;font-weight:700;color:var(--warn)}
+  .ck-teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+  .ck-team{background:var(--surface-2);border:1px solid var(--line-soft);border-top:4px solid var(--tc,var(--gold));border-radius:10px;padding:12px}
+  .ck-team .th{display:flex;gap:6px;align-items:center;margin-bottom:10px}
+  .ck-team .th input[type=text]{flex:1;min-width:0;font-weight:800}
+  .ck-team .th input[type=color]{width:34px;height:34px;padding:2px;flex:0 0 auto}
+  .ck-pl{display:flex;gap:5px;align-items:center;margin-bottom:6px}
+  .ck-pl .no{flex:0 0 18px;font-size:11px;font-weight:800;color:var(--ink-3);text-align:center}
+  .ck-pl select.ln{flex:0 0 66px;padding:6px 4px;font-size:12px}
+  .ck-pl .who{flex:1;min-width:0;padding:6px 7px;font-size:12px}
+  .ck-x{appearance:none;background:none;border:0;color:var(--ink-3);cursor:pointer;font-size:13px;font-weight:800;padding:4px 6px;flex:0 0 auto}
+  .ck-x:hover{color:var(--red)}
+  .ck-match{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:10px;padding:12px;margin-bottom:10px}
+  .ck-match .mh{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+  .ck-match .mh .vs{font-size:12px;font-weight:800;color:var(--ink-3);padding-bottom:9px}
+  .ck-match .res{font-size:12.5px;font-weight:800;color:var(--gold-bright);margin:10px 0 6px}
+  .ck-g{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;padding:7px 9px;border:1px solid var(--line-soft);border-radius:8px;background:var(--surface);margin-bottom:6px}
+  .ck-g .gi{font-weight:800;white-space:nowrap}
+  .ck-g .gt{flex:1;min-width:200px;color:var(--ink-2)}
+  .ck-g.missing{border-color:var(--red)} .ck-g.missing .gt{color:var(--red)}
+  .ck-g select{width:auto;padding:5px 7px;font-size:12px}
+  .ck-link{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+  .ck-link select{flex:1;min-width:240px;max-width:560px;font-size:12px}
+  .ck-link input{width:170px;font-size:12px}
+  .ck-link .or{font-size:11.5px;color:var(--ink-3);font-weight:700}
 </style>
 </head>
 <body>
@@ -178,6 +207,44 @@
       <button class="tab" data-t="members" aria-selected="false">단원 관리</button>
       <button class="tab" data-t="matches" aria-selected="false">내전 기록 관리</button>
       <button class="tab" data-t="updates" aria-selected="false">업데이트 게시판</button>
+      <button class="tab" data-t="ck" aria-selected="false">🏆 CK 대회</button>
+    </div>
+
+    <div class="view" id="v-ck">
+      <div class="card" id="ckWarn" style="display:none;margin-bottom:18px;border-color:var(--red)">
+        <h3 style="color:var(--red)">⚠ 대회 정보가 DB 에 저장되지 않는 상태입니다</h3>
+        <p style="color:var(--ink-2);font-size:12.5px;margin:0">Supabase 에 <b>tournaments</b> 테이블이 없어 서버 메모리에만 저장됩니다(서버를 재시작하면 사라집니다). SQL Editor 에서 <code>sql/tournaments.sql</code> 을 실행한 뒤 서버를 재시작하세요.</p>
+      </div>
+      <div class="card" style="margin-bottom:18px">
+        <h3>대회 설정</h3>
+        <p style="color:var(--ink-3);font-size:12px;margin:0 0 12px"><b>메인 노출</b>을 켜면 메인 화면 맨 위에 대회 이름과 대진표가 크게 표시되고 대회 탭이 생깁니다. 아래에서 고친 내용은 <b>저장</b>을 눌러야 반영됩니다.</p>
+        <div class="ck-bar">
+          <label class="fld">대회 선택<select id="ckSel" style="min-width:180px"></select></label>
+          <button class="btn sm" id="ckNewBtn" style="margin-bottom:3px">＋ 새 대회</button>
+          <button class="btn sm danger" id="ckDelBtn" style="margin-bottom:3px">대회 삭제</button>
+        </div>
+        <div class="ck-bar" style="margin-top:14px">
+          <label class="fld">대회 이름<input id="ck_name" maxlength="60" style="width:230px" placeholder="협곡단 CK 4회"></label>
+          <label class="fld" style="flex:1;min-width:220px">한 줄 설명<input id="ck_sub" maxlength="200" style="width:100%" placeholder="예: 11월 22일(토) 20시 · 4팀 토너먼트"></label>
+          <label class="fld">상태<select id="ck_status"></select></label>
+          <label class="chk"><input type="checkbox" id="ck_visible"> 메인 노출</label>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;justify-content:flex-end;margin-top:14px">
+          <span class="ck-dirty" id="ckDirty"></span>
+          <button class="btn primary" id="ckSaveBtn">저장</button>
+        </div>
+        <div class="err" id="ckErr"></div>
+      </div>
+      <div class="card" style="margin-bottom:18px">
+        <h3>팀 · 선수 <button class="btn sm" id="ckAddTeam" style="margin-left:8px">＋ 팀 추가</button></h3>
+        <p style="color:var(--ink-3);font-size:12px;margin:0 0 12px">첫 번째 선수가 <b>팀장</b>으로 표시됩니다. 단원이 아닌 선수는 목록에서 <b>직접 입력(용병)</b>을 고르세요. 경기 승패는 이 명단과 내전 기록의 양 팀 선수를 대조해 자동으로 판정합니다.</p>
+        <div class="ck-teams" id="ckTeams"></div>
+      </div>
+      <div class="card">
+        <h3>대진표 · 경기 결과 <button class="btn sm" id="ckAddMatch" style="margin-left:8px">＋ 경기 추가</button></h3>
+        <p style="color:var(--ink-3);font-size:12px;margin:0 0 12px">팀 자리에 <b>○○ 승자/패자</b>를 고르면 그 경기가 끝났을 때 자동으로 올라옵니다. 결과는 일반 내전처럼 등록한 뒤 여기서 <b>내전 기록을 연결</b>하거나, 라이엇 Match ID 를 적어 바로 가져와 연결하세요. 세트 스코어와 승자는 연결된 기록으로 자동 계산됩니다.</p>
+        <div id="ckMatches"></div>
+      </div>
     </div>
 
     <div class="view on" id="v-dashboard">
@@ -751,7 +818,293 @@ async function loadAll(){
   }catch(ex){console.log('seasons load error',ex)}
   await loadMembers(); await loadMatches();
   loadUpdates();
+  loadCk();
 }
+
+/* ── CK 대회 ──
+   대회 하나를 통째로(팀·선수·대진·연결된 내전 기록) 화면에서 고친 뒤 [저장] 한 번으로 PUT 한다.
+   ckDoc = 편집 중인 사본, CKS = 서버가 준 [{doc, view}] (view 는 저장된 내용으로 계산한 스코어).
+   글자를 치는 칸은 값만 사본에 적고 다시 그리지 않는다(포커스가 날아가지 않게). 행을 넣고 빼는 동작만 다시 그린다. */
+let CKS=[], ckDoc=null, ckAllMatches=[], ckMeta={stages:['예선','결승','3·4위전'],statuses:['예정','진행중','종료'],bestOf:[1,3,5]};
+const CK_COLORS=['#1E9DE3','#E84057','#2ECC8F','#E0A335','#9B6BF2','#0AC8B9','#F2792B','#C8AA6E'];
+const CK_LANES=['탑','정글','미드','원딜','서폿'];
+const ckRid=p=>p+Math.random().toString(36).slice(2,8);
+function ckSetDirty(on){ $("#ckDirty").textContent=on?'● 저장하지 않은 변경사항이 있습니다':''; }
+function ckView(){ const c=ckDoc&&CKS.find(x=>x.doc.id===ckDoc.id); return c?c.view:null; }
+async function loadCk(keepId){
+  try{
+    const [r,m]=await Promise.all([jget('/api/tournament/admin/all'), jget('/api/matches')]);
+    CKS=r.tournaments||[]; ckAllMatches=m.matches||[];
+    ckMeta={stages:r.stages,statuses:r.statuses,bestOf:r.bestOf};
+    $("#ckWarn").style.display=r.persisted===false?'block':'none';
+  }catch(ex){ $("#ckErr").textContent='대회 정보를 불러오지 못했습니다: '+ex.message; return; }
+  const want=keepId||(ckDoc&&ckDoc.id);
+  ckSelect((CKS.find(x=>x.doc.id===want)||CKS[CKS.length-1]||{doc:null}).doc);
+}
+function ckSelect(doc){
+  ckDoc=doc?JSON.parse(JSON.stringify(doc)):null;
+  $("#ckSel").innerHTML=CKS.map(x=>`<option value="${esc(x.doc.id)}">${esc(x.doc.name)}${x.doc.visible===false?' (숨김)':''}</option>`).join('');
+  if(!ckDoc) return;
+  $("#ckSel").value=ckDoc.id;
+  $("#ck_name").value=ckDoc.name; $("#ck_sub").value=ckDoc.subtitle||'';
+  fillSelect($("#ck_status"),ckMeta.statuses,ckDoc.status);
+  $("#ck_visible").checked=ckDoc.visible!==false;
+  $("#ckErr").textContent=''; ckSetDirty(false);
+  renderCkTeams(); renderCkMatches();
+}
+function ckConfirmLeave(){ return !$("#ckDirty").textContent||confirm('저장하지 않은 변경사항이 있습니다. 버리고 이동할까요?'); }
+$("#ckSel").addEventListener("change",e=>{
+  if(!ckConfirmLeave()){ e.target.value=ckDoc.id; return; }
+  ckSelect(CKS.find(x=>x.doc.id===e.target.value).doc);
+});
+$("#ck_name").addEventListener("input",e=>{ ckDoc.name=e.target.value; ckSetDirty(true); });
+$("#ck_sub").addEventListener("input",e=>{ ckDoc.subtitle=e.target.value; ckSetDirty(true); });
+$("#ck_status").addEventListener("change",e=>{ ckDoc.status=e.target.value; ckSetDirty(true); });
+$("#ck_visible").addEventListener("change",e=>{ ckDoc.visible=e.target.checked; ckSetDirty(true); });
+
+/* 팀 · 선수 */
+function ckMemberOpts(p){
+  const live=MEMBERS.filter(m=>!m.hidden).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+  const known=p.memberId!=null&&live.some(m=>m.id===p.memberId);
+  const gone=p.memberId!=null&&!known?`<option value="${p.memberId}" selected>#${p.memberId} (숨김·삭제된 단원)</option>`:'';
+  return `<option value="">— 선수 선택 —</option>${gone}`+
+    live.map(m=>`<option value="${m.id}" ${known&&m.id===p.memberId?'selected':''}>${esc(m.name)} (${esc(m.tier)})</option>`).join('')+
+    `<option value="__name">✎ 직접 입력(용병)</option>`;
+}
+function renderCkTeams(){
+  $("#ckTeams").innerHTML=ckDoc.teams.map((t,ti)=>`
+    <div class="ck-team" data-ti="${ti}" style="--tc:${esc(t.color)}">
+      <div class="th">
+        <input type="color" data-f="color" value="${esc(t.color)}" title="팀 색">
+        <input type="text" data-f="name" value="${esc(t.name)}" maxlength="30" placeholder="팀 이름">
+        <button class="ck-x" data-act="delTeam" title="팀 삭제">✕</button>
+      </div>
+      ${t.players.map((p,pi)=>`<div class="ck-pl" data-pi="${pi}">
+        <span class="no">${pi===0?'★':pi+1}</span>
+        <select class="ln" data-f="lane"><option value="">라인</option>${CK_LANES.map(l=>`<option ${p.lane===l?'selected':''}>${l}</option>`).join('')}</select>
+        ${p.memberId==null&&p.name!=null
+          ?`<input class="who" data-f="pname" value="${esc(p.name)}" maxlength="30" placeholder="용병 이름">`
+          :`<select class="who" data-f="member">${ckMemberOpts(p)}</select>`}
+        <button class="ck-x" data-act="delPlayer" title="선수 빼기">✕</button>
+      </div>`).join('')}
+      <button class="btn sm" data-act="addPlayer" style="margin-top:4px">＋ 선수</button>
+    </div>`).join('')||'<div class="acc-empty">팀이 없습니다. [＋ 팀 추가] 로 만들어 주세요.</div>';
+}
+$("#ckAddTeam").addEventListener("click",()=>{
+  if(!ckDoc) return;
+  if(ckDoc.teams.length>=8){ toast('팀은 최대 8개까지 만들 수 있습니다.'); return; }
+  const n=ckDoc.teams.length;
+  ckDoc.teams.push({id:ckRid('t'),name:`${n+1}팀`,color:CK_COLORS[n%CK_COLORS.length],players:CK_LANES.map(l=>({memberId:null,lane:l}))});
+  ckSetDirty(true); renderCkTeams(); renderCkMatches();
+});
+$("#ckTeams").addEventListener("click",e=>{
+  const btn=e.target.closest("[data-act]"); if(!btn) return;
+  const ti=+btn.closest(".ck-team").dataset.ti, t=ckDoc.teams[ti];
+  if(btn.dataset.act==='addPlayer'){ t.players.push({memberId:null,lane:null}); }
+  else if(btn.dataset.act==='delPlayer'){ t.players.splice(+btn.closest(".ck-pl").dataset.pi,1); }
+  else if(btn.dataset.act==='delTeam'){
+    if(!confirm(`'${t.name}' 팀을 삭제할까요? 대진표에서 이 팀이 들어간 자리는 '미정' 이 됩니다.`)) return;
+    ckDoc.teams.splice(ti,1);
+    ckDoc.matches.forEach(m=>{ if(m.teamA===t.id) m.teamA=null; if(m.teamB===t.id) m.teamB=null; });
+    renderCkMatches();
+  }
+  ckSetDirty(true); renderCkTeams();
+});
+function ckTeamField(e){
+  const f=e.target.dataset.f; if(!f) return;
+  if(e.type==='input'&&e.target.tagName==='SELECT') return;   // select 는 change 에서 한 번만 처리
+  const card=e.target.closest(".ck-team"), t=ckDoc.teams[+card.dataset.ti];
+  const row=e.target.closest(".ck-pl"), p=row?t.players[+row.dataset.pi]:null;
+  if(f==='name'){ t.name=e.target.value; if(e.type==='change') renderCkMatches(); }
+  else if(f==='color'){ t.color=e.target.value; card.style.setProperty('--tc',t.color); }
+  else if(f==='lane'){ p.lane=e.target.value||null; }
+  else if(f==='pname'){ p.name=e.target.value; }
+  else if(f==='member'){
+    const v=e.target.value;
+    if(v==='__name'){ delete p.memberId; p.name=''; renderCkTeams(); const inp=$(`.ck-team[data-ti="${card.dataset.ti}"] .ck-pl[data-pi="${row.dataset.pi}"] input.who`); if(inp) inp.focus(); }
+    else{
+      const id=v===''?null:+v;
+      // 같은 단원을 두 팀에 넣는 실수 방지
+      const other=id!=null&&ckDoc.teams.find(x=>x.players.some(q=>q!==p&&q.memberId===id));
+      if(other){ toast(`이미 '${other.name}' 에 들어 있는 선수입니다.`); e.target.value=p.memberId==null?'':String(p.memberId); return; }
+      p.memberId=id; delete p.name;
+    }
+  }
+  ckSetDirty(true);
+}
+$("#ckTeams").addEventListener("input",ckTeamField);
+$("#ckTeams").addEventListener("change",ckTeamField);
+
+/* 대진표 */
+function ckSlotOpts(m,cur){
+  const teams=ckDoc.teams.map(t=>`<option value="${esc(t.id)}" ${cur===t.id?'selected':''}>${esc(t.name)}</option>`).join('');
+  const refs=ckDoc.matches.filter(x=>x.id!==m.id).map(x=>
+    `<option value="W:${esc(x.id)}" ${cur==='W:'+x.id?'selected':''}>${esc(x.label)} 승자</option>`+
+    `<option value="L:${esc(x.id)}" ${cur==='L:'+x.id?'selected':''}>${esc(x.label)} 패자</option>`).join('');
+  return `<option value="">미정</option><optgroup label="팀">${teams}</optgroup>${refs?`<optgroup label="다른 경기 결과">${refs}</optgroup>`:''}`;
+}
+function ckMatchText(mt){
+  const d=new Date(mt.date), p=n=>String(n).padStart(2,'0');
+  const side=s=>s.map(x=>x.name).join(',');
+  return `${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())} · 블루(${side(mt.blue)}) vs 레드(${side(mt.red)}) · ${mt.blueWin?'블루':'레드'} 승`;
+}
+function ckLinkedIds(){ return new Set(ckDoc.matches.flatMap(m=>m.games.map(g=>String(g.matchId)))); }
+function renderCkMatches(){
+  const view=ckView(), linked=ckLinkedIds();
+  const free=ckAllMatches.filter(mt=>!linked.has(String(mt.id))).slice(0,80);
+  const freeOpts=`<option value="">— 등록된 내전 기록에서 선택 (최근 ${free.length}경기) —</option>`+
+    free.map(mt=>`<option value="${esc(mt.id)}">${esc(ckMatchText(mt))}</option>`).join('');
+  $("#ckMatches").innerHTML=ckDoc.matches.map((m,mi)=>{
+    const v=view&&view.matches.find(x=>x.id===m.id);
+    const tn=slot=>{ const t=v&&ckDoc.teams.find(x=>x.id===slot.teamId); return t?t.name:(slot?slot.label:'미정'); };
+    const res=v&&(v.games.length||v.winner)
+      ?`저장된 결과: ${esc(tn(v.a))} ${v.aWins} : ${v.bWins} ${esc(tn(v.b))}${v.winner?` → ${esc(tn(v.winner==='A'?v.a:v.b))} 승`:' (진행 중)'}`:'';
+    return `<div class="ck-match" data-mi="${mi}">
+      <div class="mh">
+        <label class="fld">단계<select data-f="stage">${ckMeta.stages.map(s=>`<option ${m.stage===s?'selected':''}>${s}</option>`).join('')}</select></label>
+        <label class="fld">경기 이름<input data-f="label" value="${esc(m.label)}" maxlength="40" style="width:130px"></label>
+        <label class="fld">A팀<select data-f="teamA" style="min-width:130px">${ckSlotOpts(m,m.teamA)}</select></label>
+        <span class="vs">VS</span>
+        <label class="fld">B팀<select data-f="teamB" style="min-width:130px">${ckSlotOpts(m,m.teamB)}</select></label>
+        <label class="fld">방식<select data-f="bestOf">${ckMeta.bestOf.map(n=>`<option value="${n}" ${m.bestOf===n?'selected':''}>${n===1?'단판':n+'전 '+Math.ceil(n/2)+'선승'}</option>`).join('')}</select></label>
+        <label class="fld">일정<input type="datetime-local" data-f="scheduledAt" value="${esc(m.scheduledAt||'')}"></label>
+        <label class="fld">승자<select data-f="winner">
+          <option value="">자동 (세트 스코어)</option>
+          <option value="A" ${m.winner==='A'?'selected':''}>A팀 승 (직접 지정)</option>
+          <option value="B" ${m.winner==='B'?'selected':''}>B팀 승 (직접 지정)</option></select></label>
+        <div style="flex:1"></div>
+        <button class="btn sm" data-act="up" title="위로" ${mi===0?'disabled':''}>▲</button>
+        <button class="btn sm" data-act="down" title="아래로" ${mi===ckDoc.matches.length-1?'disabled':''}>▼</button>
+        <button class="btn sm danger" data-act="delMatch">경기 삭제</button>
+      </div>
+      ${res?`<div class="res">${res}</div>`:'<div style="height:10px"></div>'}
+      ${m.games.map((g,gi)=>{
+        const mt=ckAllMatches.find(x=>String(x.id)===String(g.matchId));
+        return `<div class="ck-g${mt?'':' missing'}" data-gi="${gi}">
+          <span class="gi">세트</span>
+          <span class="gt">${mt?esc(ckMatchText(mt)):`삭제된 내전 기록 (${esc(g.matchId)}) — 연결을 해제하세요`}</span>
+          <select data-f="gwinner" title="팀 명단으로 승패를 가리지 못할 때만 직접 고르세요">
+            <option value="">승패 자동 판정</option>
+            <option value="A" ${g.winner==='A'?'selected':''}>A팀 승</option>
+            <option value="B" ${g.winner==='B'?'selected':''}>B팀 승</option>
+          </select>
+          <button class="ck-x" data-act="delGame" title="연결 해제 (내전 기록은 지워지지 않습니다)">✕</button>
+        </div>`;}).join('')}
+      <div class="ck-link">
+        <select class="pick">${freeOpts}</select>
+        <button class="btn sm" data-act="link">연결</button>
+        <span class="or">또는</span>
+        <input class="riot" placeholder="Match ID (KR_1234567890)">
+        <button class="btn sm" data-act="import">가져와서 연결</button>
+      </div>
+    </div>`;}).join('')||'<div class="acc-empty">경기가 없습니다. [＋ 경기 추가] 로 대진을 만들어 주세요.</div>';
+}
+$("#ckAddMatch").addEventListener("click",()=>{
+  if(!ckDoc) return;
+  const hasFinal=ckDoc.matches.some(m=>m.stage==='결승');
+  const n=ckDoc.matches.filter(m=>m.stage==='예선').length+1;
+  const nm={id:ckRid('m'),stage:'예선',label:`예선 ${n}경기`,teamA:null,teamB:null,bestOf:3,scheduledAt:null,winner:null,games:[]};
+  // 결승보다 앞(예선 맨 뒤)에 끼워 넣는다
+  const at=hasFinal?ckDoc.matches.findIndex(m=>m.stage!=='예선'):ckDoc.matches.length;
+  ckDoc.matches.splice(at<0?ckDoc.matches.length:at,0,nm);
+  ckSetDirty(true); renderCkMatches();
+});
+function ckMatchField(e){
+  const f=e.target.dataset.f; if(!f) return;
+  if(e.type==='input'&&e.target.tagName==='SELECT') return;   // select 는 change 에서 한 번만 처리
+  const box=e.target.closest(".ck-match"), m=ckDoc.matches[+box.dataset.mi], v=e.target.value;
+  if(f==='label'){
+    m.label=v;
+    // 다른 경기의 '○○ 승자/패자' 선택지 글자만 바꿔 준다 (다시 그리면 입력 중 포커스가 날아간다)
+    $$(`#ckMatches option[value="W:${m.id}"]`).forEach(o=>o.textContent=v+' 승자');
+    $$(`#ckMatches option[value="L:${m.id}"]`).forEach(o=>o.textContent=v+' 패자');
+  }
+  else if(f==='stage') m.stage=v;
+  else if(f==='teamA'||f==='teamB'){
+    const other=f==='teamA'?m.teamB:m.teamA;
+    if(v&&v===other){ toast('양쪽에 같은 팀을 넣을 수 없습니다.'); e.target.value=m[f]||''; return; }
+    m[f]=v||null;
+  }
+  else if(f==='bestOf') m.bestOf=+v;
+  else if(f==='scheduledAt') m.scheduledAt=v?v.slice(0,16):null;
+  else if(f==='winner') m.winner=v||null;
+  else if(f==='gwinner') m.games[+e.target.closest(".ck-g").dataset.gi].winner=v||null;
+  ckSetDirty(true);
+}
+$("#ckMatches").addEventListener("input",ckMatchField);
+$("#ckMatches").addEventListener("change",ckMatchField);
+$("#ckMatches").addEventListener("click",async e=>{
+  const btn=e.target.closest("[data-act]"); if(!btn) return;
+  const box=btn.closest(".ck-match"), mi=+box.dataset.mi, m=ckDoc.matches[mi], act=btn.dataset.act;
+  if(act==='up'||act==='down'){
+    const to=mi+(act==='up'?-1:1);
+    [ckDoc.matches[mi],ckDoc.matches[to]]=[ckDoc.matches[to],ckDoc.matches[mi]];
+  }else if(act==='delMatch'){
+    if(!confirm(`'${m.label}' 경기를 대진표에서 삭제할까요? (연결된 내전 기록은 지워지지 않습니다)`)) return;
+    ckDoc.matches.splice(mi,1);
+    ckDoc.matches.forEach(x=>['teamA','teamB'].forEach(k=>{ if(x[k]==='W:'+m.id||x[k]==='L:'+m.id) x[k]=null; }));
+  }else if(act==='delGame'){
+    m.games.splice(+btn.closest(".ck-g").dataset.gi,1);
+  }else if(act==='link'){
+    const id=$(".pick",box).value;
+    if(!id){ toast('연결할 내전 기록을 선택하세요.'); return; }
+    m.games.push({matchId:id,winner:null});
+  }else if(act==='import'){
+    const rid=$(".riot",box).value.trim();
+    if(!rid){ toast('라이엇 Match ID 를 입력하세요.'); return; }
+    btn.disabled=true; btn.textContent='가져오는 중…';
+    try{
+      const r=await jsend('POST','/api/matches/import',{matchId:rid});
+      ckAllMatches.unshift(r.match);
+      m.games.push({matchId:r.match.id,winner:null});
+      toast(`경기를 가져왔습니다 (단원 ${r.import.matched}/10명 매칭). [저장] 을 눌러야 대진표에 반영됩니다.`);
+      loadMatches().catch(()=>{});   // 내전 기록 관리 탭 목록도 맞춰 둔다
+    }catch(ex){
+      const msg=(ex.payload&&ex.payload.messages&&ex.payload.messages[0])||ex.message;
+      toast(ex.status===409?'이미 가져온 경기입니다. 왼쪽 목록에서 골라 연결하세요.':'가져오기 실패: '+msg);
+      btn.disabled=false; btn.textContent='가져와서 연결';
+      return;
+    }
+  }else return;
+  ckSetDirty(true); renderCkMatches();
+});
+
+/* 저장 · 새 대회 · 삭제 */
+$("#ckSaveBtn").addEventListener("click",async()=>{
+  if(!ckDoc) return;
+  const err=$("#ckErr"), btn=$("#ckSaveBtn"); err.textContent='';
+  if(!ckDoc.name.trim()){ err.textContent='대회 이름을 입력하세요.'; $("#ck_name").focus(); return; }
+  btn.disabled=true;
+  try{
+    const r=await jsend('PUT','/api/tournament/'+encodeURIComponent(ckDoc.id),ckDoc);
+    const i=CKS.findIndex(x=>x.doc.id===r.doc.id);
+    if(i>=0) CKS[i]={doc:r.doc,view:r.view};
+    ckSelect(r.doc);
+    if(r.warning){ err.textContent=r.warning; toast('저장했지만 DB 에는 남지 않았습니다'); }
+    else toast('대회 정보를 저장했습니다');
+  }catch(ex){
+    const msgs=ex.payload&&ex.payload.messages;
+    err.textContent='저장 실패: '+(msgs&&msgs.length?msgs.join(' / '):ex.message);
+  }finally{ btn.disabled=false; }
+});
+$("#ckNewBtn").addEventListener("click",async()=>{
+  if(!ckConfirmLeave()) return;
+  const name=prompt('새 대회 이름을 입력하세요.','협곡단 CK 5회');
+  if(!name||!name.trim()) return;
+  try{
+    const r=await jsend('POST','/api/tournament',{name:name.trim()});
+    toast('새 대회를 만들었습니다. 메인 화면에는 가장 최근에 만든 "메인 노출" 대회가 표시됩니다.');
+    ckSetDirty(false); await loadCk(r.doc.id);
+  }catch(ex){ toast('실패: '+((ex.payload&&ex.payload.messages&&ex.payload.messages[0])||ex.message)); }
+});
+$("#ckDelBtn").addEventListener("click",async()=>{
+  if(!ckDoc||!confirm(`'${ckDoc.name}' 대회를 삭제할까요?\n팀·대진표가 지워지며 되돌릴 수 없습니다. (내전 기록은 그대로 남습니다)`)) return;
+  try{
+    await jsend('DELETE','/api/tournament/'+encodeURIComponent(ckDoc.id));
+    toast('대회를 삭제했습니다'); ckDoc=null; ckSetDirty(false); await loadCk();
+  }catch(ex){ toast((ex.payload&&ex.payload.messages&&ex.payload.messages[0])||('실패: '+ex.message)); }
+});
+window.addEventListener("beforeunload",e=>{ if($("#ckDirty").textContent){ e.preventDefault(); e.returnValue=''; } });
 
 /* ── 업데이트 게시판 ──
    작성 폼 하나를 '새 글'과 '수정'에 같이 쓴다. updEditId 가 있으면 수정 모드. */

@@ -87,6 +87,7 @@ const BACKUP_TABLES = [
   { key: 'riot_matches',       table: 'riot_matches',       orderBy: 'match_id.asc' },
   { key: 'updates',            table: 'updates',            orderBy: 'id.asc' },
   { key: 'suggestions',        table: 'suggestions',        orderBy: 'id.asc' },
+  { key: 'tournaments',        table: 'tournaments',        orderBy: 'id.asc' },
 ];
 
 router.get('/backup', requireAdmin, async (req, res) => {

@@ -121,6 +121,97 @@
   .sec-h h2{font-size:22px}
   .sec-h .rule{flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
 
+  /* ============ 대회 (CK) ============ */
+  .ck-banner{border:1px solid var(--gold-deep);border-radius:16px;overflow:hidden;position:relative;margin-bottom:28px;
+    background:
+      radial-gradient(700px 260px at 50% -40%, color-mix(in srgb,var(--gold) 26%,transparent), transparent 70%),
+      linear-gradient(180deg,var(--surface),var(--rift-2));
+    box-shadow:var(--shadow)}
+  .ck-top{display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px;padding:30px 28px 22px;border-bottom:1px solid var(--line-soft)}
+  .ck-top .eyebrow{color:var(--gold);margin-bottom:8px}
+  .ck-title{font-size:44px;font-weight:900;line-height:1.05;letter-spacing:-.03em;color:var(--gold-bright)}
+  .ck-sub{margin:10px 0 0;color:var(--ink-2);font-size:14px;max-width:70ch;white-space:pre-line}
+  .ck-side{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+  .ck-status{font-size:12px;font-weight:800;padding:4px 12px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap}
+  .ck-status.live{color:var(--good);border-color:var(--good)}
+  .ck-status.done{color:var(--gold-bright);border-color:var(--gold-deep)}
+  .ck-champ{display:flex;align-items:center;gap:10px;padding:14px 28px;border-bottom:1px solid var(--line-soft);
+    background:color-mix(in srgb,var(--gold) 12%,transparent);font-size:15px;font-weight:700;color:var(--ink-2)}
+  .ck-champ b{font-size:20px;font-weight:900;color:var(--gold-bright)}
+  .ck-body{padding:22px 28px 26px}
+  .ck-h{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:var(--ink-3);margin:0 0 10px}
+  .ck-teamstrip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:22px}
+  .ck-tchip{border:1px solid var(--line);border-left:4px solid var(--tc,var(--gold));border-radius:10px;background:var(--surface);padding:10px 12px;min-width:0}
+  .ck-tchip b{display:block;font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ck-tchip small{display:block;font-size:12px;color:var(--ink-3);margin-top:3px;line-height:1.45}
+  .ck-tchip.champ{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+  .ck-bracket{display:grid;grid-template-columns:minmax(0,1fr) 34px minmax(0,1fr);align-items:center}
+  .ck-bracket.single{grid-template-columns:minmax(0,1fr)}
+  .ck-col{display:flex;flex-direction:column;gap:12px;min-width:0}
+  .ck-arrow{text-align:center;color:var(--gold-deep);font-size:26px;font-weight:800}
+  .ck-m{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+  .ck-m.final{border-color:var(--gold-deep)}
+  .ck-m-h{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line-soft);font-size:12px;color:var(--ink-3);font-weight:700}
+  .ck-m-h b{color:var(--ink);font-size:13px;font-weight:800}
+  .ck-m-h .st{margin-left:auto;font-size:11px;font-weight:800;white-space:nowrap}
+  .ck-m-h .st.live{color:var(--good)} .ck-m-h .st.done{color:var(--gold)}
+  .ck-row{display:flex;align-items:center;gap:10px;padding:11px 12px;font-size:15px;font-weight:700}
+  .ck-row + .ck-row{border-top:1px solid var(--line-soft)}
+  .ck-row i{flex:0 0 5px;align-self:stretch;border-radius:3px;background:var(--tc,var(--line))}
+  .ck-row .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ck-row .sc{font-size:20px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+  .ck-row.tbd .nm{color:var(--ink-3);font-weight:600;font-size:13.5px}
+  .ck-row.win{background:color-mix(in srgb,var(--gold) 12%,transparent)}
+  .ck-row.win .nm,.ck-row.win .sc{color:var(--gold-bright)}
+  .ck-row.lose{opacity:.55}
+  .ck-teams{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:28px}
+  .ck-team{border:1px solid var(--line);border-top:4px solid var(--tc,var(--gold));border-radius:12px;background:var(--surface);padding:14px 16px;min-width:0}
+  .ck-team h3{font-size:17px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+  .ck-team ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+  .ck-team li{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;min-width:0}
+  .ck-team li .ln{flex:0 0 34px;font-size:11px;font-weight:800;color:var(--ink-3)}
+  .ck-team li .pn{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ck-team li .cap{font-size:10px;font-weight:800;color:var(--gold);border:1px solid var(--gold-deep);border-radius:5px;padding:0 5px}
+  .ck-pl-link{cursor:pointer;text-decoration:none;color:inherit;border-radius:3px}
+  .ck-pl-link:hover,.ck-pl-link:focus-visible{color:var(--gold-bright);text-decoration:underline;outline:none}
+  .ck-team .none{font-size:12.5px;color:var(--ink-3)}
+  /* 전역 표 스타일(순위표용: 칸 오른쪽 정렬 · min-width 640px)을 여기서는 덮어쓴다 */
+  .ck-standwrap{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow-x:auto;margin-bottom:28px}
+  .ck-stand{width:100%;min-width:0;border-collapse:collapse;font-size:13.5px}
+  .ck-stand th,.ck-stand td{text-align:center;padding:10px 12px;white-space:nowrap}
+  .ck-stand th{font-size:11px;letter-spacing:.06em;color:var(--ink-3);font-weight:700;border-bottom:1px solid var(--line)}
+  .ck-stand td{border-bottom:1px solid var(--line-soft);font-weight:700}
+  .ck-stand tr:last-child td{border-bottom:0}
+  .ck-stand th.c-rk,.ck-stand td.c-rk{width:48px}
+  .ck-stand th.c-n,.ck-stand td.c-n{width:76px}
+  .ck-stand th.c-tm,.ck-stand td.c-tm{text-align:left;white-space:normal}
+  .ck-stand .tn{display:inline-flex;align-items:center;gap:8px}
+  .ck-stand .tn i{width:10px;height:10px;border-radius:3px;background:var(--tc)}
+  .ck-res{border:1px solid var(--line);border-radius:12px;background:var(--surface);margin-bottom:14px;overflow:hidden}
+  .ck-res-h{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line-soft)}
+  .ck-res-h b{font-size:15px;font-weight:800}
+  .ck-res-h .vs{font-size:14px;font-weight:700;color:var(--ink-2)}
+  .ck-res-h .big{margin-left:auto;font-size:20px;font-weight:900;font-variant-numeric:tabular-nums}
+  .ck-game{padding:11px 16px;border-top:1px solid var(--line-soft)}
+  .ck-game:first-of-type{border-top:0}
+  .ck-game-h{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:13px;color:var(--ink-3);font-weight:700}
+  .ck-game-h b{color:var(--ink);font-size:13.5px}
+  .ck-game-h .w{font-weight:800}
+  .ck-game-h button{margin-left:auto}
+  .ck-sides{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-top:7px;font-size:12.5px;color:var(--ink-2)}
+  .ck-sides .sd b{font-size:11px;font-weight:800;margin-right:6px}
+  .ck-sides .sd.blue b{color:var(--blue)} .ck-sides .sd.red b{color:var(--red)}
+  .ck-det{margin-top:10px}
+  @media(max-width:980px){ .ck-teamstrip,.ck-teams{grid-template-columns:1fr 1fr} }
+  @media(max-width:700px){
+    .ck-top{padding:22px 18px 18px} .ck-body{padding:18px} .ck-champ{padding:12px 18px}
+    .ck-title{font-size:32px}
+    .ck-side{margin-left:0;flex-direction:row;align-items:center;width:100%}
+    .ck-bracket{grid-template-columns:minmax(0,1fr)} .ck-arrow{transform:rotate(90deg);padding:4px 0}
+    .ck-sides{grid-template-columns:1fr}
+  }
+  @media(max-width:440px){ .ck-teamstrip,.ck-teams{grid-template-columns:1fr} .ck-title{font-size:27px} }
+
   /* ============ DASHBOARD ============ */
   .hero{
     border:1px solid var(--line);border-radius:16px;overflow:hidden;position:relative;
@@ -1413,6 +1504,7 @@
   <div class="wrap">
     <nav id="nav" role="tablist">
       <button class="tab" role="tab" aria-selected="true" data-view="dash">대시보드</button>
+      <button class="tab" role="tab" aria-selected="false" data-view="ck" id="ckTab" style="display:none">🏆 <span id="ckTabName">CK</span></button>
       <button class="tab" role="tab" aria-selected="false" data-view="updates">업데이트 <span class="c" id="cUpd" style="display:none">0</span></button>
       <button class="tab" role="tab" aria-selected="false" data-view="roster">단원 명단 <span class="c" id="cRoster">0</span></button>
       <button class="tab" role="tab" aria-selected="false" data-view="matches">내전 기록 <span class="c" id="cMatch">0</span></button>
@@ -1435,6 +1527,7 @@
 <main class="wrap">
   <!-- DASHBOARD -->
   <section class="view on" id="view-dash" role="tabpanel">
+    <div id="ckBanner"></div>
     <div class="hero">
       <div class="hero-top">
         <div class="hero-title">
@@ -1650,6 +1743,11 @@
     <div class="sec-h"><span class="eyebrow">Updates</span><h2 style="font-size:22px">업데이트</h2><div class="rule"></div></div>
     <p style="color:var(--ink-3);font-size:13px;margin:-6px 0 18px">기록실에 새로 추가되거나 바뀐 내용을 관리자가 정리해 올립니다.</p>
     <div class="upd-list" id="updList"><div class="empty">불러오는 중…</div></div>
+  </section>
+
+  <!-- 대회 (CK) -->
+  <section class="view" id="view-ck" role="tabpanel">
+    <div id="ckPage"><div class="empty">불러오는 중…</div></div>
   </section>
 
   <!-- SERIES DETAIL VIEW (시리즈 상세) -->
@@ -2987,6 +3085,159 @@ async function loadUpdates(force){
   }
 }
 
+/* ========== 대회 (CK) ==========
+   GET /api/tournament 이 '메인 노출' 대회 1건을 팀·대진·결과까지 계산해서 준다.
+   대시보드 맨 위 배너(대진표 요약)와 전용 탭(팀 명단·예선 순위·세트별 결과)에 같이 쓴다.
+   대회가 없거나 숨김이면 배너와 탭 모두 감춘다. */
+let CK=null;
+const CK_DOW=['일','월','화','수','목','금','토'];
+function ckWhen(s){   // 'YYYY-MM-DDTHH:mm' (관리자가 입력한 KST 그대로)
+  const m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(s||''); if(!m) return '';
+  const d=new Date(+m[1],+m[2]-1,+m[3]);
+  return `${+m[2]}월 ${+m[3]}일(${CK_DOW[d.getDay()]}) ${m[4]}:${m[5]}`;
+}
+/* 선수 이름 — 명단에 있는 단원이면 눌러서 단원 상세로 간다(용병·삭제된 단원은 글자만) */
+function ckPlayerLink(p){
+  return p.memberId!=null&&memberById(p.memberId)
+    ?`<a class="ck-pl-link" data-ckpid="${p.memberId}" role="link" tabindex="0">${escHtml(p.name)}</a>`
+    :escHtml(p.name);
+}
+function ckTeam(id){ return CK.teams.find(t=>t.id===id)||null; }
+function ckRow(m,side){
+  const slot=side==='A'?m.a:m.b, team=ckTeam(slot.teamId);
+  const wins=side==='A'?m.aWins:m.bWins;
+  const cls=!team?'tbd':m.winner?(m.winner===side?'win':'lose'):'';
+  // 세트 기록 없이 관리자가 승자만 정한 경기는 숫자 대신 승/패로 적는다
+  const sc=m.games.length?wins:(m.winner?(m.winner===side?'승':'패'):'–');
+  return `<div class="ck-row ${cls}" style="--tc:${team?escHtml(team.color):'var(--line)'}"><i></i><span class="nm">${escHtml(team?team.name:slot.label)}</span><span class="sc">${sc}</span></div>`;
+}
+function ckMatchCard(m){
+  const st={done:'종료',live:'진행중',scheduled:''}[m.status];
+  const when=ckWhen(m.scheduledAt);
+  return `<div class="ck-m${m.stage==='결승'?' final':''}">
+    <div class="ck-m-h"><b>${escHtml(m.label)}</b><span>Bo${m.bestOf}${when?' · '+when:''}</span>${st?`<span class="st ${m.status}">${st}</span>`:''}</div>
+    ${ckRow(m,'A')}${ckRow(m,'B')}
+  </div>`;
+}
+function ckBracketHtml(){
+  if(!CK.matches.length) return '<div class="empty" style="padding:30px">대진표 준비 중입니다.</div>';
+  const pre=CK.matches.filter(m=>m.stage==='예선');
+  const fin=[...CK.matches.filter(m=>m.stage==='결승'),...CK.matches.filter(m=>m.stage==='3·4위전')];
+  const col=(title,list)=>`<div class="ck-col"><div class="ck-h" style="margin:0">${title}</div>${list.map(ckMatchCard).join('')}</div>`;
+  if(!pre.length||!fin.length) return `<div class="ck-bracket single">${col(pre.length?'예선':'결승',pre.length?pre:fin)}</div>`;
+  return `<div class="ck-bracket">${col('예선',pre)}<div class="ck-arrow">›</div>${col('결승',fin)}</div>`;
+}
+function ckHeadHtml(withLink){
+  const stCls={'진행중':'live','종료':'done'}[CK.status]||'';
+  const champ=ckTeam(CK.championId);
+  return `<div class="ck-top">
+      <div>
+        <div class="eyebrow">Tournament</div>
+        <h1 class="ck-title">🏆 ${escHtml(CK.name)}</h1>
+        ${CK.subtitle?`<p class="ck-sub">${escHtml(CK.subtitle)}</p>`:''}
+      </div>
+      <div class="ck-side">
+        <span class="ck-status ${stCls}">${escHtml(CK.status)}</span>
+        ${withLink?'<button type="button" class="hn-more" data-go="ck">팀 · 경기 결과 자세히 →</button>':''}
+      </div>
+    </div>
+    ${champ?`<div class="ck-champ">👑 우승 <b style="color:${escHtml(champ.color)}">${escHtml(champ.name)}</b></div>`:''}`;
+}
+function renderCkBanner(){
+  const box=$("#ckBanner"); if(!box) return;
+  if(!CK){ box.innerHTML=''; return; }
+  const strip=CK.teams.map(t=>`<div class="ck-tchip${t.id===CK.championId?' champ':''}" style="--tc:${escHtml(t.color)}">
+      <b>${t.id===CK.championId?'👑 ':''}${escHtml(t.name)}</b>
+      <small>${t.players.length?t.players.map(ckPlayerLink).join(' · '):'선수 미정'}</small>
+    </div>`).join('');
+  box.innerHTML=`<div class="ck-banner">${ckHeadHtml(true)}
+    <div class="ck-body">
+      ${CK.teams.length?`<div class="ck-teamstrip">${strip}</div>`:''}
+      ${ckBracketHtml()}
+    </div></div>`;
+}
+function ckDur(sec){ return sec?`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`:''; }
+function renderCkPage(){
+  const box=$("#ckPage"); if(!box) return;
+  if(!CK){ box.innerHTML='<div class="empty">진행 중인 대회가 없습니다.</div>'; return; }
+  const teams=CK.teams.map(t=>`<div class="ck-team" style="--tc:${escHtml(t.color)}">
+      <h3>${t.id===CK.championId?'👑 ':''}${escHtml(t.name)}</h3>
+      ${t.players.length?`<ul>${t.players.map((p,i)=>`<li>
+          <span class="ln">${escHtml(p.lane||'')}</span>
+          <span class="pn" title="${escHtml(p.nick||'')}">${ckPlayerLink(p)}</span>
+          ${i===0?'<span class="cap">팀장</span>':''}
+          ${p.mercenary?'<span class="cap" style="color:var(--ink-3);border-color:var(--line)">용병</span>':(p.tier?tierBadgeTxt(p.tier):'')}
+        </li>`).join('')}</ul>`:'<div class="none">선수 미정</div>'}
+    </div>`).join('');
+  const hasPre=CK.matches.some(m=>m.stage==='예선');
+  const stand=hasPre?`<div class="sec-h"><h2>예선 순위</h2><div class="rule"></div></div>
+    <div class="ck-standwrap"><table class="ck-stand"><thead><tr><th class="c-rk">순위</th><th class="c-tm">팀</th><th class="c-n">승</th><th class="c-n">패</th><th class="c-n">세트</th><th class="c-n">득실</th></tr></thead><tbody>
+    ${CK.standings.map((s,i)=>{const t=ckTeam(s.teamId); if(!t) return ''; const diff=s.setWins-s.setLosses;
+      return `<tr><td class="c-rk num">${i+1}</td><td class="c-tm"><span class="tn" style="--tc:${escHtml(t.color)}"><i></i>${escHtml(t.name)}</span></td>
+        <td class="c-n num">${s.wins}</td><td class="c-n num">${s.losses}</td><td class="c-n num">${s.setWins} - ${s.setLosses}</td><td class="c-n num">${diff>0?'+':''}${diff}</td></tr>`;}).join('')}
+    </tbody></table></div>`:'';
+  const played=CK.matches.filter(m=>m.games.length);
+  const results=played.map(m=>{
+    const A=ckTeam(m.a.teamId), B=ckTeam(m.b.teamId);
+    const nm=(t,slot)=>`<span style="color:${t?escHtml(t.color):'inherit'}">${escHtml(t?t.name:slot.label)}</span>`;
+    return `<div class="ck-res">
+      <div class="ck-res-h"><b>${escHtml(m.label)}</b><span class="vs">${nm(A,m.a)} vs ${nm(B,m.b)}</span>
+        <span class="big">${m.aWins} : ${m.bWins}</span></div>
+      ${m.games.map((g,i)=>{
+        const wt=g.winner==='A'?A:g.winner==='B'?B:null;
+        const d=new Date(g.date);
+        const sideTeam=s=>g.aSide?(g.aSide===s?A:B):null;
+        const sd=s=>{const t=sideTeam(s);return `<div class="sd ${s}"><b>${s==='blue'?'블루':'레드'}${t?' · '+escHtml(t.name):''}${(s==='blue')===g.blueWin?' 승':''}</b>${g[s].map(ckPlayerLink).join(' · ')}</div>`};
+        return `<div class="ck-game">
+          <div class="ck-game-h"><b>${i+1}세트</b><span>${fmtDate(d)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</span>
+            ${g.dur?`<span>${ckDur(g.dur)}</span>`:''}
+            ${wt?`<span class="w" style="color:${escHtml(wt.color)}">${escHtml(wt.name)} 승</span>`:'<span>승패 미확정</span>'}
+            ${g.hasDetails?`<button type="button" class="hn-more ck-det-btn" data-mid="${escHtml(g.matchId)}">상세</button>`:''}
+          </div>
+          <div class="ck-sides">${sd('blue')}${sd('red')}</div>
+          <div class="ck-det" style="display:none"></div>
+        </div>`;}).join('')}
+    </div>`;}).join('');
+  box.innerHTML=`<div class="ck-banner">${ckHeadHtml(false)}<div class="ck-body">${ckBracketHtml()}</div></div>
+    <div class="sec-h"><h2>참가 팀</h2><div class="rule"></div></div>
+    ${CK.teams.length?`<div class="ck-teams">${teams}</div>`:'<div class="empty" style="padding:30px">팀 구성 준비 중입니다.</div>'}
+    ${stand}
+    <div class="sec-h"><h2>경기 결과</h2><div class="rule"></div></div>
+    ${results||'<div class="empty" style="padding:30px">아직 치러진 경기가 없습니다.</div>'}`;
+}
+async function loadTournament(){
+  try{
+    const r=await jget('/api/tournament');
+    CK=r.tournament||null;
+  }catch(ex){ console.error('대회 로드 실패',ex); CK=null; }   // 대회는 부가 정보 — 실패해도 나머지 화면은 그대로
+  const tab=$("#ckTab");
+  if(tab){ tab.style.display=CK?'':'none'; if(CK) $("#ckTabName").textContent=CK.name.replace(/^협곡단\s*/,''); }
+  renderCkBanner(); renderCkPage();
+}
+let _mpFrom="roster";   // 단원 상세의 [←] 가 돌아갈 곳
+function ckOpenPlayer(e){
+  const a=e.target.closest&&e.target.closest("[data-ckpid]"); if(!a) return;
+  if(e.type==="keydown"&&e.key!=="Enter") return;
+  openMemberProfile(+a.dataset.ckpid);
+  _mpFrom="ck"; $("#memberBack").textContent="← "+(CK?CK.name.replace(/^협곡단\s*/,""):"대회")+"로";
+}
+document.addEventListener("click",ckOpenPlayer);
+document.addEventListener("keydown",ckOpenPlayer);
+/* 세트 상세 — 내전 기록 카드의 상세 패널(renderDetailPanel)을 그대로 쓴다 */
+document.addEventListener("click",async e=>{
+  const btn=e.target.closest&&e.target.closest(".ck-det-btn"); if(!btn) return;
+  const panel=btn.closest(".ck-game").querySelector(".ck-det"), mid=btn.dataset.mid;
+  if(panel.style.display!=="none"){ panel.style.display="none"; btn.textContent="상세"; return; }
+  btn.textContent="접기"; panel.style.display="block";
+  if(panel.innerHTML) return;
+  panel.innerHTML='<div style="padding:12px;color:var(--ink-3);font-size:13px">불러오는 중…</div>';
+  try{
+    let det=detailCache.get(mid);
+    if(!det){ det=await jget('/api/matches/'+encodeURIComponent(mid)+'/details'); detailCache.set(mid,det); }
+    panel.innerHTML=renderDetailPanel(det);
+  }catch(ex){ panel.innerHTML='<div style="padding:12px;color:var(--red);font-size:13px">상세 데이터를 불러올 수 없습니다.</div>'; }
+});
+
 /* ========== CALENDAR (내전 달력 · 깃허브 잔디) ==========
    GET /api/matches/calendar 로 최근 1년치 '날짜 → 경기 수' 를 받아 주 단위 세로 7칸 격자로 그린다.
    시즌 필터와 무관하게 전체 기록을 쓴다. */
@@ -3204,6 +3455,7 @@ function switchView(v){
   if(v==="synergy"){fillSynMembers();renderSynergy();}
   if(v==="duo")loadDuo();
   if(v==="updates")loadUpdates(true);
+  if(v==="ck")loadTournament();
   // series / member 뷰는 탭이 없으므로 해당 탭을 활성화 표시
   if(v==="series"||v==="member"){
     $$(".tab").forEach(t=>t.setAttribute("aria-selected","false"));
@@ -4224,11 +4476,12 @@ function wrClr(wr){ return wr>=60?'var(--good)':wr>=50?'var(--blue)':wr>=40?'var
 function kdaClr(k){ return k>=4?'gold':k>=3?'good':k>=2?'':''; }
 function fmtK(n){ return n>=1000?(n/1000).toFixed(1)+'k':n; }
 
-$("#memberBack").addEventListener("click",()=>switchView("roster"));
+$("#memberBack").addEventListener("click",()=>switchView(_mpFrom));
 $("#mpSeasonSel").addEventListener("change",()=>{ if(_mpId!=null) loadMemberProfile(_mpId,$("#mpSeasonSel").value); });
 
 function openMemberProfile(id){
   _mpId=id;
+  _mpFrom="roster"; $("#memberBack").textContent="← 명단으로";
   const sel=$("#mpSeasonSel");
   sel.innerHTML=`<option value="">전체</option>`+S.seasons.map(s=>`<option value="${s.id}"${s.isCurrent?' selected':''}>${escHtml(s.name)}</option>`).join('');
   switchView("member");
@@ -4676,6 +4929,7 @@ function toast(msg){
     window.__calReady=true; renderCalendar();
     await loadPending();
     loadUpdates();
+    loadTournament();
   }catch(ex){
     document.querySelector("main").insertAdjacentHTML("afterbegin",
       `<div class="empty" style="color:var(--red)">API 로딩 실패: ${ex.message}<br>서버가 실행 중인지 확인하세요 (npm start).</div>`);
