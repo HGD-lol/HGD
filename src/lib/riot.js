@@ -107,13 +107,30 @@ function parseRiotId(nick) {
   return { gameName: s.slice(0, i).trim(), tagLine: s.slice(i + 1).trim() };
 }
 
-/* 라이엇 ID → PUUID (없는 계정이면 null) */
-async function fetchPuuid(nick) {
+/* account-v1 응답 → '닉네임#태그' (둘 중 하나라도 비면 null) */
+function riotIdOf(data) {
+  return data && data.gameName && data.tagLine ? `${data.gameName}#${data.tagLine}` : null;
+}
+
+/* 라이엇 ID → { puuid, nick(라이엇에 등록된 정확한 표기) } (없는 계정이면 null) */
+async function fetchAccountByNick(nick) {
   const id = parseRiotId(nick);
   if (!id) throw riotError(`'${nick}' 는 태그(#KR1)가 없어 조회할 수 없습니다.`, 'bad_riot_id');
   const path = `/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(id.gameName)}/${encodeURIComponent(id.tagLine)}`;
   const data = await riotGet(REGION, path);
-  return data && data.puuid ? data.puuid : null;
+  return data && data.puuid ? { puuid: data.puuid, nick: riotIdOf(data) } : null;
+}
+
+/* 라이엇 ID → PUUID (없는 계정이면 null) */
+async function fetchPuuid(nick) {
+  const acc = await fetchAccountByNick(nick);
+  return acc ? acc.puuid : null;
+}
+
+/* PUUID → 현재 라이엇 ID '닉네임#태그' — 닉네임을 바꿔도 PUUID 는 그대로다 (못 찾으면 null) */
+async function fetchRiotId(puuid) {
+  const data = await riotGet(REGION, `/riot/account/v1/accounts/by-puuid/${encodeURIComponent(puuid)}`);
+  return riotIdOf(data);
 }
 
 /* PUUID → 솔로랭크 { tier, rank, lp }. 언랭이면 tier '언랭' */
@@ -136,16 +153,23 @@ async function fetchSoloRank(puuid) {
 async function refreshAccount(acc) {
   const out = { ...acc };
   try {
-    if (!out.puuid) {
-      const puuid = await fetchPuuid(out.nick);
-      if (!puuid) return { account: out, error: `'${out.nick}' 계정을 라이엇에서 찾지 못했습니다.` };
-      out.puuid = puuid;
+    let currentNick = null;
+    const hadPuuid = !!out.puuid;
+    if (!hadPuuid) {
+      const found = await fetchAccountByNick(out.nick);
+      if (!found) return { account: out, error: `'${out.nick}' 계정을 라이엇에서 찾지 못했습니다.` };
+      out.puuid = found.puuid;
+      currentNick = found.nick;
     }
     const solo = await fetchSoloRank(out.puuid);
     out.tier = solo.tier;
     out.rank = solo.rank;
     out.lp = solo.lp;
     out.fetchedAt = new Date().toISOString();
+    // 닉네임을 바꿨으면 새 닉네임으로 — PUUID 로 지금 라이엇 ID 를 다시 받는다.
+    // 티어를 먼저 넣어 두었으니 여기서 실패해도 점수는 갱신된 채로 남는다.
+    if (hadPuuid) currentNick = await fetchRiotId(out.puuid);
+    if (currentNick) out.nick = currentNick;
     return { account: out, error: null };
   } catch (e) {
     // 어느 계정에서 난 실패인지 항상 보이게 닉네임을 붙인다
@@ -191,4 +215,4 @@ function rateStatus() {
   return buckets.map((b) => ({ limit: b.limit, window: b.window, used: b.hits.filter((t) => now - t < b.window * 1000).length }));
 }
 
-module.exports = { HAS_KEY, PLATFORM, REGION, TIER_KO, parseRiotId, fetchPuuid, fetchSoloRank, refreshAccount, refreshAccounts, fetchMatchIds, fetchMatch, rateStatus, riotError };
+module.exports = { HAS_KEY, PLATFORM, REGION, TIER_KO, parseRiotId, fetchPuuid, fetchRiotId, fetchSoloRank, refreshAccount, refreshAccounts, fetchMatchIds, fetchMatch, rateStatus, riotError };
